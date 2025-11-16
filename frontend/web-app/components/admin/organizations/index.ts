@@ -1,2 +1,2 @@
-export { OrganizationList } from './organization-list';
-
+export * from './organization-list';
+export * from './organization-details';
