@@ -11,6 +11,14 @@ import { Prisma, PayoutStatus } from '@prisma/client';
 export class AdminPayoutService {
   constructor(private prisma: PrismaService) {}
 
+  async findAll(query: PayoutQueryDto) {
+    return this.getPayouts(query);
+  }
+
+  async approve(payoutId: string) {
+    return this.approvePayout(payoutId);
+  }
+
   async getPayouts(query: PayoutQueryDto) {
     const {
       page = 1,

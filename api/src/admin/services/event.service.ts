@@ -19,6 +19,19 @@ export class AdminEventService {
     private queuesService: QueuesService,
   ) {}
 
+  // Compatibility wrappers for controller expectations
+  async findAll(query: EventQueryDto) {
+    return this.getEvents(query);
+  }
+
+  async findOne(eventId: string) {
+    return this.getEvent(eventId);
+  }
+
+  async updateStatus(eventId: string, data: UpdateEventStatusDto, actorId?: string) {
+    return this.updateEventStatus(eventId, data, actorId);
+  }
+
   async getEvents(query: EventQueryDto) {
     const {
       page = 1,

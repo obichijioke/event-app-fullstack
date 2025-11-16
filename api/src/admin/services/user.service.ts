@@ -15,6 +15,38 @@ export class AdminUserService {
 
   constructor(private prisma: PrismaService) {}
 
+  async findAll(query: UserQueryDto) {
+    return this.getUsers(query);
+  }
+
+  async findOne(userId: string) {
+    return this.getUser(userId);
+  }
+
+  async update(userId: string, dto: UpdateUserDto) {
+    return this.updateUser(userId, dto);
+  }
+
+  async suspend(userId: string) {
+    return this.suspendUser(userId);
+  }
+
+  async activate(userId: string) {
+    return this.activateUser(userId);
+  }
+
+  async remove(userId: string) {
+    return this.deleteUser(userId);
+  }
+
+  async grantRole(targetUserId: string, role: PlatformRole, actorId?: string) {
+    return this.grantPlatformRole(targetUserId, role, actorId);
+  }
+
+  async revokeRole(targetUserId: string, fallback?: PlatformRole, actorId?: string) {
+    return this.revokePlatformRole(targetUserId, actorId, fallback);
+  }
+
   async getUsers(query: UserQueryDto) {
     const {
       page = 1,

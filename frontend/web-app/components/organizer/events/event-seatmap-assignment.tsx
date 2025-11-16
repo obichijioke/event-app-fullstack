@@ -1,9 +1,10 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { MapPin, Check, Eye, Trash2, AlertCircle } from 'lucide-react';
+import { MapPin, Check, Trash2, AlertCircle } from 'lucide-react';
 import { seatmapsApi, type Seatmap } from '@/lib/api/seatmaps-api';
 import { useOrganizerStore } from '@/lib/stores/organizer-store';
+import { organizerApi } from '@/lib/api/organizer-api';
 import toast from 'react-hot-toast';
 
 interface EventSeatmapAssignmentProps {
@@ -19,19 +20,20 @@ export function EventSeatmapAssignment({ eventId }: EventSeatmapAssignmentProps)
 
   useEffect(() => {
     loadSeatmaps();
-  }, [currentOrganization]);
+  }, [currentOrganization, eventId]);
 
   const loadSeatmaps = async () => {
     if (!currentOrganization) return;
 
     setLoading(true);
     try {
-      const data = await seatmapsApi.getSeatmaps();
-      setSeatmaps(data);
+      const [seatmapData, eventData] = await Promise.all([
+        seatmapsApi.getSeatmaps(),
+        organizerApi.events.get(eventId, currentOrganization.id),
+      ]);
 
-      // TODO: Fetch event details to get currently assigned seatmap
-      // For now, we'll leave it null until backend endpoint is ready
-      // GET /organizer/events/:eventId should return event.seatmapId
+      setSeatmaps(seatmapData);
+      setAssignedSeatmapId(eventData.seatmapId ?? null);
     } catch (error: any) {
       console.error('Failed to load seatmaps:', error);
       toast.error(error.response?.data?.message || 'Failed to load seatmaps');
@@ -45,18 +47,9 @@ export function EventSeatmapAssignment({ eventId }: EventSeatmapAssignmentProps)
 
     setAssigning(true);
     try {
-      // TODO: Create backend endpoint to assign seatmap to event
-      // PATCH /organizer/events/:eventId { seatmapId: string }
-      // This will create an EventSeatmap record with a snapshot of the seatmap spec
-
-      console.log('Assigning seatmap:', seatmapId, 'to event:', eventId);
-
-      // For now, simulate the assignment
+      await organizerApi.events.assignSeatmap(eventId, seatmapId);
       toast.success('Seatmap assigned successfully');
       setAssignedSeatmapId(seatmapId);
-
-      // In real implementation:
-      // await organizerApi.events.update(eventId, { seatmapId }, currentOrganization.id);
     } catch (error: any) {
       toast.error(error.response?.data?.message || 'Failed to assign seatmap');
     } finally {
@@ -67,17 +60,17 @@ export function EventSeatmapAssignment({ eventId }: EventSeatmapAssignmentProps)
   const handleUnassign = async () => {
     if (!currentOrganization || !assignedSeatmapId) return;
 
-    if (!confirm('Remove seatmap assignment from this event? Existing ticket assignments will be preserved.')) {
+    if (
+      !confirm(
+        'Remove seatmap assignment from this event? Existing ticket assignments will be preserved.',
+      )
+    ) {
       return;
     }
 
     setAssigning(true);
     try {
-      // TODO: Create backend endpoint
-      // PATCH /organizer/events/:eventId { seatmapId: null }
-
-      console.log('Unassigning seatmap from event:', eventId);
-
+      await organizerApi.events.clearSeatmap(eventId);
       toast.success('Seatmap unassigned successfully');
       setAssignedSeatmapId(null);
     } catch (error: any) {
@@ -107,7 +100,7 @@ export function EventSeatmapAssignment({ eventId }: EventSeatmapAssignmentProps)
                 <h3 className="font-semibold">Currently Assigned Seatmap</h3>
               </div>
               <p className="text-sm text-muted-foreground mb-4">
-                {seatmaps.find(s => s.id === assignedSeatmapId)?.name || 'Unknown seatmap'}
+                {seatmaps.find((s) => s.id === assignedSeatmapId)?.name || 'Unknown seatmap'}
               </p>
               <button
                 onClick={handleUnassign}
@@ -128,9 +121,9 @@ export function EventSeatmapAssignment({ eventId }: EventSeatmapAssignmentProps)
         <div className="text-sm">
           <p className="font-medium mb-1">About Seatmap Assignment</p>
           <ul className="text-muted-foreground space-y-1">
-            <li>• Assign a seatmap layout to enable seat selection for ticket buyers</li>
-            <li>• A snapshot of the seatmap is created to preserve the layout even if the original is modified</li>
-            <li>• You can assign specific seats to ticket types after assignment</li>
+            <li>- Assign a seatmap layout to enable seat selection for ticket buyers</li>
+            <li>- A snapshot of the seatmap is created to preserve the layout even if the original is modified</li>
+            <li>- You can assign specific seats to ticket types after assignment</li>
           </ul>
         </div>
       </div>
@@ -178,9 +171,7 @@ export function EventSeatmapAssignment({ eventId }: EventSeatmapAssignmentProps)
                   <div className="p-4">
                     <h4 className="font-semibold mb-1">{seatmap.name}</h4>
                     <div className="text-sm text-muted-foreground mb-4">
-                      {seatmap.totalSeats !== undefined && (
-                        <span>{seatmap.totalSeats} seats</span>
-                      )}
+                      {seatmap.totalSeats !== undefined && <span>{seatmap.totalSeats} seats</span>}
                     </div>
 
                     {/* Actions */}

@@ -20,6 +20,8 @@ import type {
   RefundDto,
   TransferTicketDto,
   CheckinDto,
+  CheckinStats,
+  RecentCheckin,
   // Notifications (Organizer - moderation)
   NotificationsResponse,
   // Notifications (User notifications)
@@ -205,6 +207,16 @@ export const organizerApi = {
       return apiClient.post<DashboardEvent>(`/organizer/events/${eventId}/cancel`, { orgId });
     },
 
+    assignSeatmap: (eventId: string, seatmapId: string) => {
+      return apiClient.post<DashboardEvent>(`/organizer/events/${eventId}/seatmap`, {
+        seatmapId,
+      });
+    },
+
+    clearSeatmap: (eventId: string) => {
+      return apiClient.delete<{ message: string }>(`/organizer/events/${eventId}/seatmap`);
+    },
+
     // Occurrences
     occurrences: {
       list: (eventId: string, orgId: string) => {
@@ -299,6 +311,18 @@ export const organizerApi = {
   checkins: {
     create: (data: CheckinDto, orgId: string) => {
       return apiClient.post<any>('/organizer/checkins', { ...data, orgId });
+    },
+    getStats: (eventId: string, orgId: string) => {
+      return apiClient.get<CheckinStats>(
+        `/organizer/events/${eventId}/checkin-stats`,
+        { orgId }
+      );
+    },
+    getRecent: (eventId: string, orgId: string, limit?: number) => {
+      return apiClient.get<RecentCheckin[]>(
+        `/organizer/events/${eventId}/recent-checkins`,
+        { orgId, limit }
+      );
     },
   },
 
@@ -585,6 +609,16 @@ export const organizerApi = {
 
     listAccounts: (orgId: string) => {
       return apiClient.get<PayoutAccount[]>('/organizer/payout-accounts', { orgId });
+    },
+
+    deleteAccount: (accountId: string, orgId: string) => {
+      return apiClient.delete<{ message: string }>(
+        `/organizer/payout-accounts/${accountId}?orgId=${orgId}`
+      );
+    },
+
+    retry: (payoutId: string, orgId: string) => {
+      return apiClient.post<Payout>(`/organizer/payouts/${payoutId}/retry`, { orgId });
     },
   },
 

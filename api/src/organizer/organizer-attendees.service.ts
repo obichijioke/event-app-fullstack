@@ -226,4 +226,82 @@ export class OrganizerAttendeesService {
 
     return this.ticketsService.checkInTicket(dto, userId);
   }
+
+  async getCheckinStats(orgId: string, eventId: string, userId: string) {
+    await this.ensureEventAccess(orgId, eventId, userId);
+
+    const [totalTickets, checkedIn] = await this.prisma.$transaction([
+      this.prisma.ticket.count({
+        where: {
+          eventId,
+          status: {
+            not: TicketStatus.void,
+          },
+        },
+      }),
+      this.prisma.ticket.count({
+        where: {
+          eventId,
+          status: TicketStatus.checked_in,
+        },
+      }),
+    ]);
+
+    const pending = Math.max(totalTickets - checkedIn, 0);
+    const checkInRate =
+      totalTickets > 0 ? Number(((checkedIn / totalTickets) * 100).toFixed(1)) : 0;
+
+    return {
+      totalTickets,
+      checkedIn,
+      pending,
+      checkInRate,
+    };
+  }
+
+  async getRecentCheckins(
+    orgId: string,
+    eventId: string,
+    userId: string,
+    limit = 10,
+  ) {
+    await this.ensureEventAccess(orgId, eventId, userId);
+
+    const take = Math.min(Math.max(limit, 1), 50);
+
+    const checkins = await this.prisma.checkin.findMany({
+      where: {
+        eventId,
+      },
+      include: {
+        ticket: {
+          select: {
+            id: true,
+            ticketType: {
+              select: {
+                name: true,
+              },
+            },
+            owner: {
+              select: {
+                name: true,
+              },
+            },
+          },
+        },
+      },
+      orderBy: {
+        scannedAt: 'desc',
+      },
+      take,
+    });
+
+    return checkins.map((checkin) => ({
+      id: checkin.id,
+      ticketId: checkin.ticketId,
+      attendeeName: checkin.ticket.owner?.name ?? 'Attendee',
+      ticketType: checkin.ticket.ticketType?.name ?? 'Ticket',
+      scannedAt: checkin.scannedAt,
+    }));
+  }
 }

@@ -16,6 +16,38 @@ import { Prisma } from '@prisma/client';
 export class AdminTaxRateService {
   constructor(private prisma: PrismaService) {}
 
+  async findAll(query: TaxRateQueryDto) {
+    return this.getTaxRates(query);
+  }
+
+  async getStats() {
+    return this.getTaxRateStats();
+  }
+
+  async findByCountry(country: string) {
+    return this.getTaxRatesByCountry(country);
+  }
+
+  async findOne(taxRateId: string) {
+    return this.getTaxRate(taxRateId);
+  }
+
+  async create(dto: CreateTaxRateDto) {
+    return this.createTaxRate(dto);
+  }
+
+  async update(taxRateId: string, dto: UpdateTaxRateDto) {
+    return this.updateTaxRate(taxRateId, dto);
+  }
+
+  async remove(taxRateId: string) {
+    return this.deleteTaxRate(taxRateId);
+  }
+
+  async deactivate(taxRateId: string) {
+    return this.deactivateTaxRate(taxRateId);
+  }
+
   async getTaxRates(query: TaxRateQueryDto) {
     const {
       page = 1,

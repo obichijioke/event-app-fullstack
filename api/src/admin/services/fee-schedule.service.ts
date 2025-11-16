@@ -18,6 +18,34 @@ import { Prisma } from '@prisma/client';
 export class AdminFeeScheduleService {
   constructor(private prisma: PrismaService) {}
 
+  async findAll(query: FeeScheduleQueryDto) {
+    return this.getFeeSchedules(query);
+  }
+
+  async getStats() {
+    return this.getFeeScheduleStats();
+  }
+
+  async findOne(feeScheduleId: string) {
+    return this.getFeeSchedule(feeScheduleId);
+  }
+
+  async create(dto: CreateFeeScheduleDto) {
+    return this.createFeeSchedule(dto);
+  }
+
+  async update(feeScheduleId: string, dto: UpdateFeeScheduleDto) {
+    return this.updateFeeSchedule(feeScheduleId, dto);
+  }
+
+  async remove(feeScheduleId: string) {
+    return this.deleteFeeSchedule(feeScheduleId);
+  }
+
+  async deactivate(feeScheduleId: string) {
+    return this.deactivateFeeSchedule(feeScheduleId);
+  }
+
   async getFeeSchedules(query: FeeScheduleQueryDto) {
     const {
       page = 1,
@@ -116,7 +144,7 @@ export class AdminFeeScheduleService {
               select: {
                 id: true,
                 name: true,
-                email: true,
+                supportEmail: true,
                 status: true,
               },
             },

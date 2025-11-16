@@ -29,6 +29,46 @@ export class AdminOrganizationService {
     private storageService: StorageService,
   ) {}
 
+  async findAll(query: OrganizationQueryDto) {
+    return this.getOrganizations(query);
+  }
+
+  async findOne(orgId: string) {
+    return this.getOrganization(orgId);
+  }
+
+  async update(orgId: string, dto: UpdateOrganizationDto) {
+    return this.updateOrganization(orgId, dto);
+  }
+
+  async getVerificationQueue(query: OrganizationVerificationQueryDto) {
+    return this.getOrganizationsForVerification(query);
+  }
+
+  async getVerificationDetails(orgId: string) {
+    return this.getOrganizationForVerification(orgId);
+  }
+
+  async submitForVerification(orgId: string, dto: SubmitForVerificationDto) {
+    return this.submitOrganizationForVerification(orgId, dto);
+  }
+
+  async reviewDocument(documentId: string, dto: ReviewDocumentDto) {
+    return this.reviewVerificationDocument(documentId, dto);
+  }
+
+  async approveVerification(orgId: string, dto: ApproveOrganizationDto) {
+    return this.approveOrganization(orgId, dto);
+  }
+
+  async rejectVerification(orgId: string, dto: RejectOrganizationDto) {
+    return this.rejectOrganization(orgId, dto);
+  }
+
+  async reviewAppeal(orgId: string, dto: AppealReviewDto) {
+    return this.reviewOrganizationAppeal(orgId, dto);
+  }
+
   async getOrganizations(query: OrganizationQueryDto) {
     const { page = 1, limit = 10, search, status, sortBy, sortOrder } = query;
     const skip = (page - 1) * limit;
@@ -330,7 +370,7 @@ export class AdminOrganizationService {
   async submitOrganizationForVerification(
     orgId: string,
     dto: SubmitForVerificationDto,
-    userId: string,
+    userId?: string,
   ) {
     const organization = await this.prisma.organization.findUnique({
       where: { id: orgId },
@@ -341,7 +381,7 @@ export class AdminOrganizationService {
       throw new NotFoundException('Organization not found');
     }
 
-    if (organization.ownerId !== userId) {
+    if (userId && organization.ownerId !== userId) {
       throw new BadRequestException(
         'Only organization owner can submit for verification',
       );
@@ -380,8 +420,8 @@ export class AdminOrganizationService {
   async uploadVerificationDocument(
     orgId: string,
     dto: UploadDocumentDto,
-    file: any,
-    userId: string,
+    file?: any,
+    userId?: string,
   ) {
     const organization = await this.prisma.organization.findUnique({
       where: { id: orgId },
@@ -392,10 +432,14 @@ export class AdminOrganizationService {
       throw new NotFoundException('Organization not found');
     }
 
-    if (organization.ownerId !== userId) {
+    if (userId && organization.ownerId !== userId) {
       throw new BadRequestException(
         'Only organization owner can upload documents',
       );
+    }
+
+    if (!file) {
+      throw new BadRequestException('Verification document file is required');
     }
 
     const uploadResult = await this.storageService.uploadFile(
@@ -442,7 +486,7 @@ export class AdminOrganizationService {
   async reviewVerificationDocument(
     documentId: string,
     dto: ReviewDocumentDto,
-    reviewerId: string,
+    reviewerId?: string,
   ) {
     const document = await this.prisma.verificationDocument.findUnique({
       where: { id: documentId },
@@ -483,7 +527,7 @@ export class AdminOrganizationService {
   async approveOrganization(
     orgId: string,
     dto: ApproveOrganizationDto,
-    reviewerId: string,
+    reviewerId?: string,
   ) {
     const organization = await this.prisma.organization.findUnique({
       where: { id: orgId },
@@ -532,7 +576,7 @@ export class AdminOrganizationService {
   async rejectOrganization(
     orgId: string,
     dto: RejectOrganizationDto,
-    reviewerId: string,
+    reviewerId?: string,
   ) {
     const organization = await this.prisma.organization.findUnique({
       where: { id: orgId },
@@ -576,7 +620,7 @@ export class AdminOrganizationService {
   async suspendOrganization(
     orgId: string,
     dto: SuspendOrganizationDto,
-    reviewerId: string,
+    reviewerId?: string,
   ) {
     const organization = await this.prisma.organization.findUnique({
       where: { id: orgId },
@@ -618,7 +662,7 @@ export class AdminOrganizationService {
   async reviewOrganizationAppeal(
     appealId: string,
     dto: AppealReviewDto,
-    reviewerId: string,
+    reviewerId?: string,
   ) {
     const appeal = await this.prisma.organizationAppeal.findUnique({
       where: { id: appealId },

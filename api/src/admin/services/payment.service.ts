@@ -11,6 +11,10 @@ import { Prisma, PaymentStatus } from '@prisma/client';
 export class AdminPaymentService {
   constructor(private prisma: PrismaService) {}
 
+  async findAll(query: PaymentQueryDto) {
+    return this.getPayments(query);
+  }
+
   async getPayments(query: PaymentQueryDto) {
     const {
       page = 1,

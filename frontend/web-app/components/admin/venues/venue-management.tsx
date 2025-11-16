@@ -52,6 +52,14 @@ const defaultCatalogForm: CatalogFormState = {
   tags: '',
 };
 
+function extractList<T>(payload: unknown): T[] {
+  if (Array.isArray(payload)) return payload;
+  if (payload && typeof payload === 'object' && Array.isArray((payload as any).data)) {
+    return (payload as any).data as T[];
+  }
+  return [];
+}
+
 export default function VenueManagement() {
   const { accessToken } = useAuth();
   const [activeTab, setActiveTab] = useState<'catalog' | 'venues'>('catalog');
@@ -84,7 +92,7 @@ export default function VenueManagement() {
         limit: 50,
       });
       if (response.success) {
-        setCatalogEntries(response.data);
+        setCatalogEntries(extractList<AdminVenueCatalogEntry>(response.data));
       }
     } catch (error) {
       console.error('Failed to load catalog venues', error);
@@ -104,7 +112,7 @@ export default function VenueManagement() {
         limit: 50,
       });
       if (response.success) {
-        setVenues(response.data);
+        setVenues(extractList<AdminVenueRecord>(response.data));
       }
     } catch (error) {
       console.error('Failed to load venues', error);

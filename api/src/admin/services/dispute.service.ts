@@ -17,6 +17,30 @@ import { Prisma } from '@prisma/client';
 export class AdminDisputeService {
   constructor(private prisma: PrismaService) {}
 
+  async findAll(query: DisputeQueryDto) {
+    return this.getDisputes(query);
+  }
+
+  async getStats() {
+    return this.getDisputeStats();
+  }
+
+  async findOne(disputeId: string) {
+    return this.getDispute(disputeId);
+  }
+
+  async updateStatus(disputeId: string, dto: UpdateDisputeStatusDto) {
+    return this.updateDisputeStatus(disputeId, dto);
+  }
+
+  async respond(disputeId: string, dto: RespondToDisputeDto) {
+    return this.respondToDispute(disputeId, dto);
+  }
+
+  async close(disputeId: string, dto: CloseDisputeDto) {
+    return this.closeDispute(disputeId, dto);
+  }
+
   async getDisputes(query: DisputeQueryDto) {
     const {
       page = 1,
@@ -200,7 +224,7 @@ export class AdminDisputeService {
                   select: {
                     id: true,
                     name: true,
-                    email: true,
+                    supportEmail: true,
                   },
                 },
               },

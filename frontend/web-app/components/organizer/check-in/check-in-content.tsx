@@ -5,21 +5,7 @@ import { Search, Loader2, CheckCircle2, XCircle, QrCode, Users, Clock } from 'lu
 import { useOrganizerStore } from '@/lib/stores/organizer-store';
 import { organizerApi } from '@/lib/api/organizer-api';
 import toast from 'react-hot-toast';
-
-interface CheckinStats {
-  totalTickets: number;
-  checkedIn: number;
-  pending: number;
-  checkInRate: number;
-}
-
-interface RecentCheckin {
-  id: string;
-  ticketId: string;
-  attendeeName: string;
-  ticketType: string;
-  scannedAt: string;
-}
+import type { CheckinStats as CheckinStatsResponse, RecentCheckin } from '@/lib/types/organizer';
 
 interface CheckinContentProps {
   eventId: string;
@@ -29,7 +15,7 @@ export function CheckinContent({ eventId }: CheckinContentProps) {
   const { currentOrganization } = useOrganizerStore();
   const [loading, setLoading] = useState(false);
   const [ticketCode, setTicketCode] = useState('');
-  const [stats, setStats] = useState<CheckinStats>({
+  const [stats, setStats] = useState<CheckinStatsResponse>({
     totalTickets: 0,
     checkedIn: 0,
     pending: 0,
@@ -51,12 +37,11 @@ export function CheckinContent({ eventId }: CheckinContentProps) {
     if (!currentOrganization) return;
 
     try {
-      // TODO: Create backend endpoint for check-in stats
-      // GET /organizer/events/:eventId/checkin-stats
-      // For now, stats will remain at 0 until backend endpoint is created
-      console.log('Stats endpoint not yet implemented');
+      const data = await organizerApi.checkins.getStats(eventId, currentOrganization.id);
+      setStats(data);
     } catch (error) {
       console.error('Failed to load stats:', error);
+      toast.error('Failed to load check-in statistics');
     }
   };
 
@@ -64,12 +49,11 @@ export function CheckinContent({ eventId }: CheckinContentProps) {
     if (!currentOrganization) return;
 
     try {
-      // TODO: Create backend endpoint for recent check-ins
-      // GET /organizer/events/:eventId/recent-checkins?limit=10
-      // For now, list will be empty until backend endpoint is created
-      console.log('Recent check-ins endpoint not yet implemented');
+      const data = await organizerApi.checkins.getRecent(eventId, currentOrganization.id, 10);
+      setRecentCheckins(data);
     } catch (error) {
       console.error('Failed to load recent check-ins:', error);
+      toast.error('Failed to load recent check-ins');
     }
   };
 
@@ -82,7 +66,7 @@ export function CheckinContent({ eventId }: CheckinContentProps) {
     setLastCheckIn(null);
 
     try {
-      await organizerApi.checkins.create(
+      const response = await organizerApi.checkins.create(
         {
           ticketId: ticketCode,
         },
@@ -92,7 +76,7 @@ export function CheckinContent({ eventId }: CheckinContentProps) {
       setLastCheckIn({
         success: true,
         message: 'Check-in successful!',
-        attendeeName: 'Attendee', // Would come from API response
+        attendeeName: response?.ticket?.owner?.name,
       });
 
       toast.success('Check-in successful!');

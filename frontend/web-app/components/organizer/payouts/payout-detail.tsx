@@ -49,6 +49,7 @@ export function PayoutDetail({ payoutId }: PayoutDetailProps) {
   const [payout, setPayout] = useState<Payout | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [retrying, setRetrying] = useState(false);
 
   useEffect(() => {
     if (authInitialized && accessToken && currentOrganization) {
@@ -88,6 +89,22 @@ export function PayoutDetail({ payoutId }: PayoutDetailProps) {
       hour: '2-digit',
       minute: '2-digit',
     });
+  };
+
+  const handleRetry = async () => {
+    if (!currentOrganization || !payout) return;
+
+    setRetrying(true);
+    try {
+      const updated = await organizerApi.payouts.retry(payout.id, currentOrganization.id);
+      setPayout(updated);
+      toast.success('Payout retry queued');
+    } catch (err: any) {
+      console.error('Failed to retry payout:', err);
+      toast.error(err?.message || 'Failed to retry payout');
+    } finally {
+      setRetrying(false);
+    }
   };
 
   if (loading) {
@@ -275,13 +292,11 @@ export function PayoutDetail({ payoutId }: PayoutDetailProps) {
 
         {payout.status === 'failed' && (
           <button
-            onClick={() => {
-              // TODO: Implement retry logic
-              toast('Retry functionality coming soon');
-            }}
-            className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:opacity-90 transition"
+            onClick={handleRetry}
+            disabled={retrying}
+            className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:opacity-90 transition disabled:opacity-50"
           >
-            Retry Payout
+            {retrying ? 'Retrying...' : 'Retry Payout'}
           </button>
         )}
       </div>
