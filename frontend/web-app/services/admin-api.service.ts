@@ -211,6 +211,89 @@ export interface AdminVenueRecord {
   updatedAt: string;
 }
 
+export interface AdminDispute {
+  id: string;
+  orderId: string;
+  provider: string;
+  caseId: string;
+  status: 'needs_response' | 'under_review' | 'won' | 'lost' | 'warning' | 'charge_refunded';
+  amountCents?: number;
+  reason?: string;
+  openedAt: string;
+  closedAt?: string;
+  orderTotal: number;
+  orderCurrency: string;
+  orderStatus: string;
+  buyerId: string;
+  buyerName: string;
+  buyerEmail: string;
+  eventId: string;
+  eventTitle: string;
+  orgId: string;
+  orgName: string;
+}
+
+export interface AdminDisputeStats {
+  total: number;
+  needsResponse: number;
+  underReview: number;
+  won: number;
+  lost: number;
+  totalAmountCents: number;
+  winRate: string;
+}
+
+export interface AdminFeeSchedule {
+  id: string;
+  kind: 'platform' | 'processing';
+  name: string;
+  percent: number;
+  fixedCents: number;
+  currency?: string;
+  active: boolean;
+  createdAt: string;
+  orgFeeOverrides?: AdminOrgFeeOverride[];
+}
+
+export interface AdminOrgFeeOverride {
+  id: string;
+  orgId: string;
+  feeScheduleId: string;
+  startsAt?: string;
+  endsAt?: string;
+  org: {
+    id: string;
+    name: string;
+  };
+  feeSchedule?: AdminFeeSchedule;
+}
+
+export interface AdminFeeScheduleStats {
+  total: number;
+  activePlatform: number;
+  activeProcessing: number;
+  totalOverrides: number;
+}
+
+export interface AdminTaxRate {
+  id: string;
+  country: string;
+  region?: string;
+  city?: string;
+  postal?: string;
+  rate: number;
+  name: string;
+  active: boolean;
+  createdAt: string;
+}
+
+export interface AdminTaxRateStats {
+  total: number;
+  active: number;
+  countriesCount: number;
+  averageRate: string;
+}
+
 export class AdminApiService {
   private readonly baseUrl = "/api/admin";
 
@@ -740,6 +823,308 @@ export class AdminApiService {
   ): Promise<AdminApiResponse<{ restored: boolean }>> {
     return apiClient.post<AdminApiResponse<{ restored: boolean }>>(
       `${this.baseUrl}/venues/${id}/restore`,
+      undefined,
+      token
+    );
+  }
+
+  // Dispute Management
+  async getDisputes(
+    token: string,
+    options: {
+      page?: number;
+      limit?: number;
+      search?: string;
+      status?: string;
+      provider?: string;
+      orderId?: string;
+      dateFrom?: string;
+      dateTo?: string;
+      sortBy?: string;
+      sortOrder?: 'asc' | 'desc';
+    } = {}
+  ): Promise<AdminApiResponse<PaginatedResponse<AdminDispute>>> {
+    const queryString = buildQueryString(options);
+    return apiClient.get<AdminApiResponse<PaginatedResponse<AdminDispute>>>(
+      `${this.baseUrl}/disputes${queryString ? `?${queryString}` : ''}`,
+      token
+    );
+  }
+
+  async getDisputeStats(token: string): Promise<AdminApiResponse<AdminDisputeStats>> {
+    return apiClient.get<AdminApiResponse<AdminDisputeStats>>(
+      `${this.baseUrl}/disputes/stats`,
+      token
+    );
+  }
+
+  async getDispute(id: string, token: string): Promise<AdminApiResponse<AdminDispute>> {
+    return apiClient.get<AdminApiResponse<AdminDispute>>(
+      `${this.baseUrl}/disputes/${id}`,
+      token
+    );
+  }
+
+  async updateDisputeStatus(
+    id: string,
+    data: { status: string; note?: string },
+    token: string
+  ): Promise<AdminApiResponse<AdminDispute>> {
+    return apiClient.patch<AdminApiResponse<AdminDispute>>(
+      `${this.baseUrl}/disputes/${id}/status`,
+      data,
+      token
+    );
+  }
+
+  async respondToDispute(
+    id: string,
+    data: { response: string; evidenceUrls?: string },
+    token: string
+  ): Promise<AdminApiResponse<{ message: string; response: string }>> {
+    return apiClient.post<AdminApiResponse<{ message: string; response: string }>>(
+      `${this.baseUrl}/disputes/${id}/respond`,
+      data,
+      token
+    );
+  }
+
+  async closeDispute(
+    id: string,
+    data: { status: string; note?: string; closedAt?: string },
+    token: string
+  ): Promise<AdminApiResponse<AdminDispute>> {
+    return apiClient.post<AdminApiResponse<AdminDispute>>(
+      `${this.baseUrl}/disputes/${id}/close`,
+      data,
+      token
+    );
+  }
+
+  // Fee Schedule Management
+  async getFeeSchedules(
+    token: string,
+    options: {
+      page?: number;
+      limit?: number;
+      search?: string;
+      kind?: 'platform' | 'processing';
+      active?: boolean;
+      currency?: string;
+      sortBy?: string;
+      sortOrder?: 'asc' | 'desc';
+    } = {}
+  ): Promise<AdminApiResponse<PaginatedResponse<AdminFeeSchedule>>> {
+    const queryString = buildQueryString(options);
+    return apiClient.get<AdminApiResponse<PaginatedResponse<AdminFeeSchedule>>>(
+      `${this.baseUrl}/fee-schedules${queryString ? `?${queryString}` : ''}`,
+      token
+    );
+  }
+
+  async getFeeScheduleStats(token: string): Promise<AdminApiResponse<AdminFeeScheduleStats>> {
+    return apiClient.get<AdminApiResponse<AdminFeeScheduleStats>>(
+      `${this.baseUrl}/fee-schedules/stats`,
+      token
+    );
+  }
+
+  async getFeeSchedule(id: string, token: string): Promise<AdminApiResponse<AdminFeeSchedule>> {
+    return apiClient.get<AdminApiResponse<AdminFeeSchedule>>(
+      `${this.baseUrl}/fee-schedules/${id}`,
+      token
+    );
+  }
+
+  async createFeeSchedule(
+    data: {
+      kind: 'platform' | 'processing';
+      name: string;
+      percent: number;
+      fixedCents: number;
+      currency?: string;
+      active?: boolean;
+    },
+    token: string
+  ): Promise<AdminApiResponse<AdminFeeSchedule>> {
+    return apiClient.post<AdminApiResponse<AdminFeeSchedule>>(
+      `${this.baseUrl}/fee-schedules`,
+      data,
+      token
+    );
+  }
+
+  async updateFeeSchedule(
+    id: string,
+    data: {
+      name?: string;
+      percent?: number;
+      fixedCents?: number;
+      currency?: string;
+      active?: boolean;
+    },
+    token: string
+  ): Promise<AdminApiResponse<AdminFeeSchedule>> {
+    return apiClient.patch<AdminApiResponse<AdminFeeSchedule>>(
+      `${this.baseUrl}/fee-schedules/${id}`,
+      data,
+      token
+    );
+  }
+
+  async deleteFeeSchedule(id: string, token: string): Promise<AdminApiResponse<{ message: string }>> {
+    return apiClient.delete<AdminApiResponse<{ message: string }>>(
+      `${this.baseUrl}/fee-schedules/${id}`,
+      token
+    );
+  }
+
+  async deactivateFeeSchedule(id: string, token: string): Promise<AdminApiResponse<{ message: string }>> {
+    return apiClient.post<AdminApiResponse<{ message: string }>>(
+      `${this.baseUrl}/fee-schedules/${id}/deactivate`,
+      undefined,
+      token
+    );
+  }
+
+  async createOrgFeeOverride(
+    data: {
+      orgId: string;
+      feeScheduleId: string;
+      startsAt?: string;
+      endsAt?: string;
+    },
+    token: string
+  ): Promise<AdminApiResponse<AdminOrgFeeOverride>> {
+    return apiClient.post<AdminApiResponse<AdminOrgFeeOverride>>(
+      `${this.baseUrl}/fee-schedules/overrides`,
+      data,
+      token
+    );
+  }
+
+  async getOrgFeeOverrides(orgId: string, token: string): Promise<AdminApiResponse<AdminOrgFeeOverride[]>> {
+    return apiClient.get<AdminApiResponse<AdminOrgFeeOverride[]>>(
+      `${this.baseUrl}/fee-schedules/overrides/organization/${orgId}`,
+      token
+    );
+  }
+
+  async updateOrgFeeOverride(
+    id: string,
+    data: {
+      feeScheduleId?: string;
+      startsAt?: string;
+      endsAt?: string;
+    },
+    token: string
+  ): Promise<AdminApiResponse<AdminOrgFeeOverride>> {
+    return apiClient.patch<AdminApiResponse<AdminOrgFeeOverride>>(
+      `${this.baseUrl}/fee-schedules/overrides/${id}`,
+      data,
+      token
+    );
+  }
+
+  async deleteOrgFeeOverride(id: string, token: string): Promise<AdminApiResponse<{ message: string }>> {
+    return apiClient.delete<AdminApiResponse<{ message: string }>>(
+      `${this.baseUrl}/fee-schedules/overrides/${id}`,
+      token
+    );
+  }
+
+  // Tax Rate Management
+  async getTaxRates(
+    token: string,
+    options: {
+      page?: number;
+      limit?: number;
+      search?: string;
+      country?: string;
+      region?: string;
+      city?: string;
+      active?: boolean;
+      sortBy?: string;
+      sortOrder?: 'asc' | 'desc';
+    } = {}
+  ): Promise<AdminApiResponse<PaginatedResponse<AdminTaxRate>>> {
+    const queryString = buildQueryString(options);
+    return apiClient.get<AdminApiResponse<PaginatedResponse<AdminTaxRate>>>(
+      `${this.baseUrl}/tax-rates${queryString ? `?${queryString}` : ''}`,
+      token
+    );
+  }
+
+  async getTaxRateStats(token: string): Promise<AdminApiResponse<AdminTaxRateStats>> {
+    return apiClient.get<AdminApiResponse<AdminTaxRateStats>>(
+      `${this.baseUrl}/tax-rates/stats`,
+      token
+    );
+  }
+
+  async getTaxRatesByCountry(country: string, token: string): Promise<AdminApiResponse<AdminTaxRate[]>> {
+    return apiClient.get<AdminApiResponse<AdminTaxRate[]>>(
+      `${this.baseUrl}/tax-rates/country/${country}`,
+      token
+    );
+  }
+
+  async getTaxRate(id: string, token: string): Promise<AdminApiResponse<AdminTaxRate>> {
+    return apiClient.get<AdminApiResponse<AdminTaxRate>>(
+      `${this.baseUrl}/tax-rates/${id}`,
+      token
+    );
+  }
+
+  async createTaxRate(
+    data: {
+      country: string;
+      region?: string;
+      city?: string;
+      postal?: string;
+      rate: number;
+      name: string;
+      active?: boolean;
+    },
+    token: string
+  ): Promise<AdminApiResponse<AdminTaxRate>> {
+    return apiClient.post<AdminApiResponse<AdminTaxRate>>(
+      `${this.baseUrl}/tax-rates`,
+      data,
+      token
+    );
+  }
+
+  async updateTaxRate(
+    id: string,
+    data: {
+      country?: string;
+      region?: string;
+      city?: string;
+      postal?: string;
+      rate?: number;
+      name?: string;
+      active?: boolean;
+    },
+    token: string
+  ): Promise<AdminApiResponse<AdminTaxRate>> {
+    return apiClient.patch<AdminApiResponse<AdminTaxRate>>(
+      `${this.baseUrl}/tax-rates/${id}`,
+      data,
+      token
+    );
+  }
+
+  async deleteTaxRate(id: string, token: string): Promise<AdminApiResponse<{ message: string }>> {
+    return apiClient.delete<AdminApiResponse<{ message: string }>>(
+      `${this.baseUrl}/tax-rates/${id}`,
+      token
+    );
+  }
+
+  async deactivateTaxRate(id: string, token: string): Promise<AdminApiResponse<{ message: string }>> {
+    return apiClient.post<AdminApiResponse<{ message: string }>>(
+      `${this.baseUrl}/tax-rates/${id}/deactivate`,
       undefined,
       token
     );
