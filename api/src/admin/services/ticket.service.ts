@@ -52,12 +52,18 @@ export class AdminTicketService {
     }
 
     const orderBy: Prisma.TicketOrderByWithRelationInput = {};
+    const allowedSortFields: Record<string, keyof Prisma.TicketOrderByWithRelationInput> = {
+      id: 'id',
+      issuedAt: 'issuedAt',
+      status: 'status',
+      createdAt: 'issuedAt',
+    };
     if (sortBy) {
-      const allowedSortFields = ['id', 'issuedAt', 'status'] as const;
-      if (!allowedSortFields.includes(sortBy as any)) {
+      const mappedField = allowedSortFields[sortBy];
+      if (!mappedField) {
         throw new BadRequestException(`Invalid sort field: ${sortBy}`);
       }
-      orderBy[sortBy] = sortOrder || 'desc';
+      orderBy[mappedField] = sortOrder || 'desc';
     } else {
       orderBy.issuedAt = 'desc';
     }
@@ -114,6 +120,7 @@ export class AdminTicketService {
       status: ticket.status,
       qrCode: ticket.qrCode,
       issuedAt: ticket.issuedAt,
+      createdAt: ticket.issuedAt,
     }));
 
     return {

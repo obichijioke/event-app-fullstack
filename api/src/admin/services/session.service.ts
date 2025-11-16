@@ -18,6 +18,7 @@ export class AdminSessionService {
       search,
       userId,
       status,
+      active,
       sortBy,
       sortOrder,
     } = query;
@@ -42,29 +43,33 @@ export class AdminSessionService {
     }
 
     // Filter by status
-    if (status === 'active') {
+    const resolvedStatus = status ?? (active === true ? 'active' : active === false ? 'expired' : undefined);
+
+    if (resolvedStatus === 'active') {
       where.revokedAt = null;
       where.expiresAt = { gte: now };
-    } else if (status === 'expired') {
+    } else if (resolvedStatus === 'expired') {
       where.revokedAt = null;
       where.expiresAt = { lt: now };
-    } else if (status === 'revoked') {
+    } else if (resolvedStatus === 'revoked') {
       where.revokedAt = { not: null };
     }
 
     const orderBy: Prisma.UserSessionOrderByWithRelationInput = {};
+    const allowedSortFields: Record<string, keyof Prisma.UserSessionOrderByWithRelationInput> = {
+      id: 'id',
+      userId: 'userId',
+      createdAt: 'createdAt',
+      expiresAt: 'expiresAt',
+      revokedAt: 'revokedAt',
+      lastActiveAt: 'expiresAt',
+    };
     if (sortBy) {
-      const allowedSortFields = [
-        'id',
-        'userId',
-        'createdAt',
-        'expiresAt',
-        'revokedAt',
-      ] as const;
-      if (!allowedSortFields.includes(sortBy as any)) {
+      const mappedField = allowedSortFields[sortBy];
+      if (!mappedField) {
         throw new BadRequestException(`Invalid sort field: ${sortBy}`);
       }
-      orderBy[sortBy] = sortOrder || 'desc';
+      orderBy[mappedField] = sortOrder || 'desc';
     } else {
       orderBy.createdAt = 'desc';
     }
@@ -107,9 +112,11 @@ export class AdminSessionService {
       createdAt: session.createdAt,
       expiresAt: session.expiresAt,
       revokedAt: session.revokedAt,
+      lastActiveAt: session.revokedAt ?? session.expiresAt ?? session.createdAt,
       isActive: !session.revokedAt && session.expiresAt > now,
       isExpired: !session.revokedAt && session.expiresAt <= now,
       isRevoked: !!session.revokedAt,
+      ipAddress: session.ipAddr,
     }));
 
     return {
