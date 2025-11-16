@@ -1,0 +1,74 @@
+import {
+  IsString,
+  IsOptional,
+  IsEnum,
+  IsNumber,
+  IsDateString,
+  IsBoolean,
+} from 'class-validator';
+import { PayoutStatus } from '@prisma/client';
+
+export class CreatePayoutDto {
+  @IsString()
+  orgId: string;
+
+  @IsNumber()
+  amountCents: number;
+
+  @IsString()
+  currency: string;
+
+  @IsDateString()
+  @IsOptional()
+  scheduledFor?: string;
+
+  @IsString()
+  @IsOptional()
+  provider?: string;
+
+  @IsString()
+  @IsOptional()
+  providerRef?: string;
+}
+
+export class CreatePayoutAccountDto {
+  @IsString()
+  orgId: string;
+
+  @IsString()
+  provider: string; // 'stripe', 'paypal', etc.
+
+  @IsString()
+  externalId: string;
+
+  @IsOptional()
+  @IsString()
+  accountType?: string;
+
+  @IsOptional()
+  @IsString()
+  accountHolderName?: string;
+
+  @IsOptional()
+  @IsString()
+  email?: string;
+
+  @IsOptional()
+  @IsBoolean()
+  defaultAccount?: boolean = true;
+}
+
+export class CalculatePayoutsDto {
+  @IsString()
+  orgId: string;
+
+  @IsDateString()
+  startDate: string;
+
+  @IsDateString()
+  endDate: string;
+
+  @IsOptional()
+  @IsString()
+  eventId?: string;
+}

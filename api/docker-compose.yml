@@ -1,0 +1,64 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: eventapp-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: eventapp
+      POSTGRES_USER: eventapp
+      POSTGRES_PASSWORD: eventapp123
+    ports:
+      - '5432:5432'
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./001_schema_improvements.sql:/docker-entrypoint-initdb.d/001_schema_improvements.sql
+    networks:
+      - eventapp-network
+
+  # Redis
+  redis:
+    image: redis:7-alpine
+    container_name: eventapp-redis
+    restart: unless-stopped
+    ports:
+      - '6379:6379'
+    volumes:
+      - redis_data:/data
+    networks:
+      - eventapp-network
+
+  # NestJS API
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: eventapp-api
+    restart: unless-stopped
+    environment:
+      NODE_ENV: development
+      DATABASE_URL: postgresql://eventapp:eventapp123@postgres:5432/eventapp
+      REDIS_URL: redis://redis:6379
+      JWT_SECRET: your-super-secret-jwt-key
+      JWT_REFRESH_SECRET: your-super-secret-refresh-key
+      STRIPE_SECRET_KEY: sk_test_your-stripe-secret-key
+      PAYSTACK_SECRET_KEY: sk_test_your-paystack-secret-key
+    ports:
+      - '3000:3000'
+    volumes:
+      - ./uploads:/app/uploads
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - eventapp-network
+
+volumes:
+  postgres_data:
+  redis_data:
+
+networks:
+  eventapp-network:
+    driver: bridge

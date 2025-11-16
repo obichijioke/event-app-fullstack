@@ -1,0 +1,224 @@
+@import "tailwindcss";
+
+/* CSS Custom Properties (CSS Variables) */
+:root {
+  /* Base colors */
+  --background: #f9fafb;
+  --foreground: #111827;
+
+  /* Color system */
+  --color-border: rgba(0, 0, 0, 0.1);
+  --color-input: #ffffff;
+  --color-ring: #1e40af;
+  --color-background: #f9fafb;
+  --color-foreground: #111827;
+
+  /* Primary colors */
+  --color-primary: #1e40af;
+  --color-primary-foreground: #ffffff;
+
+  /* Secondary colors */
+  --color-secondary: #7c3aed;
+  --color-secondary-foreground: #ffffff;
+
+  /* Destructive colors */
+  --color-destructive: #dc2626;
+  --color-destructive-foreground: #ffffff;
+
+  /* Muted colors */
+  --color-muted: #f3f4f6;
+  --color-muted-foreground: #6b7280;
+
+  /* Accent colors */
+  --color-accent: #f59e0b;
+  --color-accent-foreground: #ffffff;
+
+  /* Popover colors */
+  --color-popover: #ffffff;
+  --color-popover-foreground: #111827;
+
+  /* Card colors */
+  --color-card: #ffffff;
+  --color-card-foreground: #111827;
+
+  /* Success colors */
+  --color-success: #059669;
+  --color-success-foreground: #ffffff;
+
+  /* Warning colors */
+  --color-warning: #d97706;
+  --color-warning-foreground: #ffffff;
+
+  /* Error colors */
+  --color-error: #dc2626;
+  --color-error-foreground: #ffffff;
+
+  /* Border radius - Flat design with minimal rounding */
+  --radius: 0.25rem; /* 4px for flat, professional appearance */
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+    --color-background: #0a0a0a;
+    --color-foreground: #ededed;
+    --color-border: rgba(255, 255, 255, 0.04);
+    --color-muted: #1f2937;
+    --color-muted-foreground: #9ca3af;
+    --color-popover: #1f2937;
+    --color-popover-foreground: #f3f4f6;
+    --color-card: #0f1216;
+    --color-card-foreground: #f3f4f6;
+  }
+}
+
+/* Tailwind CSS v4 Theme Configuration */
+@theme inline {
+  /* Colors */
+  --color-border: var(--color-border);
+  --color-input: var(--color-input);
+  --color-ring: var(--color-ring);
+  --color-background: var(--color-background);
+  --color-foreground: var(--color-foreground);
+  --color-primary: var(--color-primary);
+  --color-primary-foreground: var(--color-primary-foreground);
+  --color-secondary: var(--color-secondary);
+  --color-secondary-foreground: var(--color-secondary-foreground);
+  --color-destructive: var(--color-destructive);
+  --color-destructive-foreground: var(--color-destructive-foreground);
+  --color-muted: var(--color-muted);
+  --color-muted-foreground: var(--color-muted-foreground);
+  --color-accent: var(--color-accent);
+  --color-accent-foreground: var(--color-accent-foreground);
+  --color-popover: var(--color-popover);
+  --color-popover-foreground: var(--color-popover-foreground);
+  --color-card: var(--color-card);
+  --color-card-foreground: var(--color-card-foreground);
+  --color-success: var(--color-success);
+  --color-success-foreground: var(--color-success-foreground);
+  --color-warning: var(--color-warning);
+  --color-warning-foreground: var(--color-warning-foreground);
+  --color-error: var(--color-error);
+  --color-error-foreground: var(--color-error-foreground);
+
+  /* Border Radius */
+  --radius-lg: var(--radius);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-sm: calc(var(--radius) - 4px);
+
+  /* Font Families */
+  --font-sans: 'Inter', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+
+  /* Font Sizes with Line Heights */
+  --font-size-xs: 0.75rem;
+  --line-height-xs: 1rem;
+  --font-size-sm: 0.875rem;
+  --line-height-sm: 1.25rem;
+  --font-size-base: 1rem;
+  --line-height-base: 1.5rem;
+  --font-size-lg: 1.125rem;
+  --line-height-lg: 1.75rem;
+  --font-size-xl: 1.25rem;
+  --line-height-xl: 1.75rem;
+  --font-size-2xl: 1.5rem;
+  --line-height-2xl: 2rem;
+  --font-size-3xl: 1.875rem;
+  --line-height-3xl: 2.25rem;
+  --font-size-4xl: 2.25rem;
+  --line-height-4xl: 2.5rem;
+  --font-size-5xl: 3rem;
+  --line-height-5xl: 1;
+  --font-size-6xl: 3.75rem;
+  --line-height-6xl: 1;
+
+  /* Font Weights */
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+
+  /* Box Shadows */
+  --shadow-card: 0 2px 4px rgba(0, 0, 0, 0.06);
+  --shadow-card-hover: 0 4px 8px rgba(0, 0, 0, 0.1);
+  --shadow-modal: 0 20px 25px rgba(0, 0, 0, 0.15);
+  --shadow-dropdown: 0 10px 15px rgba(0, 0, 0, 0.1);
+
+  /* Spacing */
+  --spacing-18: 4.5rem;
+  --spacing-88: 22rem;
+
+  /* Z-Index */
+  --z-999: 999;
+  --z-1000: 1000;
+  --z-1001: 1001;
+  --z-2000: 2000;
+  --z-3000: 3000;
+
+  /* Transitions */
+  --transition-smooth: cubic-bezier(0.4, 0, 0.2, 1);
+  --duration-250: 250ms;
+  --duration-400: 400ms;
+
+  /* Animations & Keyframes */
+  @keyframes accordion-down {
+    from { height: 0; }
+    to { height: var(--radix-accordion-content-height); }
+  }
+
+  @keyframes accordion-up {
+    from { height: var(--radix-accordion-content-height); }
+    to { height: 0; }
+  }
+
+  @keyframes fade-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  @keyframes slide-in {
+    from {
+      transform: translateY(-10px);
+      opacity: 0;
+    }
+    to {
+      transform: translateY(0);
+      opacity: 1;
+    }
+  }
+
+  @keyframes scale-in {
+    from {
+      transform: scale(0.95);
+      opacity: 0;
+    }
+    to {
+      transform: scale(1);
+      opacity: 1;
+    }
+  }
+
+  --animate-accordion-down: accordion-down 0.2s ease-out;
+  --animate-accordion-up: accordion-up 0.2s ease-out;
+  --animate-fade-in: fade-in 0.3s ease-out;
+  --animate-slide-in: slide-in 0.3s ease-out;
+  --animate-scale-in: scale-in 0.2s ease-out;
+}
+
+body {
+  background: linear-gradient(180deg, #f7f8fb 0%, #ffffff 35%, #eef2ff 100%);
+  color: var(--foreground);
+  font-family: var(--font-sans);
+}
+
+.section-title {
+  font-size: clamp(1.75rem, 2.5vw, 2.5rem);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+}
+
+.section-subtitle {
+  font-size: clamp(1rem, 1.5vw, 1.125rem);
+  color: #4b5563;
+}

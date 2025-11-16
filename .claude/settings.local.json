@@ -1,0 +1,40 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm run build:*)",
+      "Bash(npm install:*)",
+      "Bash(find:*)",
+      "Read(//e/projects/event-app-comprehensive/**)",
+      "Bash(cat:*)",
+      "Bash(timeout 10 npm run:*)",
+      "Bash(npx ts-node:*)",
+      "Bash(npx prisma db push:*)",
+      "Bash(npx prisma:*)",
+      "Bash(timeout 5 npx prisma studio:*)",
+      "Bash(netstat:*)",
+      "Bash(taskkill:*)",
+      "Bash(powershell.exe -Command \"Stop-Process -Id 126536 -Force\")",
+      "Bash(curl:*)",
+      "Bash(printf:*)",
+      "Bash(node scripts/get-token.js:*)",
+      "Bash(TOKEN=\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJzZWVkLXVzZXItb3JnYW5pemVyIiwiZW1haWwiOiJvcmdhbml6ZXJAZXZlbnRmbG93LmRldiIsImlhdCI6MTc2MTUxNjY5OCwiZXhwIjoxNzYxNTIwMjk4fQ.dpBhYTFSEHxwyHtpQwt_aO7sTj_1deYzUgeJXPfGNG4\")",
+      "Bash(pgrep:*)",
+      "Bash(node -e:*)",
+      "Bash(node check-categories.js:*)",
+      "Bash(node check-venues.js:*)",
+      "Bash(node check-seatmaps.js:*)",
+      "Bash(node check-draft-tickets.js:*)",
+      "Bash(npm run start:dev:*)",
+      "Bash(TOKEN=\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJzZWVkLXVzZXItb3JnYW5pemVyIiwiZW1haWwiOiJvcmdhbml6ZXJAZXZlbnRmbG93LmRldiIsImlhdCI6MTc2MTU2Njc0NiwiZXhwIjoxNzYxNTcwMzQ2fQ.ygD7XnN52Lw4_Y1ksbntcMF4X18a4nIR39EKRgngW7U\")",
+      "Bash(TOKEN=\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJzZWVkLXVzZXItb3JnYW5pemVyIiwiZW1haWwiOiJvcmdhbml6ZXJAZXZlbnRmbG93LmRldiIsImlhdCI6MTc2MTU2NjgzMCwiZXhwIjoxNzYxNTcwNDMwfQ.51fGGlro83Vdfwb_LtGF-zMrLcg_drUMiMbS3cdPhP4\")",
+      "Bash(for file in events/event-list.tsx organizations/organization-list.tsx payments/payment-list.tsx payouts/payout-list.tsx refunds/refund-list.tsx users/user-list.tsx)",
+      "Bash(do)",
+      "Bash(done)",
+      "Bash(timeout 120 npm run build)",
+      "Bash(ls:*)",
+      "Bash(\"e:/projects/event-app-comprehensive/backend/api/prisma/migrations/20251111164529_add_notification_preferences_and_enhanced_notifications/migration.sql\")"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

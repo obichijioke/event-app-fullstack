@@ -1,0 +1,1 @@
+-- Legacy migration retained for history.\n-- No-op because initial baseline migration captures these schema changes.
