@@ -13,6 +13,9 @@ import {
   AdminSettingsService,
   AdminVenueCatalogService,
   AdminVenuesService,
+  AdminDisputeService,
+  AdminFeeScheduleService,
+  AdminTaxRateService,
 } from './services';
 import { CommonModule } from '../common/common.module';
 import { QueuesModule } from '../queues/queues.module';
@@ -33,6 +36,9 @@ import { QueuesModule } from '../queues/queues.module';
     AdminSettingsService,
     AdminVenueCatalogService,
     AdminVenuesService,
+    AdminDisputeService,
+    AdminFeeScheduleService,
+    AdminTaxRateService,
   ],
 })
 export class AdminModule {}

@@ -9,3 +9,6 @@ export * from './audit.service';
 export * from './settings.service';
 export * from './venue-catalog.service';
 export * from './venues.service';
+export * from './dispute.service';
+export * from './fee-schedule.service';
+export * from './tax-rate.service';

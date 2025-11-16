@@ -32,6 +32,9 @@ import {
   AdminUserService,
   AdminVenueCatalogService,
   AdminVenuesService,
+  AdminDisputeService,
+  AdminFeeScheduleService,
+  AdminTaxRateService,
 } from './services';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
@@ -80,6 +83,24 @@ import {
   VenueCatalogQueryDto,
 } from './dto/venue-catalog.dto';
 import { AdminVenueQueryDto } from './dto/venue-query.dto';
+import {
+  DisputeQueryDto,
+  UpdateDisputeStatusDto,
+  RespondToDisputeDto,
+  CloseDisputeDto,
+} from './dto/dispute.dto';
+import {
+  FeeScheduleQueryDto,
+  CreateFeeScheduleDto,
+  UpdateFeeScheduleDto,
+  CreateOrgFeeOverrideDto,
+  UpdateOrgFeeOverrideDto,
+} from './dto/fee-schedule.dto';
+import {
+  TaxRateQueryDto,
+  CreateTaxRateDto,
+  UpdateTaxRateDto,
+} from './dto/tax-rate.dto';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { UploadedFile, UseInterceptors } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
@@ -106,6 +127,9 @@ export class AdminController {
     private readonly settingsService: AdminSettingsService,
     private readonly venueCatalogService: AdminVenueCatalogService,
     private readonly venuesAdminService: AdminVenuesService,
+    private readonly disputeService: AdminDisputeService,
+    private readonly feeScheduleService: AdminFeeScheduleService,
+    private readonly taxRateService: AdminTaxRateService,
   ) {}
 
   // Dashboard Metrics
@@ -982,6 +1006,306 @@ export class AdminController {
     return {
       success: true,
       data: null,
+      ...result,
+    };
+  }
+
+  // Dispute Management
+  @Get('disputes')
+  @ApiOperation({ summary: 'Get all disputes with pagination and filters' })
+  @ApiResponse({ status: 200, description: 'Disputes retrieved successfully' })
+  async getDisputes(@Query() query: DisputeQueryDto) {
+    const result = await this.disputeService.getDisputes(query);
+    return {
+      success: true,
+      data: result,
+    };
+  }
+
+  @Get('disputes/stats')
+  @ApiOperation({ summary: 'Get dispute statistics' })
+  @ApiResponse({ status: 200, description: 'Dispute stats retrieved successfully' })
+  async getDisputeStats() {
+    const stats = await this.disputeService.getDisputeStats();
+    return {
+      success: true,
+      data: stats,
+    };
+  }
+
+  @Get('disputes/:id')
+  @ApiOperation({ summary: 'Get dispute details' })
+  @ApiResponse({ status: 200, description: 'Dispute retrieved successfully' })
+  async getDispute(@Param('id') id: string) {
+    const dispute = await this.disputeService.getDispute(id);
+    return {
+      success: true,
+      data: dispute,
+    };
+  }
+
+  @Patch('disputes/:id/status')
+  @ApiOperation({ summary: 'Update dispute status' })
+  @ApiResponse({ status: 200, description: 'Dispute status updated successfully' })
+  async updateDisputeStatus(
+    @Param('id') id: string,
+    @Body() dto: UpdateDisputeStatusDto,
+  ) {
+    const dispute = await this.disputeService.updateDisputeStatus(id, dto);
+    return {
+      success: true,
+      data: dispute,
+    };
+  }
+
+  @Post('disputes/:id/respond')
+  @ApiOperation({ summary: 'Respond to dispute with payment provider' })
+  @ApiResponse({ status: 200, description: 'Response submitted successfully' })
+  async respondToDispute(
+    @Param('id') id: string,
+    @Body() dto: RespondToDisputeDto,
+  ) {
+    const result = await this.disputeService.respondToDispute(id, dto);
+    return {
+      success: true,
+      data: result,
+    };
+  }
+
+  @Post('disputes/:id/close')
+  @ApiOperation({ summary: 'Close dispute' })
+  @ApiResponse({ status: 200, description: 'Dispute closed successfully' })
+  async closeDispute(
+    @Param('id') id: string,
+    @Body() dto: CloseDisputeDto,
+  ) {
+    const dispute = await this.disputeService.closeDispute(id, dto);
+    return {
+      success: true,
+      data: dispute,
+    };
+  }
+
+  // Fee Schedule Management
+  @Get('fee-schedules')
+  @ApiOperation({ summary: 'Get all fee schedules with pagination and filters' })
+  @ApiResponse({ status: 200, description: 'Fee schedules retrieved successfully' })
+  async getFeeSchedules(@Query() query: FeeScheduleQueryDto) {
+    const result = await this.feeScheduleService.getFeeSchedules(query);
+    return {
+      success: true,
+      data: result,
+    };
+  }
+
+  @Get('fee-schedules/stats')
+  @ApiOperation({ summary: 'Get fee schedule statistics' })
+  @ApiResponse({ status: 200, description: 'Fee schedule stats retrieved successfully' })
+  async getFeeScheduleStats() {
+    const stats = await this.feeScheduleService.getFeeScheduleStats();
+    return {
+      success: true,
+      data: stats,
+    };
+  }
+
+  @Get('fee-schedules/:id')
+  @ApiOperation({ summary: 'Get fee schedule details' })
+  @ApiResponse({ status: 200, description: 'Fee schedule retrieved successfully' })
+  async getFeeSchedule(@Param('id') id: string) {
+    const feeSchedule = await this.feeScheduleService.getFeeSchedule(id);
+    return {
+      success: true,
+      data: feeSchedule,
+    };
+  }
+
+  @Post('fee-schedules')
+  @ApiOperation({ summary: 'Create new fee schedule' })
+  @ApiResponse({ status: 201, description: 'Fee schedule created successfully' })
+  async createFeeSchedule(@Body() dto: CreateFeeScheduleDto) {
+    const feeSchedule = await this.feeScheduleService.createFeeSchedule(dto);
+    return {
+      success: true,
+      data: feeSchedule,
+    };
+  }
+
+  @Patch('fee-schedules/:id')
+  @ApiOperation({ summary: 'Update fee schedule' })
+  @ApiResponse({ status: 200, description: 'Fee schedule updated successfully' })
+  async updateFeeSchedule(
+    @Param('id') id: string,
+    @Body() dto: UpdateFeeScheduleDto,
+  ) {
+    const feeSchedule = await this.feeScheduleService.updateFeeSchedule(id, dto);
+    return {
+      success: true,
+      data: feeSchedule,
+    };
+  }
+
+  @Delete('fee-schedules/:id')
+  @ApiOperation({ summary: 'Delete fee schedule' })
+  @ApiResponse({ status: 200, description: 'Fee schedule deleted successfully' })
+  @HttpCode(HttpStatus.OK)
+  async deleteFeeSchedule(@Param('id') id: string) {
+    const result = await this.feeScheduleService.deleteFeeSchedule(id);
+    return {
+      success: true,
+      ...result,
+    };
+  }
+
+  @Post('fee-schedules/:id/deactivate')
+  @ApiOperation({ summary: 'Deactivate fee schedule' })
+  @ApiResponse({ status: 200, description: 'Fee schedule deactivated successfully' })
+  async deactivateFeeSchedule(@Param('id') id: string) {
+    const result = await this.feeScheduleService.deactivateFeeSchedule(id);
+    return {
+      success: true,
+      ...result,
+    };
+  }
+
+  // Organization Fee Override Management
+  @Post('fee-schedules/overrides')
+  @ApiOperation({ summary: 'Create organization fee override' })
+  @ApiResponse({ status: 201, description: 'Fee override created successfully' })
+  async createOrgFeeOverride(@Body() dto: CreateOrgFeeOverrideDto) {
+    const override = await this.feeScheduleService.createOrgFeeOverride(dto);
+    return {
+      success: true,
+      data: override,
+    };
+  }
+
+  @Get('fee-schedules/overrides/organization/:orgId')
+  @ApiOperation({ summary: 'Get organization fee overrides' })
+  @ApiResponse({ status: 200, description: 'Fee overrides retrieved successfully' })
+  async getOrgFeeOverrides(@Param('orgId') orgId: string) {
+    const overrides = await this.feeScheduleService.getOrgFeeOverrides(orgId);
+    return {
+      success: true,
+      data: overrides,
+    };
+  }
+
+  @Patch('fee-schedules/overrides/:id')
+  @ApiOperation({ summary: 'Update organization fee override' })
+  @ApiResponse({ status: 200, description: 'Fee override updated successfully' })
+  async updateOrgFeeOverride(
+    @Param('id') id: string,
+    @Body() dto: UpdateOrgFeeOverrideDto,
+  ) {
+    const override = await this.feeScheduleService.updateOrgFeeOverride(id, dto);
+    return {
+      success: true,
+      data: override,
+    };
+  }
+
+  @Delete('fee-schedules/overrides/:id')
+  @ApiOperation({ summary: 'Delete organization fee override' })
+  @ApiResponse({ status: 200, description: 'Fee override deleted successfully' })
+  @HttpCode(HttpStatus.OK)
+  async deleteOrgFeeOverride(@Param('id') id: string) {
+    const result = await this.feeScheduleService.deleteOrgFeeOverride(id);
+    return {
+      success: true,
+      ...result,
+    };
+  }
+
+  // Tax Rate Management
+  @Get('tax-rates')
+  @ApiOperation({ summary: 'Get all tax rates with pagination and filters' })
+  @ApiResponse({ status: 200, description: 'Tax rates retrieved successfully' })
+  async getTaxRates(@Query() query: TaxRateQueryDto) {
+    const result = await this.taxRateService.getTaxRates(query);
+    return {
+      success: true,
+      data: result,
+    };
+  }
+
+  @Get('tax-rates/stats')
+  @ApiOperation({ summary: 'Get tax rate statistics' })
+  @ApiResponse({ status: 200, description: 'Tax rate stats retrieved successfully' })
+  async getTaxRateStats() {
+    const stats = await this.taxRateService.getTaxRateStats();
+    return {
+      success: true,
+      data: stats,
+    };
+  }
+
+  @Get('tax-rates/country/:country')
+  @ApiOperation({ summary: 'Get tax rates by country' })
+  @ApiResponse({ status: 200, description: 'Tax rates retrieved successfully' })
+  async getTaxRatesByCountry(@Param('country') country: string) {
+    const taxRates = await this.taxRateService.getTaxRatesByCountry(country);
+    return {
+      success: true,
+      data: taxRates,
+    };
+  }
+
+  @Get('tax-rates/:id')
+  @ApiOperation({ summary: 'Get tax rate details' })
+  @ApiResponse({ status: 200, description: 'Tax rate retrieved successfully' })
+  async getTaxRate(@Param('id') id: string) {
+    const taxRate = await this.taxRateService.getTaxRate(id);
+    return {
+      success: true,
+      data: taxRate,
+    };
+  }
+
+  @Post('tax-rates')
+  @ApiOperation({ summary: 'Create new tax rate' })
+  @ApiResponse({ status: 201, description: 'Tax rate created successfully' })
+  async createTaxRate(@Body() dto: CreateTaxRateDto) {
+    const taxRate = await this.taxRateService.createTaxRate(dto);
+    return {
+      success: true,
+      data: taxRate,
+    };
+  }
+
+  @Patch('tax-rates/:id')
+  @ApiOperation({ summary: 'Update tax rate' })
+  @ApiResponse({ status: 200, description: 'Tax rate updated successfully' })
+  async updateTaxRate(
+    @Param('id') id: string,
+    @Body() dto: UpdateTaxRateDto,
+  ) {
+    const taxRate = await this.taxRateService.updateTaxRate(id, dto);
+    return {
+      success: true,
+      data: taxRate,
+    };
+  }
+
+  @Delete('tax-rates/:id')
+  @ApiOperation({ summary: 'Delete tax rate' })
+  @ApiResponse({ status: 200, description: 'Tax rate deleted successfully' })
+  @HttpCode(HttpStatus.OK)
+  async deleteTaxRate(@Param('id') id: string) {
+    const result = await this.taxRateService.deleteTaxRate(id);
+    return {
+      success: true,
+      ...result,
+    };
+  }
+
+  @Post('tax-rates/:id/deactivate')
+  @ApiOperation({ summary: 'Deactivate tax rate' })
+  @ApiResponse({ status: 200, description: 'Tax rate deactivated successfully' })
+  async deactivateTaxRate(@Param('id') id: string) {
+    const result = await this.taxRateService.deactivateTaxRate(id);
+    return {
+      success: true,
       ...result,
     };
   }
