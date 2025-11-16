@@ -8,6 +8,14 @@ import { adminApiService, type AdminEvent } from "@/services/admin-api.service";
 import { useAuth } from "@/components/auth";
 import { cn } from "@/lib/utils";
 import { ConfirmModal } from "@/components/ui/confirm-modal";
+import {
+  Eye,
+  CheckCircle2,
+  Pause,
+  Play,
+  Ban,
+  Flag,
+} from "lucide-react";
 
 interface EventListProps {
   className?: string;
@@ -255,49 +263,66 @@ export function EventList({ className }: EventListProps) {
       onClick: (event: AdminEvent) => {
         window.location.href = `/admin/events/${event.id}`;
       },
+      icon: Eye,
+      variant: "outline" as const,
       ariaLabel: (event: AdminEvent) => `View details for event ${event.title}`,
     },
     {
       label: "Approve",
       onClick: (event: AdminEvent) =>
-        handleEventStatusChange(event.id, "approved"),
-      variant: "primary" as const,
+        handleEventStatusChange(event.id, "approved", "Approve"),
+      icon: CheckCircle2,
+      variant: "success" as const,
       condition: (event: AdminEvent) => event.status === "pending",
       ariaLabel: (event: AdminEvent) => `Approve event ${event.title}`,
     },
     {
+      label: "Go Live",
+      onClick: (event: AdminEvent) =>
+        handleEventStatusChange(event.id, "live", "Go Live"),
+      icon: Play,
+      variant: "primary" as const,
+      condition: (event: AdminEvent) => event.status === "approved",
+      ariaLabel: (event: AdminEvent) => `Make event ${event.title} live`,
+    },
+    {
       label: "Pause",
       onClick: (event: AdminEvent) =>
-        handleEventStatusChange(event.id, "paused"),
-      variant: "secondary" as const,
+        handleEventStatusChange(event.id, "paused", "Pause"),
+      icon: Pause,
+      variant: "warning" as const,
       condition: (event: AdminEvent) => event.status === "live",
       ariaLabel: (event: AdminEvent) => `Pause event ${event.title}`,
     },
     {
-      label: "Unpause",
-      onClick: (event: AdminEvent) => handleEventStatusChange(event.id, "live"),
+      label: "Resume",
+      onClick: (event: AdminEvent) =>
+        handleEventStatusChange(event.id, "live", "Resume"),
+      icon: Play,
       variant: "primary" as const,
       condition: (event: AdminEvent) => event.status === "paused",
-      ariaLabel: (event: AdminEvent) => `Unpause event ${event.title}`,
+      ariaLabel: (event: AdminEvent) => `Resume event ${event.title}`,
+    },
+    {
+      label: "End Event",
+      onClick: (event: AdminEvent) =>
+        handleEventStatusChange(event.id, "ended", "End Event"),
+      icon: Flag,
+      variant: "secondary" as const,
+      condition: (event: AdminEvent) => event.status === "live" || event.status === "paused",
+      ariaLabel: (event: AdminEvent) => `End event ${event.title}`,
     },
     {
       label: "Cancel",
       onClick: (event: AdminEvent) =>
-        handleEventStatusChange(event.id, "canceled"),
+        handleEventStatusChange(event.id, "canceled", "Cancel"),
+      icon: Ban,
       variant: "destructive" as const,
       condition: (event: AdminEvent) =>
         ["draft", "pending", "approved", "live", "paused"].includes(
           event.status
         ),
       ariaLabel: (event: AdminEvent) => `Cancel event ${event.title}`,
-    },
-    {
-      label: "End",
-      onClick: (event: AdminEvent) =>
-        handleEventStatusChange(event.id, "ended"),
-      variant: "secondary" as const,
-      condition: (event: AdminEvent) => event.status === "live",
-      ariaLabel: (event: AdminEvent) => `End event ${event.title}`,
     },
   ];
 

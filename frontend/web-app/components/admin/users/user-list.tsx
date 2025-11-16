@@ -3,12 +3,24 @@
 import * as React from 'react';
 import { DataTable, FiltersPanel, StatusBadge } from '@/components/admin';
 import { Button, Text } from '@/components/ui';
+import { Modal } from '@/components/ui/modal';
+import { Input } from '@/components/ui/input';
+import { Select } from '@/components/ui/select';
 import { adminApiService, type AdminUser } from '@/services/admin-api.service';
 import { useAuth } from '@/components/auth';
 import { cn } from '@/lib/utils';
+import toast from 'react-hot-toast';
+import { Edit2, Trash2, Eye, Ban, CheckCircle, UserCog } from 'lucide-react';
 
 interface UserListProps {
   className?: string;
+}
+
+interface EditUserFormData {
+  name: string;
+  phone: string;
+  role: 'attendee' | 'organizer' | 'moderator' | 'admin';
+  status: string;
 }
 
 export function UserList({ className }: UserListProps) {
@@ -26,6 +38,15 @@ export function UserList({ className }: UserListProps) {
     field: 'createdAt' as string,
     direction: 'desc' as 'asc' | 'desc',
   });
+  const [editModalOpen, setEditModalOpen] = React.useState(false);
+  const [editingUser, setEditingUser] = React.useState<AdminUser | null>(null);
+  const [editFormData, setEditFormData] = React.useState<EditUserFormData>({
+    name: '',
+    phone: '',
+    role: 'attendee',
+    status: 'active',
+  });
+  const [saving, setSaving] = React.useState(false);
 
   // Load users on mount and when filters/sorting change
   React.useEffect(() => {
@@ -85,20 +106,70 @@ export function UserList({ className }: UserListProps) {
     try {
       switch (action) {
         case 'suspend':
+          if (!confirm(`Are you sure you want to suspend user "${user.name || user.email}"?`)) return;
           await adminApiService.suspendUser(accessToken, user.id);
+          toast.success('User suspended successfully');
           break;
         case 'activate':
           await adminApiService.activateUser(accessToken, user.id);
+          toast.success('User activated successfully');
           break;
         case 'delete':
+          if (!confirm(`Are you sure you want to delete user "${user.name || user.email}"? This action cannot be undone.`)) return;
           await adminApiService.deleteUser(accessToken, user.id);
+          toast.success('User deleted successfully');
           break;
       }
-      
+
       // Reload users to reflect changes
       await loadUsers();
     } catch (error) {
       console.error(`Failed to ${action} user:`, error);
+      toast.error(`Failed to ${action} user`);
+    }
+  };
+
+  const handleOpenEditModal = (user: AdminUser) => {
+    setEditingUser(user);
+    setEditFormData({
+      name: user.name || '',
+      phone: user.phone || '',
+      role: user.role,
+      status: user.status,
+    });
+    setEditModalOpen(true);
+  };
+
+  const handleCloseEditModal = () => {
+    setEditModalOpen(false);
+    setEditingUser(null);
+    setEditFormData({
+      name: '',
+      phone: '',
+      role: 'attendee',
+      status: 'active',
+    });
+  };
+
+  const handleSaveEdit = async () => {
+    if (!accessToken || !editingUser) return;
+
+    setSaving(true);
+    try {
+      await adminApiService.updateUser(accessToken, editingUser.id, {
+        name: editFormData.name || undefined,
+        phone: editFormData.phone || undefined,
+        role: editFormData.role,
+        status: editFormData.status,
+      });
+      toast.success('User updated successfully');
+      handleCloseEditModal();
+      await loadUsers();
+    } catch (error) {
+      console.error('Failed to update user:', error);
+      toast.error('Failed to update user');
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -192,23 +263,48 @@ export function UserList({ className }: UserListProps) {
   const actions = [
     {
       label: 'View',
-      onClick: (user: AdminUser) => {
-        // Navigate to user details
-        window.location.href = `/admin/users/${user.id}`;
+      onClick: (targetUser: AdminUser) => {
+        window.location.href = `/admin/users/${targetUser.id}`;
       },
+      icon: Eye,
     },
-    ...(user?.role === 'admin' ? [] : [
-      {
-        label: 'Suspend',
-        onClick: (user: AdminUser) => handleUserAction('suspend', user),
-        variant: 'warning' as const,
+    {
+      label: 'Quick Edit',
+      onClick: (targetUser: AdminUser) => {
+        handleOpenEditModal(targetUser);
       },
-      {
-        label: 'Delete',
-        onClick: (user: AdminUser) => handleUserAction('delete', user),
-        variant: 'destructive' as const,
+      icon: Edit2,
+      variant: 'primary' as const,
+    },
+    {
+      label: 'Manage Roles',
+      onClick: (targetUser: AdminUser) => {
+        window.location.href = `/admin/users/${targetUser.id}/manage`;
       },
-    ]),
+      icon: UserCog,
+      variant: 'secondary' as const,
+    },
+    {
+      label: 'Suspend',
+      onClick: (targetUser: AdminUser) => handleUserAction('suspend', targetUser),
+      icon: Ban,
+      variant: 'warning' as const,
+      condition: (targetUser: AdminUser) => targetUser.role !== 'admin' && targetUser.status !== 'suspended',
+    },
+    {
+      label: 'Activate',
+      onClick: (targetUser: AdminUser) => handleUserAction('activate', targetUser),
+      icon: CheckCircle,
+      variant: 'success' as const,
+      condition: (targetUser: AdminUser) => targetUser.status === 'suspended',
+    },
+    {
+      label: 'Delete',
+      onClick: (targetUser: AdminUser) => handleUserAction('delete', targetUser),
+      icon: Trash2,
+      variant: 'destructive' as const,
+      condition: (targetUser: AdminUser) => targetUser.role !== 'admin',
+    },
   ];
 
   return (
@@ -244,6 +340,117 @@ export function UserList({ className }: UserListProps) {
         }}
         actions={actions}
       />
+
+      {/* Quick Edit User Modal */}
+      <Modal
+        open={editModalOpen}
+        onClose={handleCloseEditModal}
+        title={`Quick Edit User: ${editingUser?.name || editingUser?.email || ''}`}
+        maxWidth="2xl"
+      >
+        <div className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium mb-2">
+                Full Name
+              </label>
+              <Input
+                type="text"
+                value={editFormData.name}
+                onChange={(e) =>
+                  setEditFormData((prev) => ({ ...prev, name: e.target.value }))
+                }
+                placeholder="Full Name"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium mb-2">
+                Phone Number
+              </label>
+              <Input
+                type="tel"
+                value={editFormData.phone}
+                onChange={(e) =>
+                  setEditFormData((prev) => ({ ...prev, phone: e.target.value }))
+                }
+                placeholder="+1234567890"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium mb-2">
+                Platform Role *
+              </label>
+              <Select
+                value={editFormData.role}
+                onChange={(e) =>
+                  setEditFormData((prev) => ({
+                    ...prev,
+                    role: e.target.value as EditUserFormData['role'],
+                  }))
+                }
+              >
+                <option value="attendee">Attendee</option>
+                <option value="organizer">Organizer</option>
+                <option value="moderator">Moderator</option>
+                <option value="admin">Admin</option>
+              </Select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium mb-2">
+                Status *
+              </label>
+              <Select
+                value={editFormData.status}
+                onChange={(e) =>
+                  setEditFormData((prev) => ({
+                    ...prev,
+                    status: e.target.value,
+                  }))
+                }
+              >
+                <option value="active">Active</option>
+                <option value="inactive">Inactive</option>
+                <option value="suspended">Suspended</option>
+              </Select>
+            </div>
+          </div>
+
+          {editingUser && (
+            <div className="mt-4 p-4 bg-muted/50 rounded-md">
+              <p className="text-sm text-muted-foreground">
+                <strong>Email:</strong> {editingUser.email}
+              </p>
+              <p className="text-sm text-muted-foreground">
+                <strong>Created:</strong> {new Date(editingUser.createdAt).toLocaleDateString()}
+              </p>
+              {editingUser.lastLoginAt && (
+                <p className="text-sm text-muted-foreground">
+                  <strong>Last Login:</strong> {new Date(editingUser.lastLoginAt).toLocaleDateString()}
+                </p>
+              )}
+            </div>
+          )}
+
+          <div className="flex justify-end gap-3 mt-6 pt-4 border-t border-border">
+            <Button
+              variant="outline"
+              onClick={handleCloseEditModal}
+              disabled={saving}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleSaveEdit}
+              disabled={saving}
+            >
+              {saving ? 'Saving...' : 'Save Changes'}
+            </Button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 }
