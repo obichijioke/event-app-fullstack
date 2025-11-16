@@ -26,6 +26,14 @@ type VenueWithRelations = Prisma.VenueGetPayload<{
 export class AdminVenuesService {
   constructor(private readonly prisma: PrismaService) {}
 
+  async findAll(query: AdminVenueQueryDto) {
+    return this.list(query);
+  }
+
+  async remove(id: string) {
+    return this.archive(id);
+  }
+
   async list(query: AdminVenueQueryDto) {
     const page = query.page ?? 1;
     const limit = query.limit ?? 20;

@@ -23,6 +23,21 @@ export class AdminVenueCatalogService {
 
   constructor(private readonly prisma: PrismaService) {}
 
+  async findAll(query: VenueCatalogQueryDto) {
+    return this.list(query);
+  }
+
+  async remove(id: string) {
+    return this.delete(id);
+  }
+
+  async importVenues(options: VenueCatalogImportOptionsDto) {
+    // Currently supports file-based imports; keep behavior explicit for now
+    throw new BadRequestException(
+      'Import venues requires a file upload. Use the dedicated import endpoint.',
+    );
+  }
+
   async list(query: VenueCatalogQueryDto) {
     const page = query.page ?? 1;
     const limit = Math.min(query.limit ?? 20, 100);

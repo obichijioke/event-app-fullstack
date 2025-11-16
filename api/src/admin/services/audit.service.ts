@@ -7,6 +7,10 @@ import { Prisma } from '@prisma/client';
 export class AdminAuditService {
   constructor(private prisma: PrismaService) {}
 
+  async findAll(query: AuditLogQueryDto) {
+    return this.getAuditLogs(query);
+  }
+
   async getAuditLogs(query: AuditLogQueryDto) {
     const {
       page = 1,

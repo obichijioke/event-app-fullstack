@@ -290,6 +290,21 @@ export interface CheckinDto {
   gate?: string;
 }
 
+export interface CheckinStats {
+  totalTickets: number;
+  checkedIn: number;
+  pending: number;
+  checkInRate: number;
+}
+
+export interface RecentCheckin {
+  id: string;
+  ticketId: string;
+  attendeeName: string;
+  ticketType: string;
+  scannedAt: string;
+}
+
 // Notifications & Moderation Types
 export interface ModerationFlag {
   id: string;

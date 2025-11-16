@@ -17,6 +17,7 @@ export function PayoutAccountList({ onAddAccount }: PayoutAccountListProps) {
   const { initialized: authInitialized, accessToken } = useAuth();
   const [accounts, setAccounts] = useState<PayoutAccount[]>([]);
   const [loading, setLoading] = useState(true);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   useEffect(() => {
     if (authInitialized && accessToken && currentOrganization) {
@@ -36,6 +37,26 @@ export function PayoutAccountList({ onAddAccount }: PayoutAccountListProps) {
       toast.error(error?.message || 'Failed to load payout accounts');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleDelete = async (accountId: string) => {
+    if (!currentOrganization) return;
+
+    if (!confirm('Delete this payout account? This action cannot be undone.')) {
+      return;
+    }
+
+    setDeletingId(accountId);
+    try {
+      await organizerApi.payouts.deleteAccount(accountId, currentOrganization.id);
+      toast.success('Payout account deleted');
+      await loadAccounts();
+    } catch (error: any) {
+      console.error('Failed to delete payout account:', error);
+      toast.error(error?.message || 'Failed to delete payout account');
+    } finally {
+      setDeletingId(null);
     }
   };
 
@@ -138,12 +159,10 @@ export function PayoutAccountList({ onAddAccount }: PayoutAccountListProps) {
                 {/* Right Section - Actions */}
                 <div className="ml-4 flex items-center gap-2">
                   <button
-                    onClick={() => {
-                      // TODO: Implement delete functionality
-                      toast('Delete functionality coming soon');
-                    }}
-                    className="p-2 text-destructive hover:bg-destructive/10 rounded-md transition"
+                    onClick={() => handleDelete(account.id)}
+                    className="p-2 text-destructive hover:bg-destructive/10 rounded-md transition disabled:opacity-50"
                     title="Delete account"
+                    disabled={deletingId === account.id}
                   >
                     <Trash2 className="w-4 h-4" />
                   </button>

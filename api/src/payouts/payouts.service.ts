@@ -247,6 +247,44 @@ export class PayoutsService {
     return { message: 'Payout deleted successfully' };
   }
 
+  async retryPayout(id: string, orgId: string, userId: string) {
+    await checkFinancePermission(
+      this.prisma,
+      orgId,
+      userId,
+      'You do not have permission to retry payouts for this organization',
+    );
+
+    const payout = await this.prisma.payout.findUnique({
+      where: { id },
+    });
+
+    if (!payout) {
+      throw new NotFoundException('Payout not found');
+    }
+
+    if (payout.orgId !== orgId) {
+      throw new ForbiddenException(
+        'You do not have permission to retry this payout',
+      );
+    }
+
+    if (payout.status !== PayoutStatus.failed) {
+      throw new BadRequestException(
+        'Only failed payouts can be retried at this time',
+      );
+    }
+
+    return this.prisma.payout.update({
+      where: { id },
+      data: {
+        status: PayoutStatus.pending,
+        failureReason: null,
+        initiatedAt: new Date(),
+      },
+    });
+  }
+
   async createPayoutAccount(
     orgId: string,
     userId: string,

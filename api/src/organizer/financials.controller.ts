@@ -3,6 +3,7 @@ import {
   Controller,
   Get,
   Param,
+  Delete,
   Post,
   Query,
   UseGuards,
@@ -104,5 +105,37 @@ export class OrganizerFinancialsController {
     @Body() dto: CreatePayoutAccountDto,
   ) {
     return this.payoutsService.createPayoutAccount(orgId, user.id, dto);
+  }
+
+  @Get('payout-accounts')
+  @ApiOperation({ summary: 'List payout accounts for an organization' })
+  @ApiQuery({ name: 'orgId', required: true })
+  getAccounts(
+    @CurrentUser() user: any,
+    @Query('orgId') orgId: string,
+  ) {
+    return this.payoutsService.findAllPayoutAccounts(orgId, user.id);
+  }
+
+  @Delete('payout-accounts/:accountId')
+  @ApiOperation({ summary: 'Delete a payout account' })
+  @ApiQuery({ name: 'orgId', required: true })
+  deleteAccount(
+    @CurrentUser() user: any,
+    @Query('orgId') orgId: string,
+    @Param('accountId') accountId: string,
+  ) {
+    return this.payoutsService.removePayoutAccount(accountId, orgId, user.id);
+  }
+
+  @Post('payouts/:payoutId/retry')
+  @ApiOperation({ summary: 'Retry a failed payout' })
+  @ApiQuery({ name: 'orgId', required: true })
+  retryPayout(
+    @CurrentUser() user: any,
+    @Param('payoutId') payoutId: string,
+    @Query('orgId') orgId: string,
+  ) {
+    return this.payoutsService.retryPayout(payoutId, orgId, user.id);
   }
 }

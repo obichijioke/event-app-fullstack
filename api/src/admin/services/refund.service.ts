@@ -18,6 +18,34 @@ import { Prisma, RefundStatus } from '@prisma/client';
 export class AdminRefundService {
   constructor(private prisma: PrismaService) {}
 
+  async findAll(query: RefundQueryDto) {
+    return this.getRefunds(query);
+  }
+
+  async findOne(refundId: string) {
+    return this.getRefund(refundId);
+  }
+
+  async create(dto: CreateRefundDto) {
+    return this.createRefund(dto);
+  }
+
+  async updateStatus(refundId: string, dto: UpdateRefundStatusDto) {
+    return this.updateRefundStatus(refundId, dto);
+  }
+
+  async approve(refundId: string, dto: ApproveRefundDto) {
+    return this.approveRefund(refundId, dto);
+  }
+
+  async reject(refundId: string, dto: RejectRefundDto) {
+    return this.rejectRefund(refundId, dto);
+  }
+
+  async process(refundId: string, dto: ProcessRefundDto) {
+    return this.processRefund(refundId, dto);
+  }
+
   async getRefunds(query: RefundQueryDto) {
     const {
       page = 1,

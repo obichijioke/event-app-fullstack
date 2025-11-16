@@ -6,6 +6,14 @@ import { UpdateSiteSettingsDto } from '../dto/site-settings.dto';
 export class AdminSettingsService {
   constructor(private prisma: PrismaService) {}
 
+  async get() {
+    return this.getSiteSettings();
+  }
+
+  async update(settings: UpdateSiteSettingsDto) {
+    return this.updateSiteSettings(settings);
+  }
+
   async getSiteSettings() {
     const settings = await this.prisma.siteSetting.findMany();
 

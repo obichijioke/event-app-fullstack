@@ -5,10 +5,35 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { Prisma } from '@prisma/client';
+import {
+  CategoryQueryDto,
+  CreateCategoryDto,
+  UpdateCategoryDto,
+} from '../dto/category.dto';
 
 @Injectable()
 export class AdminCategoryService {
   constructor(private prisma: PrismaService) {}
+
+  async findAll(query?: CategoryQueryDto) {
+    return this.getCategories(query);
+  }
+
+  async findOne(id: string) {
+    return this.getCategoryById(id);
+  }
+
+  async create(data: CreateCategoryDto) {
+    return this.createCategory(data);
+  }
+
+  async update(id: string, data: UpdateCategoryDto) {
+    return this.updateCategory(id, data);
+  }
+
+  async remove(id: string) {
+    return this.deleteCategory(id);
+  }
 
   async getCategories(query?: { search?: string; parentOnly?: boolean }) {
     const where: Prisma.CategoryWhereInput = {};

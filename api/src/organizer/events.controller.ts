@@ -30,6 +30,7 @@ import {
   UpdateEventPoliciesDto,
 } from '../events/dto/update-event.dto';
 import { CreateEventAssetDto } from '../events/dto/create-event-asset.dto';
+import { AssignSeatmapDto } from './dto/organizer-seatmap.dto';
 
 @ApiTags('Organizer Events')
 @Controller('organizer/events')
@@ -147,5 +148,21 @@ export class OrganizerEventsController {
     @Body() dto: CreateEventAssetDto,
   ) {
     return this.eventsService.addAsset(eventId, user.id, dto);
+  }
+
+  @Post(':eventId/seatmap')
+  @ApiOperation({ summary: 'Assign a seatmap to an event' })
+  assignSeatmap(
+    @CurrentUser() user: any,
+    @Param('eventId') eventId: string,
+    @Body() dto: AssignSeatmapDto,
+  ) {
+    return this.eventsService.assignSeatmap(eventId, user.id, dto.seatmapId);
+  }
+
+  @Delete(':eventId/seatmap')
+  @ApiOperation({ summary: 'Remove seatmap assignment from an event' })
+  clearSeatmap(@CurrentUser() user: any, @Param('eventId') eventId: string) {
+    return this.eventsService.clearSeatmap(eventId, user.id);
   }
 }

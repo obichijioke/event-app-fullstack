@@ -19,6 +19,7 @@ import { OrganizerAttendeesService } from './organizer-attendees.service';
 import { OrganizerAttendeeQueryDto } from './dto/organizer-attendee-query.dto';
 import { OrganizerTransferTicketDto } from './dto/organizer-transfer.dto';
 import { CreateCheckinDto } from '../tickets/dto/create-ticket.dto';
+import { OrganizerRecentCheckinsQueryDto } from './dto/organizer-checkin-query.dto';
 
 @ApiTags('Organizer Attendees')
 @Controller('organizer')
@@ -71,5 +72,33 @@ export class OrganizerAttendeesController {
     @Body() dto: CreateCheckinDto,
   ) {
     return this.attendeesService.recordCheckin(orgId, user.id, dto);
+  }
+
+  @Get('events/:eventId/checkin-stats')
+  @ApiOperation({ summary: 'Get check-in statistics for an event' })
+  @ApiQuery({ name: 'orgId', required: true })
+  getCheckinStats(
+    @CurrentUser() user: any,
+    @Query('orgId') orgId: string,
+    @Param('eventId') eventId: string,
+  ) {
+    return this.attendeesService.getCheckinStats(orgId, eventId, user.id);
+  }
+
+  @Get('events/:eventId/recent-checkins')
+  @ApiOperation({ summary: 'Get recent check-ins for an event' })
+  @ApiQuery({ name: 'orgId', required: true })
+  getRecentCheckins(
+    @CurrentUser() user: any,
+    @Query('orgId') orgId: string,
+    @Param('eventId') eventId: string,
+    @Query() query: OrganizerRecentCheckinsQueryDto,
+  ) {
+    return this.attendeesService.getRecentCheckins(
+      orgId,
+      eventId,
+      user.id,
+      query.limit,
+    );
   }
 }

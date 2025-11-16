@@ -609,6 +609,132 @@ export class EventsService {
     return updatedEvent;
   }
 
+  async assignSeatmap(eventId: string, userId: string, seatmapId: string) {
+    const event = await this.prisma.event.findFirst({
+      where: { id: eventId, deletedAt: null },
+      include: { org: true },
+    });
+
+    if (!event) {
+      throw new NotFoundException('Event not found');
+    }
+
+    await checkOrgPermission(
+      this.prisma,
+      event.orgId,
+      userId,
+      [OrgMemberRole.owner, OrgMemberRole.manager],
+      'You do not have permission to update this event seatmap',
+    );
+
+    const seatmap = await this.prisma.seatmap.findUnique({
+      where: { id: seatmapId },
+      include: {
+        venue: {
+          select: {
+            orgId: true,
+          },
+        },
+        seats: {
+          select: {
+            id: true,
+            section: true,
+            row: true,
+            number: true,
+            pos: true,
+          },
+        },
+      },
+    });
+
+    if (!seatmap || seatmap.venue.orgId !== event.orgId) {
+      throw new BadRequestException('Invalid seatmap for this organization');
+    }
+
+    if (event.seatmapId && event.seatmapId !== seatmapId) {
+      const ticketsCount = await this.prisma.ticket.count({
+        where: { eventId },
+      });
+
+      if (ticketsCount > 0) {
+        throw new ForbiddenException(
+          'Cannot change seatmap after tickets have been sold',
+        );
+      }
+    }
+
+    const snapshot = {
+      spec: seatmap.spec,
+      seats: seatmap.seats,
+    };
+
+    await this.prisma.eventSeatmap.upsert({
+      where: { eventId },
+      update: {
+        seatmapId,
+        snapshot,
+      },
+      create: {
+        eventId,
+        seatmapId,
+        snapshot,
+      },
+    });
+
+    const updatedEvent = await this.prisma.event.update({
+      where: { id: eventId },
+      data: {
+        seatmapId,
+      },
+    });
+
+    return serializeResponse(updatedEvent);
+  }
+
+  async clearSeatmap(eventId: string, userId: string) {
+    const event = await this.prisma.event.findFirst({
+      where: { id: eventId, deletedAt: null },
+      include: { org: true },
+    });
+
+    if (!event) {
+      throw new NotFoundException('Event not found');
+    }
+
+    await checkOrgPermission(
+      this.prisma,
+      event.orgId,
+      userId,
+      [OrgMemberRole.owner, OrgMemberRole.manager],
+      'You do not have permission to update this event seatmap',
+    );
+
+    if (event.seatmapId) {
+      const ticketsCount = await this.prisma.ticket.count({
+        where: { eventId },
+      });
+
+      if (ticketsCount > 0) {
+        throw new ForbiddenException(
+          'Cannot remove seatmap after tickets have been sold',
+        );
+      }
+    }
+
+    await this.prisma.eventSeatmap.deleteMany({
+      where: { eventId },
+    });
+
+    const updatedEvent = await this.prisma.event.update({
+      where: { id: eventId },
+      data: {
+        seatmapId: null,
+      },
+    });
+
+    return serializeResponse(updatedEvent);
+  }
+
   async remove(id: string, userId: string) {
     // Check if user is a member of the organization that owns the event with appropriate permissions
     const event = await this.prisma.event.findFirst({
