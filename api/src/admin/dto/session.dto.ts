@@ -22,6 +22,11 @@ export class SessionQueryDto {
   @IsString()
   search?: string;
 
+  @ApiPropertyOptional({ description: 'Filter active sessions (true) or expired sessions (false)' })
+  @IsOptional()
+  @Type(() => Boolean)
+  active?: boolean;
+
   @ApiPropertyOptional({ description: 'Filter by user ID' })
   @IsOptional()
   @IsString()

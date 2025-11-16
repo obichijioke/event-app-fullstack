@@ -294,6 +294,339 @@ export interface AdminTaxRateStats {
   averageRate: string;
 }
 
+// Orders
+export interface AdminOrder {
+  id: string;
+  orderNumber: string;
+  buyerId: string;
+  buyerName: string;
+  buyerEmail: string;
+  eventId: string;
+  eventTitle: string;
+  orgId: string;
+  orgName: string;
+  amountCents: number;
+  currency: string;
+  status: 'pending' | 'paid' | 'canceled' | 'refunded' | 'chargeback';
+  paymentStatus: string;
+  ticketCount: number;
+  createdAt: string;
+  paidAt?: string;
+}
+
+export interface AdminOrderStats {
+  total: number;
+  pending: number;
+  paid: number;
+  canceled: number;
+  refunded: number;
+  totalRevenueCents: number;
+}
+
+// Tickets
+export interface AdminTicket {
+  id: string;
+  ticketCode: string;
+  orderId: string;
+  eventId: string;
+  eventTitle: string;
+  ticketTypeId: string;
+  ticketTypeName: string;
+  buyerId: string;
+  buyerName: string;
+  buyerEmail: string;
+  status: 'issued' | 'transferred' | 'refunded' | 'checked_in' | 'void';
+  priceCents: number;
+  currency: string;
+  checkedInAt?: string;
+  transferredAt?: string;
+  createdAt: string;
+}
+
+export interface AdminTicketStats {
+  total: number;
+  issued: number;
+  checkedIn: number;
+  transferred: number;
+  refunded: number;
+  void: number;
+}
+
+export interface AdminTicketTransfer {
+  id: string;
+  ticketId: string;
+  fromUserId: string;
+  fromUserEmail: string;
+  toUserId: string;
+  toUserEmail: string;
+  status: string;
+  createdAt: string;
+  acceptedAt?: string;
+}
+
+export interface AdminTicketCheckin {
+  id: string;
+  ticketId: string;
+  ticketCode: string;
+  userId: string;
+  eventId: string;
+  eventTitle: string;
+  checkedInAt: string;
+  checkedInBy?: string;
+}
+
+// Notifications
+export interface AdminNotification {
+  id: string;
+  userId: string;
+  userName?: string;
+  userEmail?: string;
+  type: 'info' | 'success' | 'warning' | 'error';
+  channels: ('in_app' | 'email' | 'push' | 'sms')[];
+  title: string;
+  message: string;
+  data?: Record<string, unknown>;
+  readAt?: string;
+  createdAt: string;
+}
+
+export interface AdminNotificationStats {
+  total: number;
+  read: number;
+  unread: number;
+  byType: Record<string, number>;
+  byChannel: Record<string, number>;
+}
+
+// Reviews
+export interface AdminEventReview {
+  id: string;
+  eventId: string;
+  eventTitle: string;
+  userId: string;
+  userName: string;
+  userEmail: string;
+  rating: number;
+  comment?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface AdminOrganizerReview {
+  id: string;
+  orgId: string;
+  orgName: string;
+  userId: string;
+  userName: string;
+  userEmail: string;
+  rating: number;
+  comment?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface AdminReviewStats {
+  totalEventReviews: number;
+  totalOrganizerReviews: number;
+  avgEventRating: string;
+  avgOrganizerRating: string;
+}
+
+// Promotions
+export interface AdminPromotion {
+  id: string;
+  eventId: string;
+  eventTitle: string;
+  orgId: string;
+  orgName: string;
+  name: string;
+  description?: string;
+  status: string;
+  startAt: string;
+  endAt: string;
+  createdAt: string;
+}
+
+export interface AdminPromoCode {
+  id: string;
+  code: string;
+  promotionId?: string;
+  promotionName?: string;
+  eventId?: string;
+  eventTitle?: string;
+  discountType: string;
+  discountValue: number;
+  usageLimit?: number;
+  usageCount: number;
+  expiresAt?: string;
+  active: boolean;
+  createdAt: string;
+}
+
+export interface AdminPromotionStats {
+  totalPromotions: number;
+  activePromotions: number;
+  totalPromoCodes: number;
+  activePromoCodes: number;
+  totalRedemptions: number;
+}
+
+// Moderation/Flags
+export interface AdminFlag {
+  id: string;
+  targetKind: string;
+  targetId: string;
+  reporterId: string;
+  reporterName: string;
+  reporterEmail: string;
+  reason: string;
+  description?: string;
+  status: 'open' | 'needs_changes' | 'approved' | 'rejected' | 'resolved';
+  resolvedBy?: string;
+  resolvedAt?: string;
+  createdAt: string;
+}
+
+export interface AdminModerationAction {
+  id: string;
+  flagId: string;
+  actorId: string;
+  actorName: string;
+  action: string;
+  note?: string;
+  createdAt: string;
+}
+
+export interface AdminModerationStats {
+  total: number;
+  open: number;
+  resolved: number;
+  rejected: number;
+  averageResolutionTime: string;
+}
+
+// Sessions
+export interface AdminSession {
+  id: string;
+  userId: string;
+  userName: string;
+  userEmail: string;
+  userAgent?: string;
+  ipAddress?: string;
+  lastActiveAt: string;
+  expiresAt: string;
+  createdAt: string;
+}
+
+export interface AdminSessionStats {
+  totalSessions: number;
+  activeSessions: number;
+  expiredSessions: number;
+  activeUsers: number;
+}
+
+// Revenue
+export interface AdminRevenueMetrics {
+  totalRevenueCents: number;
+  platformFeeCents: number;
+  processingFeeCents: number;
+  organizerPayoutCents: number;
+  currency: string;
+  periodStart: string;
+  periodEnd: string;
+  orderCount: number;
+  ticketCount: number;
+  refundCount: number;
+  refundAmountCents: number;
+}
+
+export interface AdminRevenueBreakdown {
+  byEvent: Array<{
+    eventId: string;
+    eventTitle: string;
+    revenueCents: number;
+    orderCount: number;
+  }>;
+  byOrganizer: Array<{
+    orgId: string;
+    orgName: string;
+    revenueCents: number;
+    orderCount: number;
+  }>;
+  byCategory: Array<{
+    categoryId: string;
+    categoryName: string;
+    revenueCents: number;
+    orderCount: number;
+  }>;
+}
+
+// Webhooks
+export interface AdminWebhook {
+  id: string;
+  orgId: string;
+  orgName: string;
+  url: string;
+  events: string[];
+  active: boolean;
+  secret: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface AdminWebhookEvent {
+  id: string;
+  webhookId: string;
+  webhookUrl: string;
+  orgId: string;
+  eventType: string;
+  status: 'pending' | 'success' | 'failed';
+  attempts: number;
+  lastAttemptAt?: string;
+  nextRetryAt?: string;
+  responseCode?: number;
+  errorMessage?: string;
+  createdAt: string;
+}
+
+export interface AdminWebhookStats {
+  totalWebhooks: number;
+  activeWebhooks: number;
+  totalEvents: number;
+  successfulEvents: number;
+  failedEvents: number;
+  successRate: string;
+}
+
+// Organization Verification
+export interface AdminVerificationDocument {
+  id: string;
+  orgId: string;
+  documentType: string;
+  fileName: string;
+  fileUrl: string;
+  fileSize: number;
+  mimeType: string;
+  status: 'pending' | 'approved' | 'rejected' | 'expired';
+  reviewNote?: string;
+  uploadedAt: string;
+  reviewedAt?: string;
+}
+
+export interface AdminOrganizationVerification {
+  id: string;
+  name: string;
+  legalName?: string;
+  orgType: string;
+  status: string;
+  documents: AdminVerificationDocument[];
+  trustScore: number;
+  verifiedAt?: string;
+  submittedAt?: string;
+  reviewedAt?: string;
+  createdAt: string;
+}
+
 export class AdminApiService {
   private readonly baseUrl = "/api/admin";
 
@@ -1126,6 +1459,639 @@ export class AdminApiService {
     return apiClient.post<AdminApiResponse<{ message: string }>>(
       `${this.baseUrl}/tax-rates/${id}/deactivate`,
       undefined,
+      token
+    );
+  }
+
+  // Orders Management
+  async getOrders(
+    token: string,
+    options: {
+      page?: number;
+      limit?: number;
+      search?: string;
+      status?: string;
+      eventId?: string;
+      buyerId?: string;
+      dateFrom?: string;
+      dateTo?: string;
+      sortBy?: string;
+      sortOrder?: 'asc' | 'desc';
+    } = {}
+  ): Promise<AdminApiResponse<PaginatedResponse<AdminOrder>>> {
+    const queryString = buildQueryString(options);
+    return apiClient.get<AdminApiResponse<PaginatedResponse<AdminOrder>>>(
+      `${this.baseUrl}/orders${queryString ? `?${queryString}` : ''}`,
+      token
+    );
+  }
+
+  async getOrderStats(token: string): Promise<AdminApiResponse<AdminOrderStats>> {
+    return apiClient.get<AdminApiResponse<AdminOrderStats>>(
+      `${this.baseUrl}/orders/stats`,
+      token
+    );
+  }
+
+  async getOrder(id: string, token: string): Promise<AdminApiResponse<AdminOrder>> {
+    return apiClient.get<AdminApiResponse<AdminOrder>>(
+      `${this.baseUrl}/orders/${id}`,
+      token
+    );
+  }
+
+  async updateOrderStatus(
+    id: string,
+    data: { status: string; note?: string },
+    token: string
+  ): Promise<AdminApiResponse<{ message: string }>> {
+    return apiClient.patch<AdminApiResponse<{ message: string }>>(
+      `${this.baseUrl}/orders/${id}/status`,
+      data,
+      token
+    );
+  }
+
+  async cancelOrder(id: string, token: string): Promise<AdminApiResponse<{ message: string }>> {
+    return apiClient.post<AdminApiResponse<{ message: string }>>(
+      `${this.baseUrl}/orders/${id}/cancel`,
+      undefined,
+      token
+    );
+  }
+
+  // Tickets Management
+  async getTickets(
+    token: string,
+    options: {
+      page?: number;
+      limit?: number;
+      search?: string;
+      status?: string;
+      eventId?: string;
+      buyerId?: string;
+      ticketTypeId?: string;
+      dateFrom?: string;
+      dateTo?: string;
+      sortBy?: string;
+      sortOrder?: 'asc' | 'desc';
+    } = {}
+  ): Promise<AdminApiResponse<PaginatedResponse<AdminTicket>>> {
+    const queryString = buildQueryString(options);
+    return apiClient.get<AdminApiResponse<PaginatedResponse<AdminTicket>>>(
+      `${this.baseUrl}/tickets${queryString ? `?${queryString}` : ''}`,
+      token
+    );
+  }
+
+  async getTicketStats(token: string): Promise<AdminApiResponse<AdminTicketStats>> {
+    return apiClient.get<AdminApiResponse<AdminTicketStats>>(
+      `${this.baseUrl}/tickets/stats`,
+      token
+    );
+  }
+
+  async getTicket(id: string, token: string): Promise<AdminApiResponse<AdminTicket>> {
+    return apiClient.get<AdminApiResponse<AdminTicket>>(
+      `${this.baseUrl}/tickets/${id}`,
+      token
+    );
+  }
+
+  async voidTicket(id: string, token: string): Promise<AdminApiResponse<{ message: string }>> {
+    return apiClient.post<AdminApiResponse<{ message: string }>>(
+      `${this.baseUrl}/tickets/${id}/void`,
+      undefined,
+      token
+    );
+  }
+
+  async getTicketTransfers(
+    token: string,
+    options: {
+      page?: number;
+      limit?: number;
+      search?: string;
+      status?: string;
+      ticketId?: string;
+      fromUserId?: string;
+      toUserId?: string;
+      dateFrom?: string;
+      dateTo?: string;
+      sortBy?: string;
+      sortOrder?: 'asc' | 'desc';
+    } = {}
+  ): Promise<AdminApiResponse<PaginatedResponse<AdminTicketTransfer>>> {
+    const queryString = buildQueryString(options);
+    return apiClient.get<AdminApiResponse<PaginatedResponse<AdminTicketTransfer>>>(
+      `${this.baseUrl}/tickets/transfers${queryString ? `?${queryString}` : ''}`,
+      token
+    );
+  }
+
+  async getTicketCheckins(
+    token: string,
+    options: {
+      page?: number;
+      limit?: number;
+      search?: string;
+      eventId?: string;
+      ticketId?: string;
+      userId?: string;
+      dateFrom?: string;
+      dateTo?: string;
+      sortBy?: string;
+      sortOrder?: 'asc' | 'desc';
+    } = {}
+  ): Promise<AdminApiResponse<PaginatedResponse<AdminTicketCheckin>>> {
+    const queryString = buildQueryString(options);
+    return apiClient.get<AdminApiResponse<PaginatedResponse<AdminTicketCheckin>>>(
+      `${this.baseUrl}/tickets/checkins${queryString ? `?${queryString}` : ''}`,
+      token
+    );
+  }
+
+  // Notifications Management
+  async getNotifications(
+    token: string,
+    options: {
+      page?: number;
+      limit?: number;
+      search?: string;
+      type?: string;
+      channel?: string;
+      userId?: string;
+      read?: boolean;
+      dateFrom?: string;
+      dateTo?: string;
+      sortBy?: string;
+      sortOrder?: 'asc' | 'desc';
+    } = {}
+  ): Promise<AdminApiResponse<PaginatedResponse<AdminNotification>>> {
+    const queryString = buildQueryString(options);
+    return apiClient.get<AdminApiResponse<PaginatedResponse<AdminNotification>>>(
+      `${this.baseUrl}/notifications${queryString ? `?${queryString}` : ''}`,
+      token
+    );
+  }
+
+  async getNotificationStats(token: string): Promise<AdminApiResponse<AdminNotificationStats>> {
+    return apiClient.get<AdminApiResponse<AdminNotificationStats>>(
+      `${this.baseUrl}/notifications/stats`,
+      token
+    );
+  }
+
+  async broadcastNotification(
+    data: {
+      title: string;
+      message: string;
+      type: 'info' | 'success' | 'warning' | 'error';
+      channels: ('in_app' | 'email' | 'push' | 'sms')[];
+      targetUserIds?: string[];
+      targetRoles?: string[];
+    },
+    token: string
+  ): Promise<AdminApiResponse<{ message: string; sent: number }>> {
+    return apiClient.post<AdminApiResponse<{ message: string; sent: number }>>(
+      `${this.baseUrl}/notifications/broadcast`,
+      data,
+      token
+    );
+  }
+
+  async deleteNotification(id: string, token: string): Promise<AdminApiResponse<{ message: string }>> {
+    return apiClient.delete<AdminApiResponse<{ message: string }>>(
+      `${this.baseUrl}/notifications/${id}`,
+      token
+    );
+  }
+
+  // Reviews Management
+  async getEventReviews(
+    token: string,
+    options: {
+      page?: number;
+      limit?: number;
+      search?: string;
+      eventId?: string;
+      userId?: string;
+      minRating?: number;
+      maxRating?: number;
+      dateFrom?: string;
+      dateTo?: string;
+      sortBy?: string;
+      sortOrder?: 'asc' | 'desc';
+    } = {}
+  ): Promise<AdminApiResponse<PaginatedResponse<AdminEventReview>>> {
+    const queryString = buildQueryString(options);
+    return apiClient.get<AdminApiResponse<PaginatedResponse<AdminEventReview>>>(
+      `${this.baseUrl}/reviews/events${queryString ? `?${queryString}` : ''}`,
+      token
+    );
+  }
+
+  async getOrganizerReviews(
+    token: string,
+    options: {
+      page?: number;
+      limit?: number;
+      search?: string;
+      orgId?: string;
+      userId?: string;
+      minRating?: number;
+      maxRating?: number;
+      dateFrom?: string;
+      dateTo?: string;
+      sortBy?: string;
+      sortOrder?: 'asc' | 'desc';
+    } = {}
+  ): Promise<AdminApiResponse<PaginatedResponse<AdminOrganizerReview>>> {
+    const queryString = buildQueryString(options);
+    return apiClient.get<AdminApiResponse<PaginatedResponse<AdminOrganizerReview>>>(
+      `${this.baseUrl}/reviews/organizers${queryString ? `?${queryString}` : ''}`,
+      token
+    );
+  }
+
+  async getReviewStats(token: string): Promise<AdminApiResponse<AdminReviewStats>> {
+    return apiClient.get<AdminApiResponse<AdminReviewStats>>(
+      `${this.baseUrl}/reviews/stats`,
+      token
+    );
+  }
+
+  async deleteEventReview(id: string, token: string): Promise<AdminApiResponse<{ message: string }>> {
+    return apiClient.delete<AdminApiResponse<{ message: string }>>(
+      `${this.baseUrl}/reviews/events/${id}`,
+      token
+    );
+  }
+
+  async deleteOrganizerReview(id: string, token: string): Promise<AdminApiResponse<{ message: string }>> {
+    return apiClient.delete<AdminApiResponse<{ message: string }>>(
+      `${this.baseUrl}/reviews/organizers/${id}`,
+      token
+    );
+  }
+
+  // Promotions Management
+  async getPromotions(
+    token: string,
+    options: {
+      page?: number;
+      limit?: number;
+      search?: string;
+      status?: string;
+      eventId?: string;
+      orgId?: string;
+      dateFrom?: string;
+      dateTo?: string;
+      sortBy?: string;
+      sortOrder?: 'asc' | 'desc';
+    } = {}
+  ): Promise<AdminApiResponse<PaginatedResponse<AdminPromotion>>> {
+    const queryString = buildQueryString(options);
+    return apiClient.get<AdminApiResponse<PaginatedResponse<AdminPromotion>>>(
+      `${this.baseUrl}/promotions${queryString ? `?${queryString}` : ''}`,
+      token
+    );
+  }
+
+  async getPromotionStats(token: string): Promise<AdminApiResponse<AdminPromotionStats>> {
+    return apiClient.get<AdminApiResponse<AdminPromotionStats>>(
+      `${this.baseUrl}/promotions/stats`,
+      token
+    );
+  }
+
+  async getPromotion(id: string, token: string): Promise<AdminApiResponse<AdminPromotion>> {
+    return apiClient.get<AdminApiResponse<AdminPromotion>>(
+      `${this.baseUrl}/promotions/${id}`,
+      token
+    );
+  }
+
+  async deactivatePromotion(id: string, token: string): Promise<AdminApiResponse<{ message: string }>> {
+    return apiClient.post<AdminApiResponse<{ message: string }>>(
+      `${this.baseUrl}/promotions/${id}/deactivate`,
+      undefined,
+      token
+    );
+  }
+
+  async getPromoCodes(
+    token: string,
+    options: {
+      page?: number;
+      limit?: number;
+      search?: string;
+      active?: boolean;
+      promotionId?: string;
+      eventId?: string;
+      dateFrom?: string;
+      dateTo?: string;
+      sortBy?: string;
+      sortOrder?: 'asc' | 'desc';
+    } = {}
+  ): Promise<AdminApiResponse<PaginatedResponse<AdminPromoCode>>> {
+    const queryString = buildQueryString(options);
+    return apiClient.get<AdminApiResponse<PaginatedResponse<AdminPromoCode>>>(
+      `${this.baseUrl}/promo-codes${queryString ? `?${queryString}` : ''}`,
+      token
+    );
+  }
+
+  // Moderation/Flags Management
+  async getFlags(
+    token: string,
+    options: {
+      page?: number;
+      limit?: number;
+      search?: string;
+      status?: string;
+      targetKind?: string;
+      reporterId?: string;
+      dateFrom?: string;
+      dateTo?: string;
+      sortBy?: string;
+      sortOrder?: 'asc' | 'desc';
+    } = {}
+  ): Promise<AdminApiResponse<PaginatedResponse<AdminFlag>>> {
+    const queryString = buildQueryString(options);
+    return apiClient.get<AdminApiResponse<PaginatedResponse<AdminFlag>>>(
+      `${this.baseUrl}/flags${queryString ? `?${queryString}` : ''}`,
+      token
+    );
+  }
+
+  async getModerationStats(token: string): Promise<AdminApiResponse<AdminModerationStats>> {
+    return apiClient.get<AdminApiResponse<AdminModerationStats>>(
+      `${this.baseUrl}/flags/stats`,
+      token
+    );
+  }
+
+  async getFlag(id: string, token: string): Promise<AdminApiResponse<AdminFlag>> {
+    return apiClient.get<AdminApiResponse<AdminFlag>>(
+      `${this.baseUrl}/flags/${id}`,
+      token
+    );
+  }
+
+  async resolveFlag(
+    id: string,
+    data: {
+      action: 'approve' | 'reject' | 'resolve';
+      note?: string;
+    },
+    token: string
+  ): Promise<AdminApiResponse<{ message: string }>> {
+    return apiClient.post<AdminApiResponse<{ message: string }>>(
+      `${this.baseUrl}/flags/${id}/resolve`,
+      data,
+      token
+    );
+  }
+
+  async getModerationActions(
+    token: string,
+    options: {
+      page?: number;
+      limit?: number;
+      flagId?: string;
+      actorId?: string;
+      action?: string;
+      dateFrom?: string;
+      dateTo?: string;
+      sortBy?: string;
+      sortOrder?: 'asc' | 'desc';
+    } = {}
+  ): Promise<AdminApiResponse<PaginatedResponse<AdminModerationAction>>> {
+    const queryString = buildQueryString(options);
+    return apiClient.get<AdminApiResponse<PaginatedResponse<AdminModerationAction>>>(
+      `${this.baseUrl}/moderation/actions${queryString ? `?${queryString}` : ''}`,
+      token
+    );
+  }
+
+  // Sessions Management
+  async getSessions(
+    token: string,
+    options: {
+      page?: number;
+      limit?: number;
+      search?: string;
+      userId?: string;
+      active?: boolean;
+      dateFrom?: string;
+      dateTo?: string;
+      sortBy?: string;
+      sortOrder?: 'asc' | 'desc';
+    } = {}
+  ): Promise<AdminApiResponse<PaginatedResponse<AdminSession>>> {
+    const queryString = buildQueryString(options);
+    return apiClient.get<AdminApiResponse<PaginatedResponse<AdminSession>>>(
+      `${this.baseUrl}/sessions${queryString ? `?${queryString}` : ''}`,
+      token
+    );
+  }
+
+  async getSessionStats(token: string): Promise<AdminApiResponse<AdminSessionStats>> {
+    return apiClient.get<AdminApiResponse<AdminSessionStats>>(
+      `${this.baseUrl}/sessions/stats`,
+      token
+    );
+  }
+
+  async revokeSession(id: string, token: string): Promise<AdminApiResponse<{ message: string }>> {
+    return apiClient.delete<AdminApiResponse<{ message: string }>>(
+      `${this.baseUrl}/sessions/${id}`,
+      token
+    );
+  }
+
+  async revokeAllUserSessions(userId: string, token: string): Promise<AdminApiResponse<{ message: string; count: number }>> {
+    return apiClient.post<AdminApiResponse<{ message: string; count: number }>>(
+      `${this.baseUrl}/sessions/users/${userId}/revoke-all`,
+      undefined,
+      token
+    );
+  }
+
+  // Revenue Analytics
+  async getRevenueMetrics(
+    token: string,
+    options: {
+      periodStart?: string;
+      periodEnd?: string;
+      groupBy?: 'day' | 'week' | 'month';
+    } = {}
+  ): Promise<AdminApiResponse<AdminRevenueMetrics>> {
+    const queryString = buildQueryString(options);
+    return apiClient.get<AdminApiResponse<AdminRevenueMetrics>>(
+      `${this.baseUrl}/revenue/metrics${queryString ? `?${queryString}` : ''}`,
+      token
+    );
+  }
+
+  async getRevenueBreakdown(
+    token: string,
+    options: {
+      periodStart?: string;
+      periodEnd?: string;
+      limit?: number;
+    } = {}
+  ): Promise<AdminApiResponse<AdminRevenueBreakdown>> {
+    const queryString = buildQueryString(options);
+    return apiClient.get<AdminApiResponse<AdminRevenueBreakdown>>(
+      `${this.baseUrl}/revenue/breakdown${queryString ? `?${queryString}` : ''}`,
+      token
+    );
+  }
+
+  // Webhooks Management
+  async getWebhooks(
+    token: string,
+    options: {
+      page?: number;
+      limit?: number;
+      search?: string;
+      active?: boolean;
+      orgId?: string;
+      sortBy?: string;
+      sortOrder?: 'asc' | 'desc';
+    } = {}
+  ): Promise<AdminApiResponse<PaginatedResponse<AdminWebhook>>> {
+    const queryString = buildQueryString(options);
+    return apiClient.get<AdminApiResponse<PaginatedResponse<AdminWebhook>>>(
+      `${this.baseUrl}/webhooks${queryString ? `?${queryString}` : ''}`,
+      token
+    );
+  }
+
+  async getWebhookStats(token: string): Promise<AdminApiResponse<AdminWebhookStats>> {
+    return apiClient.get<AdminApiResponse<AdminWebhookStats>>(
+      `${this.baseUrl}/webhooks/stats`,
+      token
+    );
+  }
+
+  async getWebhook(id: string, token: string): Promise<AdminApiResponse<AdminWebhook>> {
+    return apiClient.get<AdminApiResponse<AdminWebhook>>(
+      `${this.baseUrl}/webhooks/${id}`,
+      token
+    );
+  }
+
+  async getWebhookEvents(
+    token: string,
+    options: {
+      page?: number;
+      limit?: number;
+      search?: string;
+      status?: string;
+      webhookId?: string;
+      eventType?: string;
+      dateFrom?: string;
+      dateTo?: string;
+      sortBy?: string;
+      sortOrder?: 'asc' | 'desc';
+    } = {}
+  ): Promise<AdminApiResponse<PaginatedResponse<AdminWebhookEvent>>> {
+    const queryString = buildQueryString(options);
+    return apiClient.get<AdminApiResponse<PaginatedResponse<AdminWebhookEvent>>>(
+      `${this.baseUrl}/webhook-events${queryString ? `?${queryString}` : ''}`,
+      token
+    );
+  }
+
+  async retryWebhookEvent(id: string, token: string): Promise<AdminApiResponse<{ message: string }>> {
+    return apiClient.post<AdminApiResponse<{ message: string }>>(
+      `${this.baseUrl}/webhook-events/${id}/retry`,
+      undefined,
+      token
+    );
+  }
+
+  async testWebhook(id: string, token: string): Promise<AdminApiResponse<{ message: string }>> {
+    return apiClient.post<AdminApiResponse<{ message: string }>>(
+      `${this.baseUrl}/webhooks/${id}/test`,
+      undefined,
+      token
+    );
+  }
+
+  // Organization Verification Details
+  async getOrganizationVerification(orgId: string, token: string): Promise<AdminApiResponse<AdminOrganizationVerification>> {
+    return apiClient.get<AdminApiResponse<AdminOrganizationVerification>>(
+      `${this.baseUrl}/organizations/${orgId}/verification`,
+      token
+    );
+  }
+
+  async approveOrganization(
+    orgId: string,
+    data: { note?: string; trustScore?: number },
+    token: string
+  ): Promise<AdminApiResponse<{ message: string }>> {
+    return apiClient.post<AdminApiResponse<{ message: string }>>(
+      `${this.baseUrl}/organizations/${orgId}/verification/approve`,
+      data,
+      token
+    );
+  }
+
+  async rejectOrganization(
+    orgId: string,
+    data: { reason: string; note?: string },
+    token: string
+  ): Promise<AdminApiResponse<{ message: string }>> {
+    return apiClient.post<AdminApiResponse<{ message: string }>>(
+      `${this.baseUrl}/organizations/${orgId}/verification/reject`,
+      data,
+      token
+    );
+  }
+
+  async suspendOrganization(
+    orgId: string,
+    data: { reason: string; note?: string },
+    token: string
+  ): Promise<AdminApiResponse<{ message: string }>> {
+    return apiClient.post<AdminApiResponse<{ message: string }>>(
+      `${this.baseUrl}/organizations/${orgId}/verification/suspend`,
+      data,
+      token
+    );
+  }
+
+  async reviewDocument(
+    docId: string,
+    data: { status: 'approved' | 'rejected'; note?: string },
+    token: string
+  ): Promise<AdminApiResponse<AdminVerificationDocument>> {
+    return apiClient.post<AdminApiResponse<AdminVerificationDocument>>(
+      `${this.baseUrl}/verification/documents/${docId}/review`,
+      data,
+      token
+    );
+  }
+
+  async getVerificationQueue(
+    token: string,
+    options: {
+      page?: number;
+      limit?: number;
+      status?: string;
+      orgType?: string;
+      sortBy?: string;
+      sortOrder?: 'asc' | 'desc';
+    } = {}
+  ): Promise<AdminApiResponse<PaginatedResponse<AdminOrganizationVerification>>> {
+    const queryString = buildQueryString(options);
+    return apiClient.get<AdminApiResponse<PaginatedResponse<AdminOrganizationVerification>>>(
+      `${this.baseUrl}/organizations/verification${queryString ? `?${queryString}` : ''}`,
       token
     );
   }
