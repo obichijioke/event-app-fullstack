@@ -2,6 +2,7 @@
 
 import { apiClient, ApiError } from "@/lib/api-client";
 import { buildQueryString } from "@/lib/utils/query-builder";
+import { API_BASE_URL } from "@/lib/config";
 
 // Base types for admin API responses
 export interface AdminApiResponse<T> {
@@ -1118,6 +1119,34 @@ export class AdminApiService {
       `${this.baseUrl}/venues/catalog/${id}`,
       token
     );
+  }
+
+  async bulkUploadVenueCatalog(
+    token: string,
+    formData: FormData
+  ): Promise<AdminApiResponse<{
+    total: number;
+    created: number;
+    updated: number;
+    skipped: number;
+    errors: Array<{ index: number; message: string }>;
+  }>> {
+    const uploadUrl = new URL(`${this.baseUrl}/venues/catalog/bulk-upload`, API_BASE_URL);
+    const response = await fetch(uploadUrl.toString(), {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      credentials: 'include',
+      body: formData,
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.message || 'Failed to upload file');
+    }
+
+    return response.json();
   }
 
   // Venues

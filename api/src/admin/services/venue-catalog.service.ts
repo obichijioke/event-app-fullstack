@@ -132,11 +132,47 @@ export class AdminVenueCatalogService {
     return { deleted: true };
   }
 
+  async bulkUploadFromFile(
+    buffer: Buffer,
+    filename: string,
+    options?: VenueCatalogImportOptionsDto,
+  ) {
+    if (!buffer || buffer.length === 0) {
+      throw new BadRequestException('File is empty');
+    }
+
+    const isCSV = filename.toLowerCase().endsWith('.csv');
+    const isJSON = filename.toLowerCase().endsWith('.json');
+
+    if (!isCSV && !isJSON) {
+      throw new BadRequestException('Only CSV and JSON files are supported');
+    }
+
+    let entries: any[];
+
+    if (isJSON) {
+      entries = await this.parseJSONFile(buffer);
+    } else {
+      entries = await this.parseCSVFile(buffer);
+    }
+
+    if (!entries.length) {
+      throw new BadRequestException('File does not contain any entries');
+    }
+
+    return this.processImportEntries(entries, options);
+  }
+
   async importFromFile(buffer: Buffer, options?: VenueCatalogImportOptionsDto) {
     if (!buffer || buffer.length === 0) {
       throw new BadRequestException('Upload a JSON file with catalog entries');
     }
 
+    const entries = await this.parseJSONFile(buffer);
+    return this.processImportEntries(entries, options);
+  }
+
+  private async parseJSONFile(buffer: Buffer): Promise<any[]> {
     let payload: unknown;
     try {
       payload = JSON.parse(buffer.toString('utf-8'));
@@ -144,11 +180,106 @@ export class AdminVenueCatalogService {
       throw new BadRequestException('Unable to parse JSON file');
     }
 
-    const entries = this.extractEntries(payload);
-    if (!entries.length) {
-      throw new BadRequestException('JSON file does not contain any entries');
+    return this.extractEntries(payload);
+  }
+
+  private async parseCSVFile(buffer: Buffer): Promise<any[]> {
+    const csvText = buffer.toString('utf-8');
+    const lines = csvText.split('\n').filter((line) => line.trim());
+
+    if (lines.length < 2) {
+      throw new BadRequestException(
+        'CSV file must contain at least a header row and one data row',
+      );
     }
 
+    // Parse header
+    const headers = this.parseCSVLine(lines[0]);
+
+    // Parse data rows
+    const entries: any[] = [];
+    for (let i = 1; i < lines.length; i++) {
+      const values = this.parseCSVLine(lines[i]);
+      if (values.length === 0) continue; // Skip empty lines
+
+      const entry: any = {};
+      headers.forEach((header, index) => {
+        const value = values[index]?.trim();
+        if (value) {
+          // Handle nested address fields
+          if (header.startsWith('address.')) {
+            const addressField = header.replace('address.', '');
+            if (!entry.address) entry.address = {};
+            entry.address[addressField] = value;
+          }
+          // Handle numeric fields
+          else if (
+            [
+              'capacityMin',
+              'capacityMax',
+              'latitude',
+              'longitude',
+            ].includes(header)
+          ) {
+            const num = parseFloat(value);
+            if (!isNaN(num)) {
+              entry[header] = num;
+            }
+          }
+          // Handle array fields (tags)
+          else if (header === 'tags') {
+            entry[header] = value.split(',').map((tag) => tag.trim());
+          }
+          // Handle regular fields
+          else {
+            entry[header] = value;
+          }
+        }
+      });
+
+      entries.push(entry);
+    }
+
+    return entries;
+  }
+
+  private parseCSVLine(line: string): string[] {
+    const result: string[] = [];
+    let current = '';
+    let inQuotes = false;
+
+    for (let i = 0; i < line.length; i++) {
+      const char = line[i];
+      const nextChar = line[i + 1];
+
+      if (char === '"') {
+        if (inQuotes && nextChar === '"') {
+          // Escaped quote
+          current += '"';
+          i++; // Skip next quote
+        } else {
+          // Toggle quote state
+          inQuotes = !inQuotes;
+        }
+      } else if (char === ',' && !inQuotes) {
+        // End of field
+        result.push(current);
+        current = '';
+      } else {
+        current += char;
+      }
+    }
+
+    // Add last field
+    result.push(current);
+
+    return result;
+  }
+
+  private async processImportEntries(
+    entries: any[],
+    options?: VenueCatalogImportOptionsDto,
+  ) {
     const strategy = options?.strategy ?? VenueCatalogImportStrategy.UPSERT;
     const dryRun = options?.dryRun ?? false;
 

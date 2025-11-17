@@ -1,13 +1,16 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, useRef } from 'react';
 import toast from 'react-hot-toast';
 import { useAuth } from '@/components/auth';
+import { Modal } from '@/components/ui/modal';
+import { Button } from '@/components/ui/button';
 import {
   adminApiService,
   AdminVenueCatalogEntry,
   AdminVenueRecord,
 } from '@/services/admin-api.service';
+import { Upload, Edit2, FileUp } from 'lucide-react';
 
 type CatalogFormState = {
   id?: string;
@@ -75,6 +78,20 @@ export default function VenueManagement() {
   const [venuesLoading, setVenuesLoading] = useState(false);
   const [venueSearch, setVenueSearch] = useState('');
   const [venueStatus, setVenueStatus] = useState<'active' | 'archived' | 'all'>('active');
+
+  // Bulk upload state
+  const [showBulkUploadModal, setShowBulkUploadModal] = useState(false);
+  const [bulkUploadFile, setBulkUploadFile] = useState<File | null>(null);
+  const [bulkUploading, setBulkUploading] = useState(false);
+  const bulkFileInputRef = useRef<HTMLInputElement>(null);
+
+  // File upload for image
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const imageFileInputRef = useRef<HTMLInputElement>(null);
+
+  // Quick edit state
+  const [showQuickEditModal, setShowQuickEditModal] = useState(false);
+  const [quickEditVenue, setQuickEditVenue] = useState<AdminVenueCatalogEntry | null>(null);
 
   useEffect(() => {
     if (!accessToken) return;
@@ -238,6 +255,151 @@ export default function VenueManagement() {
     }
   };
 
+  // Bulk upload handler
+  const handleBulkUploadFile = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      // Validate file type (CSV or JSON)
+      const validTypes = ['text/csv', 'application/json', 'text/plain'];
+      const fileType = file.type || '';
+      const fileName = file.name.toLowerCase();
+
+      if (!validTypes.includes(fileType) && !fileName.endsWith('.csv') && !fileName.endsWith('.json')) {
+        toast.error('Please upload a CSV or JSON file');
+        return;
+      }
+
+      setBulkUploadFile(file);
+    }
+  };
+
+  const handleBulkUploadSubmit = async () => {
+    if (!accessToken || !bulkUploadFile) return;
+
+    setBulkUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', bulkUploadFile);
+
+      const result = await adminApiService.bulkUploadVenueCatalog(accessToken, formData);
+
+      if (result.success && result.data) {
+        const { total, created, updated, skipped, errors } = result.data;
+
+        let message = `Successfully processed ${total} entries: ${created} created, ${updated} updated`;
+        if (skipped > 0) {
+          message += `, ${skipped} skipped`;
+        }
+
+        if (errors.length > 0) {
+          message += `. ${errors.length} errors occurred.`;
+          toast.warning(message);
+
+          // Log errors to console for debugging
+          console.error('Bulk upload errors:', errors);
+        } else {
+          toast.success(message);
+        }
+      }
+
+      setShowBulkUploadModal(false);
+      setBulkUploadFile(null);
+      loadCatalog();
+    } catch (error: any) {
+      console.error('Failed to bulk upload venues', error);
+      const errorMessage = error?.message || error?.response?.data?.message || 'Failed to bulk upload venues';
+      toast.error(errorMessage);
+    } finally {
+      setBulkUploading(false);
+    }
+  };
+
+  // Image file upload handler
+  const handleImageFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      // Validate file type
+      const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+      if (!validTypes.includes(file.type)) {
+        toast.error('Please upload a valid image file (JPEG, PNG, or WebP)');
+        return;
+      }
+
+      // Validate file size (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error('Image file size should be less than 5MB');
+        return;
+      }
+
+      setImageFile(file);
+      // For now, generate a local preview URL
+      const previewUrl = URL.createObjectURL(file);
+      setCatalogForm((prev) => ({ ...prev, imageUrl: previewUrl }));
+    }
+  };
+
+  // Quick edit handler
+  const handleQuickEdit = (entry: AdminVenueCatalogEntry) => {
+    setQuickEditVenue(entry);
+    setCatalogForm({
+      id: entry.id,
+      name: entry.name,
+      slug: entry.slug ?? '',
+      description: entry.description ?? '',
+      imageUrl: entry.imageUrl ?? '',
+      timezone: entry.timezone,
+      capacityMin: entry.capacityMin?.toString() ?? '',
+      capacityMax: entry.capacityMax?.toString() ?? '',
+      latitude: entry.latitude?.toString() ?? '',
+      longitude: entry.longitude?.toString() ?? '',
+      address: {
+        line1: (entry.address?.line1 as string) ?? '',
+        line2: (entry.address?.line2 as string) ?? '',
+        city: (entry.address?.city as string) ?? '',
+        region: (entry.address?.region as string) ?? '',
+        postal: (entry.address?.postal as string) ?? '',
+        country: (entry.address?.country as string) ?? 'US',
+      },
+      tags: entry.tags.join(', '),
+    });
+    setShowQuickEditModal(true);
+  };
+
+  const handleQuickEditSave = async () => {
+    if (!accessToken || !quickEditVenue) return;
+
+    const payload = {
+      name: catalogForm.name,
+      slug: catalogForm.slug || undefined,
+      description: catalogForm.description || undefined,
+      imageUrl: catalogForm.imageUrl || undefined,
+      timezone: catalogForm.timezone,
+      capacityMin: catalogForm.capacityMin ? Number(catalogForm.capacityMin) : undefined,
+      capacityMax: catalogForm.capacityMax ? Number(catalogForm.capacityMax) : undefined,
+      latitude: catalogForm.latitude ? Number(catalogForm.latitude) : undefined,
+      longitude: catalogForm.longitude ? Number(catalogForm.longitude) : undefined,
+      address: catalogForm.address,
+      tags: catalogForm.tags
+        ? catalogForm.tags
+            .split(',')
+            .map(tag => tag.trim())
+            .filter(Boolean)
+        : [],
+    };
+
+    try {
+      await adminApiService.updateVenueCatalog(accessToken, quickEditVenue.id, payload);
+      toast.success('Venue updated successfully');
+      setShowQuickEditModal(false);
+      setQuickEditVenue(null);
+      setCatalogForm(defaultCatalogForm);
+      loadCatalog();
+    } catch (error: any) {
+      console.error('Failed to update venue', error);
+      toast.error(error?.response?.data?.message || 'Failed to update venue');
+    }
+  };
+
   const catalogEmpty = !catalogLoading && catalogEntries.length === 0;
   const venuesEmpty = !venuesLoading && venues.length === 0;
 
@@ -289,6 +451,13 @@ export default function VenueManagement() {
                   className="rounded-md border border-border px-4 py-2 text-sm"
                 >
                   Refresh
+                </button>
+                <button
+                  onClick={() => setShowBulkUploadModal(true)}
+                  className="rounded-md border border-border px-4 py-2 text-sm font-medium hover:bg-muted flex items-center gap-2"
+                >
+                  <Upload className="w-4 h-4" />
+                  Bulk Upload
                 </button>
                 <button
                   onClick={() => openCatalogModal()}
@@ -346,18 +515,28 @@ export default function VenueManagement() {
                         {entry.tags.length ? entry.tags.join(', ') : '—'}
                       </td>
                       <td className="px-4 py-3 text-right text-sm">
-                        <button
-                          className="text-primary hover:underline"
-                          onClick={() => openCatalogModal(entry)}
-                        >
-                          Edit
-                        </button>
-                        <button
-                          className="ml-4 text-red-600 hover:underline"
-                          onClick={() => handleDeleteCatalog(entry)}
-                        >
-                          Delete
-                        </button>
+                        <div className="flex items-center justify-end gap-2">
+                          <button
+                            className="flex items-center gap-1 text-primary hover:underline"
+                            onClick={() => handleQuickEdit(entry)}
+                            title="Quick Edit"
+                          >
+                            <Edit2 className="w-3 h-3" />
+                            Quick Edit
+                          </button>
+                          <button
+                            className="text-primary hover:underline"
+                            onClick={() => openCatalogModal(entry)}
+                          >
+                            Full Edit
+                          </button>
+                          <button
+                            className="text-red-600 hover:underline"
+                            onClick={() => handleDeleteCatalog(entry)}
+                          >
+                            Delete
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))
@@ -567,7 +746,37 @@ export default function VenueManagement() {
               </div>
 
               <div className="md:col-span-2">
-                <label className="mb-1 block text-sm font-medium">Image URL</label>
+                <label className="mb-1 block text-sm font-medium">Venue Image</label>
+                <div className="flex items-center gap-3">
+                  <input
+                    ref={imageFileInputRef}
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageFileChange}
+                    className="hidden"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => imageFileInputRef.current?.click()}
+                    className="flex items-center gap-2 rounded-md border border-border bg-muted px-4 py-2 text-sm hover:bg-muted/80"
+                  >
+                    <FileUp className="w-4 h-4" />
+                    Upload Image
+                  </button>
+                  {catalogForm.imageUrl && (
+                    <div className="flex items-center gap-2">
+                      <img
+                        src={catalogForm.imageUrl}
+                        alt="Preview"
+                        className="h-12 w-12 rounded object-cover"
+                      />
+                      <span className="text-xs text-muted-foreground">Image selected</span>
+                    </div>
+                  )}
+                </div>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Or enter image URL manually:
+                </p>
                 <input
                   type="text"
                   value={catalogForm.imageUrl}
@@ -578,7 +787,7 @@ export default function VenueManagement() {
                     }))
                   }
                   placeholder="https://images.example.com/venue.jpg"
-                  className="w-full rounded-md border border-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                  className="mt-2 w-full rounded-md border border-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
                 />
               </div>
 
@@ -769,6 +978,175 @@ export default function VenueManagement() {
           </div>
         </div>
       )}
+
+      {/* Bulk Upload Modal */}
+      <Modal
+        open={showBulkUploadModal}
+        onClose={() => {
+          setShowBulkUploadModal(false);
+          setBulkUploadFile(null);
+        }}
+        title="Bulk Upload Catalog Venues"
+        maxWidth="lg"
+      >
+        <div className="space-y-4">
+          <p className="text-sm text-muted-foreground">
+            Upload a CSV or JSON file containing venue data. The file should have the following columns:
+            name, slug, description, imageUrl, timezone, address (line1, city, region, postal, country), etc.
+          </p>
+
+          <div className="border-2 border-dashed border-border rounded-lg p-6 text-center">
+            <input
+              ref={bulkFileInputRef}
+              type="file"
+              accept=".csv,.json,text/csv,application/json"
+              onChange={handleBulkUploadFile}
+              className="hidden"
+            />
+
+            {!bulkUploadFile ? (
+              <div>
+                <FileUp className="w-12 h-12 mx-auto text-muted-foreground mb-3" />
+                <p className="text-sm font-medium mb-1">Click to upload or drag and drop</p>
+                <p className="text-xs text-muted-foreground mb-4">CSV or JSON file (max 10MB)</p>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => bulkFileInputRef.current?.click()}
+                >
+                  Choose File
+                </Button>
+              </div>
+            ) : (
+              <div>
+                <FileUp className="w-12 h-12 mx-auto text-green-600 mb-3" />
+                <p className="text-sm font-medium mb-1">{bulkUploadFile.name}</p>
+                <p className="text-xs text-muted-foreground mb-4">
+                  {(bulkUploadFile.size / 1024).toFixed(2)} KB
+                </p>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setBulkUploadFile(null)}
+                >
+                  Remove File
+                </Button>
+              </div>
+            )}
+          </div>
+
+          <div className="flex justify-end gap-3 mt-6 pt-4 border-t border-border">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setShowBulkUploadModal(false);
+                setBulkUploadFile(null);
+              }}
+              disabled={bulkUploading}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleBulkUploadSubmit}
+              disabled={!bulkUploadFile || bulkUploading}
+            >
+              {bulkUploading ? 'Uploading...' : 'Upload'}
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Quick Edit Modal */}
+      <Modal
+        open={showQuickEditModal}
+        onClose={() => {
+          setShowQuickEditModal(false);
+          setQuickEditVenue(null);
+          setCatalogForm(defaultCatalogForm);
+        }}
+        title="Quick Edit Venue"
+        maxWidth="2xl"
+      >
+        <div className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="mb-1 block text-sm font-medium">Name *</label>
+              <input
+                type="text"
+                value={catalogForm.name}
+                onChange={(e) =>
+                  setCatalogForm((prev) => ({ ...prev, name: e.target.value }))
+                }
+                className="w-full rounded-md border border-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                required
+              />
+            </div>
+
+            <div>
+              <label className="mb-1 block text-sm font-medium">Timezone *</label>
+              <input
+                type="text"
+                value={catalogForm.timezone}
+                onChange={(e) =>
+                  setCatalogForm((prev) => ({ ...prev, timezone: e.target.value }))
+                }
+                className="w-full rounded-md border border-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                required
+              />
+            </div>
+
+            <div className="md:col-span-2">
+              <label className="mb-1 block text-sm font-medium">Description</label>
+              <textarea
+                value={catalogForm.description}
+                onChange={(e) =>
+                  setCatalogForm((prev) => ({ ...prev, description: e.target.value }))
+                }
+                className="w-full rounded-md border border-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                rows={2}
+              />
+            </div>
+
+            <div>
+              <label className="mb-1 block text-sm font-medium">Capacity Min</label>
+              <input
+                type="number"
+                value={catalogForm.capacityMin}
+                onChange={(e) =>
+                  setCatalogForm((prev) => ({ ...prev, capacityMin: e.target.value }))
+                }
+                className="w-full rounded-md border border-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+              />
+            </div>
+
+            <div>
+              <label className="mb-1 block text-sm font-medium">Capacity Max</label>
+              <input
+                type="number"
+                value={catalogForm.capacityMax}
+                onChange={(e) =>
+                  setCatalogForm((prev) => ({ ...prev, capacityMax: e.target.value }))
+                }
+                className="w-full rounded-md border border-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+              />
+            </div>
+          </div>
+
+          <div className="flex justify-end gap-3 mt-6 pt-4 border-t border-border">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setShowQuickEditModal(false);
+                setQuickEditVenue(null);
+                setCatalogForm(defaultCatalogForm);
+              }}
+            >
+              Cancel
+            </Button>
+            <Button onClick={handleQuickEditSave}>Save Changes</Button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 }

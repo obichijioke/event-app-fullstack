@@ -1,0 +1,5 @@
+name,slug,description,timezone,address.line1,address.city,address.region,address.postal,address.country,capacityMin,capacityMax,latitude,longitude,tags,imageUrl
+Madison Square Garden,madison-square-garden,World-famous indoor arena in New York City,America/New_York,4 Pennsylvania Plaza,New York,NY,10001,US,18000,20789,40.7505,-73.9934,"sports,concerts,arena",https://example.com/msg.jpg
+Hollywood Bowl,hollywood-bowl,Iconic outdoor amphitheater in Los Angeles,America/Los_Angeles,2301 N Highland Ave,Los Angeles,CA,90068,US,17000,17500,34.1128,-118.3393,"concerts,outdoor,amphitheater",https://example.com/hollywood-bowl.jpg
+Red Rocks Amphitheatre,red-rocks-amphitheatre,Naturally formed rock amphitheater near Denver,America/Denver,18300 W Alameda Pkwy,Morrison,CO,80465,US,9000,9525,39.6654,-105.2057,"concerts,outdoor,natural",https://example.com/red-rocks.jpg
+The O2 Arena,the-o2-arena,Multi-purpose indoor arena in London,Europe/London,Peninsula Square,London,England,SE10 0DX,GB,18000,20000,51.5033,0.0031,"sports,concerts,arena",https://example.com/o2.jpg
