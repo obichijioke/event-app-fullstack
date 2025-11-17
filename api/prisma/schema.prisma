@@ -1343,6 +1343,7 @@ model EventCreatorDraft {
   promoCodes     EventCreatorDraftPromoCode[]
   checkoutFields EventCreatorDraftCheckoutField[]
 
+  @@unique([eventId])
   @@index([organizationId])
   @@index([ownerUserId])
   @@index([status])

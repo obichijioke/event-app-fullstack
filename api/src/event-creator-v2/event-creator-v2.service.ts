@@ -622,6 +622,35 @@ export class EventCreatorV2Service {
     });
     if (!draft) throw new NotFoundException('Draft not found');
 
+    // Prevent duplicate publishing: check if already published/scheduled
+    if (
+      draft.status === EventCreatorDraftStatus.published ||
+      draft.status === EventCreatorDraftStatus.scheduled
+    ) {
+      // Idempotent response: return existing event info
+      if (draft.eventId) {
+        const existingEvent = await this.prisma.event.findUnique({
+          where: { id: draft.eventId },
+          select: { id: true, status: true, publishAt: true },
+        });
+
+        if (existingEvent) {
+          return {
+            id: draft.id,
+            eventId: existingEvent.id,
+            status: draft.status,
+            targetPublishAt: draft.targetPublishAt,
+            message: 'Event already published',
+          };
+        }
+      }
+
+      throw new BadRequestException({
+        message: 'Draft has already been published',
+        status: draft.status,
+      });
+    }
+
     const sections = draft.sections;
     const incomplete = sections.filter(
       (section) => section.status !== EventCreatorSectionStatus.valid,
@@ -677,23 +706,26 @@ export class EventCreatorV2Service {
     const liveNow = !targetPublishAt || targetPublishAt <= new Date();
 
     // Create Event and associated data
-    const created = await this.prisma.$transaction(async (tx) => {
-      const event = await tx.event.create({
-        data: {
-          orgId: draft.organizationId,
-          title: draft.title || basics?.title || 'Untitled event',
-          descriptionMd: story?.description || null,
-          status: liveNow ? 'live' : 'pending',
-          visibility: dto.visibility || basics?.visibility || draft.visibility,
-          categoryId: basics?.categoryId || null,
-          startAt,
-          endAt: endAt || new Date(startAt.getTime() + 2 * 60 * 60 * 1000),
-          coverImageUrl: draft.coverImageUrl || basics?.coverImageUrl || null,
-          publishAt: targetPublishAt,
-          language: basics?.language || null,
-          tags: this.normalizeTags(basics?.tags),
-        },
-      });
+    // Note: Database unique constraint on eventId prevents duplicate events
+    let created;
+    try {
+      created = await this.prisma.$transaction(async (tx) => {
+        const event = await tx.event.create({
+          data: {
+            orgId: draft.organizationId,
+            title: draft.title || basics?.title || 'Untitled event',
+            descriptionMd: story?.description || null,
+            status: liveNow ? 'live' : 'pending',
+            visibility: dto.visibility || basics?.visibility || draft.visibility,
+            categoryId: basics?.categoryId || null,
+            startAt,
+            endAt: endAt || new Date(startAt.getTime() + 2 * 60 * 60 * 1000),
+            coverImageUrl: draft.coverImageUrl || basics?.coverImageUrl || null,
+            publishAt: targetPublishAt,
+            language: basics?.language || null,
+            tags: this.normalizeTags(basics?.tags),
+          },
+        });
 
       // Policies (from story payload)
       const refundPolicy: string | null =
@@ -820,8 +852,29 @@ export class EventCreatorV2Service {
         },
       });
 
-      return event;
-    });
+        return event;
+      });
+    } catch (error: any) {
+      // Handle unique constraint violation on eventId
+      if (error.code === 'P2002' && error.meta?.target?.includes('eventId')) {
+        // Another request already published this draft
+        const existing = await this.prisma.eventCreatorDraft.findUnique({
+          where: { id: draftId },
+          select: { eventId: true, status: true, targetPublishAt: true },
+        });
+
+        if (existing?.eventId) {
+          return {
+            id: draftId,
+            eventId: existing.eventId,
+            status: existing.status,
+            targetPublishAt: existing.targetPublishAt,
+            message: 'Event already published',
+          };
+        }
+      }
+      throw error;
+    }
 
     return {
       id: draft.id,
