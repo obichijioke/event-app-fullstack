@@ -2,6 +2,7 @@
 
 import { apiClient, ApiError } from "@/lib/api-client";
 import { buildQueryString } from "@/lib/utils/query-builder";
+import { API_BASE_URL } from "@/lib/config";
 
 // Base types for admin API responses
 export interface AdminApiResponse<T> {
@@ -1130,11 +1131,13 @@ export class AdminApiService {
     skipped: number;
     errors: Array<{ index: number; message: string }>;
   }>> {
-    const response = await fetch(`${this.baseUrl}/venues/catalog/bulk-upload`, {
+    const uploadUrl = new URL(`${this.baseUrl}/venues/catalog/bulk-upload`, API_BASE_URL);
+    const response = await fetch(uploadUrl.toString(), {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${token}`,
       },
+      credentials: 'include',
       body: formData,
     });
 

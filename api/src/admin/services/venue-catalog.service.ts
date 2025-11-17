@@ -168,7 +168,7 @@ export class AdminVenueCatalogService {
       throw new BadRequestException('Upload a JSON file with catalog entries');
     }
 
-    const entries = this.parseJSONFile(buffer);
+    const entries = await this.parseJSONFile(buffer);
     return this.processImportEntries(entries, options);
   }
 

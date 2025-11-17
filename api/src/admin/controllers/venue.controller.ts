@@ -178,7 +178,7 @@ export class AdminVenueController {
   )
   @HttpCode(HttpStatus.OK)
   async bulkUploadVenues(
-    @UploadedFile() file: Express.Multer.File,
+    @UploadedFile() file: { buffer: Buffer; originalname: string },
     @Body() dto: VenueCatalogImportOptionsDto,
   ) {
     if (!file) {
