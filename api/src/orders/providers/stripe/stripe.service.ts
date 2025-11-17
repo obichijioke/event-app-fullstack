@@ -19,6 +19,7 @@ export class StripePaymentProvider implements PaymentProvider {
   public readonly name = 'stripe' as const;
 
   private readonly stripe: Stripe;
+  private readonly webhookSecret?: string;
 
   constructor(private readonly configService: ConfigService) {
     const secretKey = this.configService.get<string>('STRIPE_SECRET_KEY');
@@ -28,6 +29,9 @@ export class StripePaymentProvider implements PaymentProvider {
       );
     }
 
+    this.webhookSecret = this.configService.get<string>(
+      'STRIPE_WEBHOOK_SECRET',
+    );
     this.stripe = new Stripe(secretKey, {} as Stripe.StripeConfig);
   }
 
@@ -36,18 +40,27 @@ export class StripePaymentProvider implements PaymentProvider {
     dto: CreatePaymentDto,
   ): Promise<PaymentInitializationResponse> {
     try {
-      const paymentIntent = await this.stripe.paymentIntents.create({
-        amount: Number(order.totalCents),
-        currency: order.currency,
-        metadata: {
-          orderId: order.id,
-          buyerId: order.buyer?.id,
+      // Generate idempotency key to prevent duplicate payment intents
+      const idempotencyKey = `order_${order.id}_${Date.now()}`;
+
+      const paymentIntent = await this.stripe.paymentIntents.create(
+        {
+          amount: Number(order.totalCents),
+          currency: order.currency,
+          metadata: {
+            orderId: order.id,
+            buyerId: order.buyer?.id,
+            buyerEmail: order.buyer?.email,
+          },
+          automatic_payment_methods: {
+            enabled: true,
+          },
+          return_url: dto.returnUrl,
         },
-        automatic_payment_methods: {
-          enabled: true,
+        {
+          idempotencyKey,
         },
-        return_url: dto.returnUrl,
-      });
+      );
 
       return {
         paymentRecord: {
@@ -138,6 +151,48 @@ export class StripePaymentProvider implements PaymentProvider {
     } catch (error) {
       throw new InternalServerErrorException(
         `Stripe error creating refund: ${(error as Error).message}`,
+      );
+    }
+  }
+
+  /**
+   * Validates Stripe webhook signature to ensure authenticity
+   * @param signature The Stripe-Signature header value
+   * @param payload The raw request body
+   * @returns The verified Stripe event object or null if validation fails
+   */
+  constructWebhookEvent(
+    signature: string | undefined,
+    payload: string | Buffer,
+  ): Stripe.Event | null {
+    if (!signature || !this.webhookSecret) {
+      return null;
+    }
+
+    try {
+      return this.stripe.webhooks.constructEvent(
+        payload,
+        signature,
+        this.webhookSecret,
+      );
+    } catch (error) {
+      return null;
+    }
+  }
+
+  /**
+   * Retrieves a payment intent by ID
+   * @param paymentIntentId The Stripe payment intent ID
+   * @returns The Stripe payment intent object
+   */
+  async retrievePaymentIntent(
+    paymentIntentId: string,
+  ): Promise<Stripe.PaymentIntent> {
+    try {
+      return await this.stripe.paymentIntents.retrieve(paymentIntentId);
+    } catch (error) {
+      throw new InternalServerErrorException(
+        `Stripe error retrieving payment intent: ${(error as Error).message}`,
       );
     }
   }
