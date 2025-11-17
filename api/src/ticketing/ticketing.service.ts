@@ -16,10 +16,14 @@ import {
 } from './dto/update-ticket-type.dto';
 import { HoldReason, OrderStatus } from '@prisma/client';
 import { checkOrgPermission } from '../common/utils';
+import { CurrencyService } from '../currency/currency.service';
 
 @Injectable()
 export class TicketingService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private currencyService: CurrencyService,
+  ) {}
 
   async createTicketTypeForEvent(
     eventId: string,
@@ -61,13 +65,17 @@ export class TicketingService {
       sortOrder,
     } = createTicketTypeDto;
 
+    // Use default currency if not specified
+    const finalCurrency =
+      currency || (await this.currencyService.getDefaultCurrency());
+
     // Create ticket type for the event
     const ticketType = await this.prisma.ticketType.create({
       data: {
         eventId,
         name,
         kind,
-        currency,
+        currency: finalCurrency,
         priceCents,
         feeCents,
         capacity,

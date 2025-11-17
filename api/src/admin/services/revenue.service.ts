@@ -39,6 +39,91 @@ export class AdminRevenueService {
     return { start, end };
   }
 
+  async getRevenueMetrics(query: RevenueQueryDto) {
+    const { period = RevenuePeriod.MONTH, startDate, endDate, organizationId, categoryId } = query;
+    const { start, end } = this.getDateRange(period, startDate, endDate);
+
+    const orderWhere: Prisma.OrderWhereInput = {
+      status: 'paid',
+      paidAt: {
+        gte: start,
+        lte: end,
+      },
+    };
+
+    if (organizationId) {
+      orderWhere.orgId = organizationId;
+    }
+
+    if (categoryId) {
+      orderWhere.event = {
+        categoryId,
+      };
+    }
+
+    const [revenue, platformFees, orderCount, ticketsSold, refunds, refundCount, sampleOrder] =
+      await Promise.all([
+        this.prisma.order.aggregate({
+          where: orderWhere,
+          _sum: { totalCents: true },
+        }),
+        this.prisma.order.aggregate({
+          where: orderWhere,
+          _sum: { feesCents: true },
+        }),
+        this.prisma.order.count({ where: orderWhere }),
+        this.prisma.orderItem.aggregate({
+          where: {
+            order: orderWhere,
+          },
+          _sum: { quantity: true },
+        }),
+        this.prisma.refund.aggregate({
+          where: {
+            status: 'processed',
+            processedAt: {
+              gte: start,
+              lte: end,
+            },
+          },
+          _sum: { amountCents: true },
+        }),
+        this.prisma.refund.count({
+          where: {
+            status: 'processed',
+            processedAt: {
+              gte: start,
+              lte: end,
+            },
+          },
+        }),
+        this.prisma.order.findFirst({
+          where: orderWhere,
+          select: { currency: true },
+        }),
+      ]);
+
+    const grossCents = revenue._sum.totalCents || BigInt(0);
+    const platformFeeCents = platformFees._sum.feesCents || BigInt(0);
+    const refundedCents = refunds._sum.amountCents || BigInt(0);
+
+    // Processing fees are not tracked separately; expose as 0 for now.
+    const processingFeeCents = BigInt(0);
+    const organizerPayoutCents = grossCents - platformFeeCents - processingFeeCents - refundedCents;
+
+    return {
+      totalRevenueCents: Number(grossCents),
+      platformFeeCents: Number(platformFeeCents),
+      processingFeeCents: Number(processingFeeCents),
+      organizerPayoutCents: Number(organizerPayoutCents),
+      orderCount,
+      ticketCount: ticketsSold._sum.quantity || 0,
+      refundAmountCents: Number(refundedCents),
+      refundCount,
+      currency: sampleOrder?.currency || 'USD',
+    };
+  }
+
   async getRevenueOverview(query: RevenueQueryDto) {
     const { period = RevenuePeriod.MONTH, startDate, endDate, organizationId, categoryId } = query;
     const { start, end } = this.getDateRange(period, startDate, endDate);

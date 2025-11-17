@@ -33,7 +33,7 @@ export class OrdersService {
         ticketTypes: {
           where: {
             deletedAt: null,
-            status: 'active',
+            status: { in: ['active', 'approved'] },
           },
         },
       },

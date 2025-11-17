@@ -4,9 +4,9 @@ import {
   Headers,
   HttpCode,
   Post,
-  RawBodyRequest,
   Req,
 } from '@nestjs/common';
+import type { RawBodyRequest } from '@nestjs/common';
 import { StripeWebhookService } from './services/stripe-webhook.service';
 import { Request } from 'express';
 

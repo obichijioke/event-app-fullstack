@@ -55,7 +55,6 @@ export class StripePaymentProvider implements PaymentProvider {
           automatic_payment_methods: {
             enabled: true,
           },
-          return_url: dto.returnUrl,
         },
         {
           idempotencyKey,

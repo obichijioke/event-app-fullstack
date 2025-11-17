@@ -79,4 +79,15 @@ export class AdminRevenueController {
       data,
     };
   }
+
+  @Get('metrics')
+  @ApiOperation({ summary: 'Get consolidated revenue metrics' })
+  @ApiResponse({ status: 200, description: 'Revenue metrics retrieved successfully' })
+  async getRevenueMetrics(@Query() query: RevenueQueryDto) {
+    const data = await this.revenueService.getRevenueMetrics(query);
+    return {
+      success: true,
+      data,
+    };
+  }
 }

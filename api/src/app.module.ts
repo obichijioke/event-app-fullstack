@@ -25,6 +25,7 @@ import { OrganizerModule } from './organizer/organizer.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { WebsocketsModule } from './websockets/websockets.module';
 import { EventCreatorV2Module } from './event-creator-v2/event-creator-v2.module';
+import { CurrencyModule } from './currency/currency.module';
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -54,6 +55,7 @@ import { EventCreatorV2Module } from './event-creator-v2/event-creator-v2.module
     NotificationsModule,
     WebsocketsModule,
     EventCreatorV2Module,
+    CurrencyModule,
   ],
   controllers: [AppController],
   providers: [AppService],

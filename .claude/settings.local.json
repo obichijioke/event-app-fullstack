@@ -32,7 +32,9 @@
       "Bash(done)",
       "Bash(timeout 120 npm run build)",
       "Bash(ls:*)",
-      "Bash(\"e:/projects/event-app-comprehensive/backend/api/prisma/migrations/20251111164529_add_notification_preferences_and_enhanced_notifications/migration.sql\")"
+      "Bash(\"e:/projects/event-app-comprehensive/backend/api/prisma/migrations/20251111164529_add_notification_preferences_and_enhanced_notifications/migration.sql\")",
+      "Bash(findstr:*)",
+      "Bash(timeout 30 npx prisma generate:*)"
     ],
     "deny": [],
     "ask": []

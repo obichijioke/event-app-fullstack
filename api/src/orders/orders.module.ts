@@ -31,6 +31,11 @@ import { TestPaymentProvider } from './providers/test/test-payment.provider';
     },
   ],
   controllers: [OrdersController],
-  exports: [OrdersService, PaymentService, PaystackPaymentProvider],
+  exports: [
+    OrdersService,
+    PaymentService,
+    PaystackPaymentProvider,
+    StripePaymentProvider,
+  ],
 })
 export class OrdersModule {}

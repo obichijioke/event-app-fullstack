@@ -785,19 +785,26 @@ export class EventCreatorV2Service {
       // Promo codes (optional)
       const promos = (tickets?.promoCodes as any[]) || [];
       for (const p of promos) {
-        await tx.promoCode.create({
-          data: {
-            orgId: draft.organizationId,
-            eventId: event.id,
-            code: p.code,
-            kind: p.discountType || 'percent',
-            percentOff:
-              p.percentOff != null ? new Prisma.Decimal(p.percentOff) : null,
-            amountOffCents:
-              p.amountOffCents != null ? BigInt(p.amountOffCents) : null,
-            currency: p.currency || 'USD',
-            maxRedemptions: p.usageLimit || null,
+        const promoData = {
+          orgId: draft.organizationId,
+          eventId: event.id,
+          code: p.code,
+          kind: p.discountType || 'percent',
+          percentOff:
+            p.percentOff != null ? new Prisma.Decimal(p.percentOff) : null,
+          amountOffCents:
+            p.amountOffCents != null ? BigInt(p.amountOffCents) : null,
+          currency: p.currency || 'USD',
+          maxRedemptions: p.usageLimit || null,
+        };
+
+        // Ensure org/code uniqueness by updating existing promo when it already exists
+        await tx.promoCode.upsert({
+          where: {
+            orgId_code: { orgId: draft.organizationId, code: p.code },
           },
+          create: promoData,
+          update: promoData,
         });
       }
 

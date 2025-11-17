@@ -89,9 +89,27 @@ export class StripeWebhookService {
       return;
     }
 
-    const capturedAt = paymentIntent.charges?.data?.[0]?.created
-      ? new Date(paymentIntent.charges.data[0].created * 1000)
-      : new Date();
+    // Retrieve the latest charge if available
+    // PaymentIntent may have charges expanded or we need to fetch them
+    const stripe = this.stripeProvider['stripe']; // Access the stripe client
+    let capturedAt = new Date();
+
+    try {
+      // If charges are expanded in the webhook event, use them
+      const charges = paymentIntent.latest_charge
+        ? typeof paymentIntent.latest_charge === 'string'
+          ? await stripe.charges.retrieve(paymentIntent.latest_charge)
+          : paymentIntent.latest_charge
+        : null;
+
+      if (charges?.created) {
+        capturedAt = new Date(charges.created * 1000);
+      }
+    } catch (error) {
+      this.logger.warn(
+        `Could not retrieve charge details for ${paymentIntent.id}, using current time`,
+      );
+    }
 
     await this.markPaymentCaptured(payment.id, payment.orderId, capturedAt);
 

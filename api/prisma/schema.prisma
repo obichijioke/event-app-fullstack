@@ -178,6 +178,8 @@ model User {
   eventCreatorTemplates           EventCreatorTemplate[]          @relation("EventCreatorTemplateAuthor")
   eventCreatorDraftCollaborations EventCreatorDraftCollaborator[] @relation("EventCreatorDraftCollaboratorUser")
   EventCreatorTemplateAccess      EventCreatorTemplateAccess[]
+  currencyConfigUpdates           CurrencyConfiguration[]
+  currencyChangeLogs              CurrencyChangeLog[]
 
   @@map("users")
 }
@@ -397,24 +399,24 @@ model VenueCatalog {
 }
 
 model Venue {
-  id             String           @id @default(cuid())
-  orgId          String           @map("org_id")
-  catalogVenueId String?          @map("catalog_venue_id")
+  id             String          @id @default(cuid())
+  orgId          String          @map("org_id")
+  catalogVenueId String?         @map("catalog_venue_id")
   name           String
   address        Json // {line1, line2, city, region, postal, country}
   timezone       String
   capacity       Int?
-  latitude       Decimal?         @db.Decimal(10, 8)
-  longitude      Decimal?         @db.Decimal(11, 8)
-  visibility     VenueVisibility  @default(private)
-  createdAt      DateTime         @default(now()) @map("created_at")
-  deletedAt      DateTime?        @map("deleted_at")
+  latitude       Decimal?        @db.Decimal(10, 8)
+  longitude      Decimal?        @db.Decimal(11, 8)
+  visibility     VenueVisibility @default(private)
+  createdAt      DateTime        @default(now()) @map("created_at")
+  deletedAt      DateTime?       @map("deleted_at")
 
   // Relations
-  org           Organization  @relation(fields: [orgId], references: [id], onDelete: Cascade)
-  catalogVenue  VenueCatalog? @relation(fields: [catalogVenueId], references: [id], onDelete: SetNull)
-  events        Event[]
-  seatmaps      Seatmap[]
+  org          Organization  @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  catalogVenue VenueCatalog? @relation(fields: [catalogVenueId], references: [id], onDelete: SetNull)
+  events       Event[]
+  seatmaps     Seatmap[]
 
   @@index([orgId])
   @@index([catalogVenueId])
@@ -1619,4 +1621,98 @@ model EventCreatorDraftCheckoutField {
   @@unique([draftId, fieldKey])
   @@index([draftId])
   @@map("event_creator_draft_checkout_fields")
+}
+
+// ============================================================================
+// CURRENCY MANAGEMENT SYSTEM
+// ============================================================================
+
+model CurrencyConfiguration {
+  id String @id @default(cuid())
+
+  // Basic currency settings
+  defaultCurrency     String   @default("NGN")
+  supportedCurrencies String[] @default(["NGN", "USD", "GBP", "EUR", "GHS", "KES", "ZAR"])
+
+  // Multi-currency mode toggle
+  multiCurrencyEnabled Boolean @default(false) @map("multi_currency_enabled")
+
+  // Currency display settings
+  currencySymbol     String @default("₦")
+  currencyPosition   String @default("before") // "before" or "after"
+  decimalSeparator   String @default(".") @map("decimal_separator")
+  thousandsSeparator String @default(",") @map("thousands_separator")
+  decimalPlaces      Int    @default(2) @map("decimal_places")
+
+  // Exchange rate settings
+  exchangeRatesEnabled Boolean   @default(false) @map("exchange_rates_enabled")
+  exchangeRateProvider String?   @map("exchange_rate_provider") // "manual", "api", etc.
+  exchangeRateApiKey   String?   @map("exchange_rate_api_key")
+  lastRateUpdate       DateTime? @map("last_rate_update")
+  autoUpdateRates      Boolean   @default(false) @map("auto_update_rates")
+  updateFrequency      String    @default("daily") @map("update_frequency") // "hourly", "daily", "weekly"
+
+  // Organizer preferences (for multi-currency mode)
+  allowOrganizerCurrency Boolean @default(false) @map("allow_organizer_currency")
+
+  // Audit
+  updatedBy     String? @map("updated_by")
+  updatedByUser User?   @relation(fields: [updatedBy], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("currency_configuration")
+}
+
+model ExchangeRate {
+  id           String  @id @default(cuid())
+  fromCurrency String  @map("from_currency") // e.g., "USD"
+  toCurrency   String  @map("to_currency") // e.g., "NGN"
+  rate         Decimal @db.Decimal(18, 6) // e.g., 1575.500000
+  inverseRate  Decimal @db.Decimal(18, 6) // e.g., 0.000635 (1/rate)
+  source       String  @default("manual") // "manual", "api", "system"
+  provider     String? // API provider name if applicable
+
+  // Validity period
+  validFrom  DateTime  @default(now()) @map("valid_from")
+  validUntil DateTime? @map("valid_until")
+  isActive   Boolean   @default(true) @map("is_active")
+
+  // Metadata
+  metadata Json? @default("{}")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@unique([fromCurrency, toCurrency, validFrom])
+  @@index([fromCurrency, toCurrency, isActive])
+  @@index([isActive, validFrom])
+  @@map("exchange_rates")
+}
+
+model CurrencyChangeLog {
+  id         String @id @default(cuid())
+  changeType String @map("change_type") // "default_currency", "multi_currency_toggle", "exchange_rate"
+
+  // Change details
+  oldValue Json?   @map("old_value")
+  newValue Json?   @map("new_value")
+  reason   String?
+
+  // Impact tracking
+  affectedOrders Int? @default(0) @map("affected_orders")
+  affectedEvents Int? @default(0) @map("affected_events")
+
+  // Audit
+  changedBy     String  @map("changed_by")
+  changedByUser User    @relation(fields: [changedBy], references: [id], onDelete: Cascade)
+  ipAddress     String? @map("ip_address")
+  userAgent     String? @map("user_agent")
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([changeType, createdAt])
+  @@index([changedBy])
+  @@map("currency_change_logs")
 }
