@@ -10,13 +10,19 @@ import {
   UseGuards,
   HttpCode,
   HttpStatus,
+  UseInterceptors,
+  UploadedFile,
+  BadRequestException,
 } from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
   ApiResponse,
   ApiBearerAuth,
+  ApiConsumes,
+  ApiBody,
 } from '@nestjs/swagger';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../../auth/guards/roles.guard';
 import { Roles } from '../../auth/decorators/roles.decorator';
@@ -110,6 +116,84 @@ export class AdminVenueController {
     const result = await this.venueCatalogService.importVenues(dto);
     return {
       success: true,
+      data: result,
+    };
+  }
+
+  @Post('catalog/bulk-upload')
+  @ApiOperation({ summary: 'Bulk upload venues from CSV or JSON file' })
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        file: {
+          type: 'string',
+          format: 'binary',
+          description: 'CSV or JSON file containing venue data',
+        },
+        strategy: {
+          type: 'string',
+          enum: ['UPSERT', 'SKIP', 'REPLACE'],
+          description: 'Import strategy (default: UPSERT)',
+        },
+        dryRun: {
+          type: 'boolean',
+          description: 'Simulate import without saving (default: false)',
+        },
+      },
+    },
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'File uploaded and venues imported successfully',
+  })
+  @UseInterceptors(
+    FileInterceptor('file', {
+      limits: {
+        fileSize: 10 * 1024 * 1024, // 10MB
+      },
+      fileFilter: (req, file, cb) => {
+        const allowedMimeTypes = [
+          'text/csv',
+          'application/json',
+          'text/plain',
+          'application/vnd.ms-excel',
+        ];
+        if (
+          allowedMimeTypes.includes(file.mimetype) ||
+          file.originalname.match(/\.(csv|json)$/i)
+        ) {
+          cb(null, true);
+        } else {
+          cb(
+            new BadRequestException(
+              'Only CSV and JSON files are allowed',
+            ),
+            false,
+          );
+        }
+      },
+    }),
+  )
+  @HttpCode(HttpStatus.OK)
+  async bulkUploadVenues(
+    @UploadedFile() file: Express.Multer.File,
+    @Body() dto: VenueCatalogImportOptionsDto,
+  ) {
+    if (!file) {
+      throw new BadRequestException('File is required');
+    }
+
+    const result = await this.venueCatalogService.bulkUploadFromFile(
+      file.buffer,
+      file.originalname,
+      dto,
+    );
+
+    return {
+      success: true,
+      message: 'Bulk upload completed',
       data: result,
     };
   }

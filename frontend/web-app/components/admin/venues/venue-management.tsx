@@ -281,17 +281,34 @@ export default function VenueManagement() {
       const formData = new FormData();
       formData.append('file', bulkUploadFile);
 
-      // Note: Backend API endpoint for bulk upload should be implemented
-      toast.info('Bulk upload feature - Backend endpoint needed');
-      // await adminApiService.bulkUploadVenueCatalog(accessToken, formData);
+      const result = await adminApiService.bulkUploadVenueCatalog(accessToken, formData);
 
-      toast.success('Bulk upload completed');
+      if (result.success && result.data) {
+        const { total, created, updated, skipped, errors } = result.data;
+
+        let message = `Successfully processed ${total} entries: ${created} created, ${updated} updated`;
+        if (skipped > 0) {
+          message += `, ${skipped} skipped`;
+        }
+
+        if (errors.length > 0) {
+          message += `. ${errors.length} errors occurred.`;
+          toast.warning(message);
+
+          // Log errors to console for debugging
+          console.error('Bulk upload errors:', errors);
+        } else {
+          toast.success(message);
+        }
+      }
+
       setShowBulkUploadModal(false);
       setBulkUploadFile(null);
       loadCatalog();
     } catch (error: any) {
       console.error('Failed to bulk upload venues', error);
-      toast.error(error?.response?.data?.message || 'Failed to bulk upload venues');
+      const errorMessage = error?.message || error?.response?.data?.message || 'Failed to bulk upload venues';
+      toast.error(errorMessage);
     } finally {
       setBulkUploading(false);
     }

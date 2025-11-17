@@ -1120,6 +1120,32 @@ export class AdminApiService {
     );
   }
 
+  async bulkUploadVenueCatalog(
+    token: string,
+    formData: FormData
+  ): Promise<AdminApiResponse<{
+    total: number;
+    created: number;
+    updated: number;
+    skipped: number;
+    errors: Array<{ index: number; message: string }>;
+  }>> {
+    const response = await fetch(`${this.baseUrl}/venues/catalog/bulk-upload`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      body: formData,
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.message || 'Failed to upload file');
+    }
+
+    return response.json();
+  }
+
   // Venues
   async getVenues(
     token: string,

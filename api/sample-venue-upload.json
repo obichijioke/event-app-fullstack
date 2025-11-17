@@ -1,0 +1,78 @@
+[
+  {
+    "name": "Madison Square Garden",
+    "slug": "madison-square-garden",
+    "description": "World-famous indoor arena in New York City",
+    "timezone": "America/New_York",
+    "address": {
+      "line1": "4 Pennsylvania Plaza",
+      "city": "New York",
+      "region": "NY",
+      "postal": "10001",
+      "country": "US"
+    },
+    "capacityMin": 18000,
+    "capacityMax": 20789,
+    "latitude": 40.7505,
+    "longitude": -73.9934,
+    "tags": ["sports", "concerts", "arena"],
+    "imageUrl": "https://example.com/msg.jpg"
+  },
+  {
+    "name": "Hollywood Bowl",
+    "slug": "hollywood-bowl",
+    "description": "Iconic outdoor amphitheater in Los Angeles",
+    "timezone": "America/Los_Angeles",
+    "address": {
+      "line1": "2301 N Highland Ave",
+      "city": "Los Angeles",
+      "region": "CA",
+      "postal": "90068",
+      "country": "US"
+    },
+    "capacityMin": 17000,
+    "capacityMax": 17500,
+    "latitude": 34.1128,
+    "longitude": -118.3393,
+    "tags": ["concerts", "outdoor", "amphitheater"],
+    "imageUrl": "https://example.com/hollywood-bowl.jpg"
+  },
+  {
+    "name": "Red Rocks Amphitheatre",
+    "slug": "red-rocks-amphitheatre",
+    "description": "Naturally formed rock amphitheater near Denver",
+    "timezone": "America/Denver",
+    "address": {
+      "line1": "18300 W Alameda Pkwy",
+      "city": "Morrison",
+      "region": "CO",
+      "postal": "80465",
+      "country": "US"
+    },
+    "capacityMin": 9000,
+    "capacityMax": 9525,
+    "latitude": 39.6654,
+    "longitude": -105.2057,
+    "tags": ["concerts", "outdoor", "natural"],
+    "imageUrl": "https://example.com/red-rocks.jpg"
+  },
+  {
+    "name": "The O2 Arena",
+    "slug": "the-o2-arena",
+    "description": "Multi-purpose indoor arena in London",
+    "timezone": "Europe/London",
+    "address": {
+      "line1": "Peninsula Square",
+      "city": "London",
+      "region": "England",
+      "postal": "SE10 0DX",
+      "country": "GB"
+    },
+    "capacityMin": 18000,
+    "capacityMax": 20000,
+    "latitude": 51.5033,
+    "longitude": 0.0031,
+    "tags": ["sports", "concerts", "arena"],
+    "imageUrl": "https://example.com/o2.jpg"
+  }
+]
