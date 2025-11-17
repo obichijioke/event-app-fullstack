@@ -6,7 +6,7 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { OrganizationQueryDto } from '../dto/query-params.dto';
-import { UpdateOrganizationDto } from '../dto/update-organization.dto';
+import { AdminUpdateOrganizationDto } from '../dto/update-organization.dto';
 import {
   OrganizationVerificationQueryDto,
   SubmitForVerificationDto,
@@ -37,7 +37,7 @@ export class AdminOrganizationService {
     return this.getOrganization(orgId);
   }
 
-  async update(orgId: string, dto: UpdateOrganizationDto) {
+  async update(orgId: string, dto: AdminUpdateOrganizationDto) {
     return this.updateOrganization(orgId, dto);
   }
 
@@ -208,7 +208,7 @@ export class AdminOrganizationService {
     };
   }
 
-  async updateOrganization(orgId: string, data: UpdateOrganizationDto) {
+  async updateOrganization(orgId: string, data: AdminUpdateOrganizationDto) {
     const existingOrg = await this.prisma.organization.findUnique({
       where: { id: orgId },
       select: { id: true, status: true },

@@ -15,7 +15,8 @@ export class CreateTicketTypeDto {
   kind: TicketKind;
 
   @IsString()
-  currency: string;
+  @IsOptional()
+  currency?: string;
 
   @IsNumber()
   priceCents: number;

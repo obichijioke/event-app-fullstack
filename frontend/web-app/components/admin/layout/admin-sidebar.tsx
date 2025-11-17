@@ -94,6 +94,7 @@ const navigation: NavItem[] = [
       { title: 'Tax Rates', href: '/admin/tax-rates' },
       { title: 'Fee Schedules', href: '/admin/fee-schedules' },
       { title: 'Site Settings', href: '/admin/site-settings' },
+      {title: 'Currency Settings', href: '/admin/currency-settings'}
     ],
   },
   {

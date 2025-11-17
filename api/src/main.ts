@@ -12,7 +12,9 @@ import cookieParser = require('cookie-parser');
 };
 
 async function bootstrap() {
-  const app = await NestFactory.create<NestExpressApplication>(AppModule);
+  const app = await NestFactory.create<NestExpressApplication>(AppModule, {
+    rawBody: true, // Enable raw body for webhook signature verification
+  });
 
   // Enable cookie parsing
   app.use(cookieParser());

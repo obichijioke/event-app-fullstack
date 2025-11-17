@@ -22,7 +22,7 @@ import { Roles } from '../../auth/decorators/roles.decorator';
 import { PlatformRole } from '@prisma/client';
 import { AdminOrganizationService } from '../services/organization.service';
 import { OrganizationQueryDto } from '../dto/query-params.dto';
-import { UpdateOrganizationDto } from '../dto/update-organization.dto';
+import { AdminUpdateOrganizationDto } from '../dto/update-organization.dto';
 import {
   SubmitForVerificationDto,
   UploadDocumentDto,
@@ -89,7 +89,10 @@ export class AdminOrganizationController {
   @Patch(':id')
   @ApiOperation({ summary: 'Update organization details' })
   @ApiResponse({ status: 200, description: 'Organization updated successfully' })
-  async updateOrganization(@Param('id') id: string, @Body() dto: UpdateOrganizationDto) {
+  async updateOrganization(
+    @Param('id') id: string,
+    @Body() dto: AdminUpdateOrganizationDto,
+  ) {
     const org = await this.orgService.update(id, dto);
     return {
       success: true,
