@@ -4,7 +4,8 @@ import Image from 'next/image';
 import { Calendar, MapPin, Shield, Lock, CreditCard, Tag } from 'lucide-react';
 
 import { CurrencyDisplay } from '@/components/common/currency-display';
-import type { Event } from '@/lib/api/events-api';
+//import type { Event } from '@/lib/api/events-api';
+import type {PublicEvent as Event} from '@/lib/events';
 import type { TicketType } from '@/lib/api/tickets-api';
 
 interface OrderSummaryProps {
@@ -37,6 +38,7 @@ type SelectedTicket = {
 };
 
 const formatDate = (dateString: string) => {
+  console.log(dateString);
   const date = new Date(dateString);
   return date.toLocaleDateString('en-US', {
     weekday: 'short',
@@ -71,9 +73,7 @@ export function OrderSummary({
   let subtotalCents = 0;
   let feesCents = 0;
 
-  const currency =
-    // @ts-expect-error - currency is returned by API but not typed yet
-    (event as any)?.currency || ticketTypes[0]?.currency || 'NGN';
+  const currency = ticketTypes[0]?.currency || 'NGN';
 
   const selectedTickets: SelectedTicket[] = Array.from(ticketSelections.entries())
     .filter(([, quantity]) => quantity > 0)
@@ -120,10 +120,10 @@ export function OrderSummary({
         <div className="mb-6 rounded-xl border border-border/60 bg-muted/40 p-4">
           <div className="flex flex-col gap-4">
             <div className="flex items-center gap-4">
-              {event.bannerImageUrl && (
+              {event.coverImageUrl && (
                 <div className="relative h-16 w-16 flex-shrink-0 overflow-hidden rounded-lg">
                   <Image
-                    src={event.bannerImageUrl}
+                    src={event.coverImageUrl}
                     alt={event.title}
                     fill
                     className="object-cover"
@@ -135,7 +135,7 @@ export function OrderSummary({
                 <div className="mt-2 space-y-1.5 text-sm text-muted-foreground">
                   <div className="flex items-start gap-2">
                     <Calendar className="h-4 w-4 flex-shrink-0" />
-                    <span>{formatDate(event.startTime)}</span>
+                    <span>{formatDate(event.startAt)}</span>
                   </div>
                   {event.venue && (
                     <div className="flex items-start gap-2">

@@ -62,8 +62,9 @@ export function BasicsSection() {
   // Debounced autosave on any change
   const debouncedSave = useMemo(
     () =>
-      debounce(async (values: z.infer<typeof schema>) => {
-        await updateSection(
+      debounce((...args: unknown[]) => {
+        const values = args[0] as z.infer<typeof schema>;
+        void updateSection(
           'basics',
           {
             autosave: true,

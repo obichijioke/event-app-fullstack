@@ -15,12 +15,14 @@ interface PromotionFormProps {
   onCancel: () => void;
 }
 
+type PromotionFormData = CreatePromotionDto & Record<string, unknown>;
+
 export function PromotionForm({ eventId, onSubmit, onCancel }: PromotionFormProps) {
   const { currentOrganization } = useRequireOrganization();
   const [loadingEvents, setLoadingEvents] = useState(true);
   const [events, setEvents] = useState<Array<{ id: string; title: string }>>([]);
 
-  const { formData, setFormData, loading, handleChange, handleSubmit } = useFormState({
+  const { formData, setFormData, loading, handleChange, handleSubmit } = useFormState<PromotionFormData>({
     initialData: {
       name: '',
       type: 'discount',
@@ -30,7 +32,7 @@ export function PromotionForm({ eventId, onSubmit, onCancel }: PromotionFormProp
       startsAt: '',
       endsAt: '',
       maxUses: 0,
-    } as CreatePromotionDto,
+    } as PromotionFormData,
     onSubmit,
   });
 

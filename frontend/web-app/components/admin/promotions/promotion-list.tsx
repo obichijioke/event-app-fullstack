@@ -226,37 +226,58 @@ export function PromotionList({ className }: PromotionListProps) {
         </div>
       </div>
 
-      <DataTable
-        data={viewMode === 'promotions' ? promotions : promoCodes}
-        columns={viewMode === 'promotions' ? promotionColumns : promoCodeColumns}
-        loading={loading}
-        pagination={{
-          ...pagination,
-          onPageChange: (page) => setPagination(prev => ({ ...prev, page })),
-        }}
-        sorting={{
-          ...sorting,
-          onSort: (field) => {
-            setSorting(prev => ({
-              field,
-              direction: prev.field === field && prev.direction === 'asc' ? 'desc' : 'asc',
-            }));
-          },
-        }}
-        actions={viewMode === 'promotions' ? [
-          {
-            label: 'View Details',
-            onClick: (promotion: AdminPromotion) => {
-              window.location.href = `/admin/promotions/${promotion.id}`;
+      {viewMode === 'promotions' ? (
+        <DataTable<AdminPromotion>
+          data={promotions}
+          columns={promotionColumns}
+          loading={loading}
+          pagination={{
+            ...pagination,
+            onPageChange: (page) => setPagination(prev => ({ ...prev, page })),
+          }}
+          sorting={{
+            ...sorting,
+            onSort: (field) => {
+              setSorting(prev => ({
+                field,
+                direction: prev.field === field && prev.direction === 'asc' ? 'desc' : 'asc',
+              }));
             },
-          },
-          {
-            label: 'Deactivate',
-            variant: 'destructive' as const,
-            onClick: handleDeactivatePromotion,
-          },
-        ] : []}
-      />
+          }}
+          actions={[
+            {
+              label: 'View Details',
+              onClick: (promotion: AdminPromotion) => {
+                window.location.href = `/admin/promotions/${promotion.id}`;
+              },
+            },
+            {
+              label: 'Deactivate',
+              variant: 'destructive' as const,
+              onClick: handleDeactivatePromotion,
+            },
+          ]}
+        />
+      ) : (
+        <DataTable<AdminPromoCode>
+          data={promoCodes}
+          columns={promoCodeColumns}
+          loading={loading}
+          pagination={{
+            ...pagination,
+            onPageChange: (page) => setPagination(prev => ({ ...prev, page })),
+          }}
+          sorting={{
+            ...sorting,
+            onSort: (field) => {
+              setSorting(prev => ({
+                field,
+                direction: prev.field === field && prev.direction === 'asc' ? 'desc' : 'asc',
+              }));
+            },
+          }}
+        />
+      )}
     </div>
   );
 }

@@ -195,15 +195,27 @@ export function WebhookList({ className }: WebhookListProps) {
         </div>
       </div>
 
-      <DataTable
-        data={viewMode === 'webhooks' ? webhooks : events}
-        columns={viewMode === 'webhooks' ? webhookColumns : eventColumns}
-        loading={loading}
-        pagination={{
-          ...pagination,
-          onPageChange: (page) => setPagination(prev => ({ ...prev, page })),
-        }}
-      />
+      {viewMode === 'webhooks' ? (
+        <DataTable<AdminWebhook>
+          data={webhooks}
+          columns={webhookColumns}
+          loading={loading}
+          pagination={{
+            ...pagination,
+            onPageChange: (page) => setPagination(prev => ({ ...prev, page })),
+          }}
+        />
+      ) : (
+        <DataTable<AdminWebhookEvent>
+          data={events}
+          columns={eventColumns}
+          loading={loading}
+          pagination={{
+            ...pagination,
+            onPageChange: (page) => setPagination(prev => ({ ...prev, page })),
+          }}
+        />
+      )}
     </div>
   );
 }

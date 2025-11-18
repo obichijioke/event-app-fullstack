@@ -40,6 +40,7 @@ export function RequestPayoutModal({ onSuccess, onCancel }: RequestPayoutModalPr
       // Get financial summary
       const summaryData = await organizerApi.financials.getSummary(currentOrganization.id);
       setSummary(summaryData);
+      const summaryCurrency = summaryData.currency || summaryData.totals.currency || 'USD';
 
       // Check for pending payouts
       const payoutsData = await organizerApi.payouts.list(currentOrganization.id, {
@@ -53,7 +54,7 @@ export function RequestPayoutModal({ onSuccess, onCancel }: RequestPayoutModalPr
       setFormData((prev) => ({
         ...prev,
         amountCents: Math.max(0, availableAmount),
-        currency: 'USD',
+        currency: summaryCurrency,
       }));
     } catch (error: any) {
       console.error('Failed to calculate payout:', error);
@@ -87,6 +88,8 @@ export function RequestPayoutModal({ onSuccess, onCancel }: RequestPayoutModalPr
       setLoading(false);
     }
   };
+
+  const summaryCurrency = summary?.currency || summary?.totals.currency || 'USD';
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
@@ -128,7 +131,7 @@ export function RequestPayoutModal({ onSuccess, onCancel }: RequestPayoutModalPr
                   <p className="text-2xl font-bold text-blue-900 mb-3">
                     <CurrencyDisplay
                       amountCents={Math.max(0, summary.totals.netRevenueCents - summary.totals.payoutsCents)}
-                      currency={summary.currency}
+                      currency={summaryCurrency}
                       showFree={false}
                     />
                   </p>
@@ -138,7 +141,7 @@ export function RequestPayoutModal({ onSuccess, onCancel }: RequestPayoutModalPr
                       <span className="font-medium">
                         <CurrencyDisplay
                           amountCents={summary.totals.grossRevenueCents}
-                          currency={summary.currency}
+                          currency={summaryCurrency}
                           showFree={false}
                         />
                       </span>
@@ -149,7 +152,7 @@ export function RequestPayoutModal({ onSuccess, onCancel }: RequestPayoutModalPr
                         -
                         <CurrencyDisplay
                           amountCents={summary.totals.feeCents}
-                          currency={summary.currency}
+                          currency={summaryCurrency}
                           showFree={false}
                         />
                       </span>
@@ -160,7 +163,7 @@ export function RequestPayoutModal({ onSuccess, onCancel }: RequestPayoutModalPr
                         -
                         <CurrencyDisplay
                           amountCents={summary.totals.payoutsCents}
-                          currency={summary.currency}
+                          currency={summaryCurrency}
                           showFree={false}
                         />
                       </span>

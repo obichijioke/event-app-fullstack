@@ -9,7 +9,8 @@ import { StepIndicator } from '@/components/checkout/step-indicator';
 import { TicketSelector } from '@/components/checkout/ticket-selector';
 import { OrderSummary } from '@/components/checkout/order-summary';
 import { CountdownTimer } from '@/components/checkout/countdown-timer';
-import { eventsApi, type Event } from '@/lib/api/events-api';
+import { PublicEvent as Event } from '@/lib/events';
+import { eventsApi } from '@/lib/api/events-api';
 import { ticketsApi, type TicketType } from '@/lib/api/tickets-api';
 import { ordersApi } from '@/lib/api/orders-api';
 import { promotionsApi } from '@/lib/api/promotions-api';
@@ -262,10 +263,10 @@ export default function CheckoutPage({ params }: Props) {
             <section className="rounded-3xl border border-border/70 bg-card p-6 shadow-sm">
               <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                 <div className="flex items-center gap-4">
-                  {event.bannerImageUrl && (
+                  {event.coverImageUrl && (
                     <div className="relative h-20 w-32 overflow-hidden rounded-xl">
                       <Image
-                        src={event.bannerImageUrl}
+                        src={event.coverImageUrl}
                         alt={event.title}
                         fill
                         className="object-cover"
@@ -280,7 +281,7 @@ export default function CheckoutPage({ params }: Props) {
                     <div className="mt-3 space-y-1 text-sm text-muted-foreground">
                       <div className="flex items-center gap-2">
                         <Calendar className="h-4 w-4" />
-                        <span>{formatEventDate(event.startTime)}</span>
+                        <span>{formatEventDate(event.startAt)}</span>
                       </div>
                       {event.venue && (
                         <div className="flex items-center gap-2">

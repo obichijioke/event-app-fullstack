@@ -6,30 +6,16 @@ import { accountApi } from '@/lib/api/account-api';
 import { ticketsApi, type Ticket } from '@/lib/api/tickets-api';
 import { ordersApi } from '@/lib/api/orders-api';
 import { CurrencyDisplay } from '@/components/common/currency-display';
-import {
-  Loader2,
-  Ticket as TicketIcon,
-  ShoppingBag,
-  Heart,
-  TrendingUp,
-  Shield,
-  User,
-  RefreshCw,
-  AlertCircle,
-  RotateCcw,
-} from 'lucide-react';
 
 export default function AccountDashboardPage() {
   const [stats, setStats] = useState({ totalOrders: 0, totalSpentCents: 0, activeTickets: 0, following: 0 });
   const [upcomingTickets, setUpcomingTickets] = useState<Ticket[]>([]);
   const [recentOrders, setRecentOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     async function fetchData() {
       try {
-        setError(null);
         const [statsData, ticketsData, ordersData] = await Promise.all([
           accountApi.getStats(),
           ticketsApi.getUserTickets({ upcoming: true }),
@@ -39,9 +25,8 @@ export default function AccountDashboardPage() {
         setStats(statsData);
         setUpcomingTickets(ticketsData.slice(0, 3));
         setRecentOrders(ordersData.items || []);
-      } catch (err: any) {
-        console.error('Failed to load account data:', err);
-        setError(err?.message || 'Failed to load account data');
+      } catch (error) {
+        console.error('Failed to load account data:', error);
       } finally {
         setLoading(false);
       }

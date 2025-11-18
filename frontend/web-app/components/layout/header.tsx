@@ -283,8 +283,8 @@ function UserMenu({
           </div>
           <div className="p-2">
             <UserMenuItem href="/account">My Account</UserMenuItem>
-            <UserMenuItem href="/orders">My Orders</UserMenuItem>
-            <UserMenuItem href="/tickets">My Tickets</UserMenuItem>
+            <UserMenuItem href="/account/orders">My Orders</UserMenuItem>
+            <UserMenuItem href="/account/tickets">My Tickets</UserMenuItem>
             <UserMenuItem href="/account/following">Following</UserMenuItem>
             <div className="my-2 border-t border-border" />
             <UserMenuItem href="/organizer">Organizer Dashboard</UserMenuItem>

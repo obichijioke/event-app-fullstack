@@ -1,13 +1,8 @@
-import { Metadata } from 'next';
-import Link from 'next/link';
+'use client';
 
+import Link from 'next/link';
 import { useState } from 'react';
 import { authApi } from '@/lib/api/auth-api';
-
-export const metadata: Metadata = {
-  title: 'Forgot Password',
-  description: 'Reset your password',
-};
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState('');

@@ -15,12 +15,14 @@ interface EditPromotionFormProps {
   onCancel: () => void;
 }
 
+type PromotionFormData = CreatePromotionDto & Record<string, unknown>;
+
 export function EditPromotionForm({ promotion, onSubmit, onCancel }: EditPromotionFormProps) {
   const { currentOrganization } = useRequireOrganization();
   const [loadingEvents, setLoadingEvents] = useState(true);
   const [events, setEvents] = useState<Array<{ id: string; title: string }>>([]);
 
-  const { formData, setFormData, loading, handleChange, handleSubmit } = useFormState({
+  const { formData, setFormData, loading, handleChange, handleSubmit } = useFormState<PromotionFormData>({
     initialData: {
       name: promotion.name,
       type: promotion.type,
@@ -30,7 +32,7 @@ export function EditPromotionForm({ promotion, onSubmit, onCancel }: EditPromoti
       startsAt: toDateTimeInput(promotion.startsAt),
       endsAt: toDateTimeInput(promotion.endsAt),
       maxUses: promotion.maxUses,
-    } as CreatePromotionDto,
+    } as PromotionFormData,
     onSubmit: async (data) => await onSubmit(data),
   });
 

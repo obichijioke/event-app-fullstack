@@ -48,8 +48,9 @@ export function CheckoutSection() {
 
   const debouncedSave = useMemo(
     () =>
-      debounce(async (values: CheckoutValues) => {
-        await updateSection(
+      debounce((...args: unknown[]) => {
+        const values = args[0] as CheckoutValues;
+        void updateSection(
           'checkout',
           {
             autosave: true,
