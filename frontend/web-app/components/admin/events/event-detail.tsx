@@ -40,7 +40,6 @@ export function AdminEventDetail({ eventId, className }: Props) {
 
   // Debug: log incoming props and auth so we can trace undefined eventId issues
   // Remove or lower verbosity in production
-  // eslint-disable-next-line no-console
   console.debug("AdminEventDetail init", { eventId, accessToken });
 
   React.useEffect(() => {
@@ -72,10 +71,8 @@ export function AdminEventDetail({ eventId, className }: Props) {
   }, [accessToken, eventId]);
 
   const reload = async () => {
-    // eslint-disable-next-line no-console
     console.debug("AdminEventDetail.reload called", { eventId, accessToken });
     if (!accessToken || !eventId) {
-      // eslint-disable-next-line no-console
       console.debug("AdminEventDetail.reload - missing dependency", {
         eventId,
         accessToken,
@@ -88,7 +85,6 @@ export function AdminEventDetail({ eventId, className }: Props) {
       if (res.success) setEvent(res.data);
       else toast.error(res.message || "Failed to reload event");
     } catch (e) {
-      // eslint-disable-next-line no-console
       console.error("AdminEventDetail.reload error", e);
       toast.error(e instanceof Error ? e.message : "Failed to reload event");
     } finally {

@@ -25,12 +25,8 @@ interface SocialShareDropdownProps {
 export function SocialShareDropdown({ url, title, description, hashtags }: SocialShareDropdownProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [copied, setCopied] = useState(false);
-  const [showNativeShare, setShowNativeShare] = useState(false);
+  const [showNativeShare] = useState(() => isNativeShareAvailable());
   const dropdownRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    setShowNativeShare(isNativeShareAvailable());
-  }, []);
 
   // Close dropdown when clicking outside
   useEffect(() => {

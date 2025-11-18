@@ -31,7 +31,7 @@ export interface CreateVenueDto {
   longitude?: number;
 }
 
-export interface UpdateVenueDto extends Partial<CreateVenueDto> {}
+export type UpdateVenueDto = Partial<CreateVenueDto>;
 
 export const venuesApi = {
   /**

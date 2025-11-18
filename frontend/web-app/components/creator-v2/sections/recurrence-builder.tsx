@@ -38,7 +38,9 @@ interface RecurrenceBuilderProps {
 export function RecurrenceBuilder({ config, timezone, onChange }: RecurrenceBuilderProps) {
   const [local, setLocal] = useState<RecurrenceConfig>(config);
 
-  useEffect(() => setLocal(config), [config.start, config.end, config.freq, config.interval, config.byWeekday, config.ends, config.exceptions]);
+  useEffect(() => {
+    setLocal(config);
+  }, [config]);
 
   const rruleString = useMemo(() => {
     try {
@@ -174,4 +176,3 @@ export function RecurrenceBuilder({ config, timezone, onChange }: RecurrenceBuil
     </div>
   );
 }
-

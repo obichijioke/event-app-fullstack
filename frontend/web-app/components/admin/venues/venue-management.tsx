@@ -97,7 +97,6 @@ export default function VenueManagement() {
     if (!accessToken) return;
     loadCatalog();
     loadVenues();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [accessToken]);
 
   const loadCatalog = async () => {

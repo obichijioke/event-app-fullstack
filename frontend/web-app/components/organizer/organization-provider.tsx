@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { useOrganizerStore } from '@/lib/stores/organizer-store';
 import { organizerApi } from '@/lib/api/organizer-api';
@@ -133,18 +134,18 @@ export function OrganizationProvider({ children }: { children: React.ReactNode }
             }
             action={
               <div className="flex gap-3 justify-center">
-                <a
+                <Link
                   href="/organizations/create"
                   className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:opacity-90 transition"
                 >
                   Create Organization
-                </a>
-                <a
+                </Link>
+                <Link
                   href="/"
                   className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition"
                 >
                   Back to Home
-                </a>
+                </Link>
               </div>
             }
           />
