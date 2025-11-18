@@ -238,7 +238,10 @@ export class OrdersService {
       status?: OrderStatus;
       eventId?: string;
       orgId?: string;
+      startDate?: string;
+      endDate?: string;
     },
+    pagination?: { page: number; limit: number },
   ) {
     const whereClause: any = {
       buyerId: userId,
@@ -256,56 +259,77 @@ export class OrdersService {
       whereClause.orgId = filters.orgId;
     }
 
-    const orders = await this.prisma.order.findMany({
-      where: whereClause,
-      include: {
-        event: {
-          select: {
-            id: true,
-            title: true,
-            startAt: true,
-          },
-        },
-        org: {
-          select: {
-            id: true,
-            name: true,
-          },
-        },
-        items: {
-          include: {
-            ticketType: {
-              select: {
-                id: true,
-                name: true,
-                kind: true,
-              },
-            },
-            seat: {
-              select: {
-                id: true,
-                section: true,
-                row: true,
-                number: true,
-              },
-            },
-          },
-        },
-        payments: true,
-        tickets: true,
-        _count: {
-          select: {
-            items: true,
-            tickets: true,
-          },
-        },
-      },
-      orderBy: {
-        createdAt: 'desc',
-      },
-    });
+    if (filters?.startDate || filters?.endDate) {
+      whereClause.createdAt = {};
+      if (filters.startDate) {
+        whereClause.createdAt.gte = new Date(filters.startDate);
+      }
+      if (filters.endDate) {
+        whereClause.createdAt.lte = new Date(filters.endDate);
+      }
+    }
 
-    return orders;
+    const page = pagination?.page && pagination.page > 0 ? pagination.page : 1;
+    const limit =
+      pagination?.limit && pagination.limit > 0 && pagination.limit <= 100
+        ? pagination.limit
+        : 20;
+
+    const [orders, total] = await Promise.all([
+      this.prisma.order.findMany({
+        where: whereClause,
+        include: {
+          event: {
+            select: {
+              id: true,
+              title: true,
+              startAt: true,
+            },
+          },
+          org: {
+            select: {
+              id: true,
+              name: true,
+            },
+          },
+          items: {
+            include: {
+              ticketType: {
+                select: {
+                  id: true,
+                  name: true,
+                  kind: true,
+                },
+              },
+              seat: {
+                select: {
+                  id: true,
+                  section: true,
+                  row: true,
+                  number: true,
+                },
+              },
+            },
+          },
+          payments: true,
+          tickets: true,
+          _count: {
+            select: {
+              items: true,
+              tickets: true,
+            },
+          },
+        },
+        orderBy: {
+          createdAt: 'desc',
+        },
+        skip: (page - 1) * limit,
+        take: limit,
+      }),
+      this.prisma.order.count({ where: whereClause }),
+    ]);
+
+    return { items: orders, total, page, limit };
   }
 
   async findOne(id: string, userId: string) {

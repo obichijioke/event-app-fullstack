@@ -30,10 +30,12 @@ export class CreatePromotionDto {
   type: PromoType;
 
   @IsEnum(DiscountType)
-  discountType: DiscountType;
+  @IsOptional()
+  discountType?: DiscountType;
 
   @IsNumber()
-  discountValue: number;
+  @IsOptional()
+  discountValue?: number;
 
   @IsString()
   @IsOptional()

@@ -1,17 +1,45 @@
-import { Metadata } from 'next';
+'use client';
+
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { authApi } from '@/lib/api/auth-api';
 
 type Props = {
   params: Promise<{ token: string }>;
 };
 
-export const metadata: Metadata = {
-  title: 'Reset Password',
-  description: 'Set a new password for your account',
-};
+export default function ResetPasswordPage({ params }: Props) {
+  const [token, setToken] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [status, setStatus] = useState<'idle' | 'submitting' | 'success' | 'error'>('idle');
+  const [message, setMessage] = useState<string>('');
+  const router = useRouter();
 
-export default async function ResetPasswordPage({ params }: Props) {
-  const { token } = await params;
+  useEffect(() => {
+    params.then(({ token }) => setToken(token));
+  }, [params]);
+
+  const onSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (password !== confirmPassword) {
+      setStatus('error');
+      setMessage('Passwords do not match');
+      return;
+    }
+    setStatus('submitting');
+    setMessage('');
+    try {
+      await authApi.resetPassword(token, password);
+      setStatus('success');
+      setMessage('Password reset successfully. Redirecting to login...');
+      setTimeout(() => router.push('/auth/login'), 1500);
+    } catch (err: any) {
+      setStatus('error');
+      setMessage(err?.message || 'Failed to reset password');
+    }
+  };
 
   return (
     <div className="min-h-screen flex items-center justify-center px-4 py-12">
@@ -22,7 +50,7 @@ export default async function ResetPasswordPage({ params }: Props) {
             Enter your new password below
           </p>
 
-          <form className="space-y-4">
+          <form className="space-y-4" onSubmit={onSubmit}>
             <input type="hidden" value={token} />
 
             {/* New Password */}
@@ -33,8 +61,11 @@ export default async function ResetPasswordPage({ params }: Props) {
               <input
                 type="password"
                 id="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
                 className="w-full px-4 py-2 rounded-md border border-border bg-background focus:outline-none focus:ring-2 focus:ring-primary"
                 placeholder="••••••••"
+                required
               />
             </div>
 
@@ -46,8 +77,11 @@ export default async function ResetPasswordPage({ params }: Props) {
               <input
                 type="password"
                 id="confirmPassword"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
                 className="w-full px-4 py-2 rounded-md border border-border bg-background focus:outline-none focus:ring-2 focus:ring-primary"
                 placeholder="••••••••"
+                required
               />
             </div>
 
@@ -55,10 +89,21 @@ export default async function ResetPasswordPage({ params }: Props) {
             <button
               type="submit"
               className="w-full bg-primary text-primary-foreground py-2 rounded-md hover:opacity-90 transition font-medium"
+              disabled={status === 'submitting'}
             >
-              Reset Password
+              {status === 'submitting' ? 'Resetting...' : 'Reset Password'}
             </button>
           </form>
+
+          {message && (
+            <p
+              className={`text-sm mt-4 text-center ${
+                status === 'success' ? 'text-success' : 'text-error'
+              }`}
+            >
+              {message}
+            </p>
+          )}
 
           {/* Back to Login */}
           <p className="text-center text-sm text-muted-foreground mt-6">
@@ -71,4 +116,3 @@ export default async function ResetPasswordPage({ params }: Props) {
     </div>
   );
 }
-

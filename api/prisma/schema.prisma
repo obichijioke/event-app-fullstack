@@ -180,6 +180,9 @@ model User {
   EventCreatorTemplateAccess      EventCreatorTemplateAccess[]
   currencyConfigUpdates           CurrencyConfiguration[]
   currencyChangeLogs              CurrencyChangeLog[]
+  emailVerificationTokens         EmailVerificationToken[]
+  passwordResetTokens             PasswordResetToken[]
+  twoFactorCodes                  TwoFactorCode[]
 
   @@map("users")
 }
@@ -217,6 +220,49 @@ model ApiKey {
 
   @@unique([prefix])
   @@map("api_keys")
+}
+
+model EmailVerificationToken {
+  id         String   @id @default(cuid())
+  userId     String   @map("user_id")
+  token      String   @unique
+  expiresAt  DateTime @map("expires_at")
+  usedAt     DateTime? @map("used_at")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("email_verification_tokens")
+}
+
+model PasswordResetToken {
+  id         String   @id @default(cuid())
+  userId     String   @map("user_id")
+  token      String   @unique
+  expiresAt  DateTime @map("expires_at")
+  usedAt     DateTime? @map("used_at")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("password_reset_tokens")
+}
+
+model TwoFactorCode {
+  id         String   @id @default(cuid())
+  userId     String   @map("user_id")
+  codeHash   String   @map("code_hash")
+  purpose    String
+  expiresAt  DateTime @map("expires_at")
+  usedAt     DateTime? @map("used_at")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, purpose])
+  @@map("twofactor_codes")
 }
 
 // ---------- Organizations & Payouts ----------
