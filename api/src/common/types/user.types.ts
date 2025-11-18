@@ -15,6 +15,4 @@ export interface UserEntity {
   role: PlatformRole;
 }
 
-export interface AuthenticatedUser extends UserEntity {
-  // Add any additional user properties needed
-}
+export type AuthenticatedUser = UserEntity;

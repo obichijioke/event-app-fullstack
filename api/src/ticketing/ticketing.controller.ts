@@ -14,6 +14,7 @@ import {
   ApiResponse,
   ApiBearerAuth,
 } from '@nestjs/swagger';
+import type { AuthenticatedUser } from '../common/types/user.types';
 import { TicketingService } from './ticketing.service';
 import {
   CreateTicketTypeDto,
@@ -41,7 +42,7 @@ export class TicketingController {
   @ApiResponse({ status: 403, description: 'Forbidden' })
   @ApiResponse({ status: 404, description: 'Event not found' })
   createTicketType(
-    @CurrentUser() user: any,
+    @CurrentUser() user: AuthenticatedUser,
     @Param('eventId') eventId: string,
     @Body() createTicketTypeDto: CreateTicketTypeDto,
   ) {
@@ -61,7 +62,7 @@ export class TicketingController {
   @ApiResponse({ status: 403, description: 'Forbidden' })
   @ApiResponse({ status: 404, description: 'Event not found' })
   getTicketTypesForEvent(
-    @CurrentUser() user: any,
+    @CurrentUser() user: AuthenticatedUser,
     @Param('eventId') eventId: string,
   ) {
     return this.ticketingService.findAllTicketTypesForEvent(eventId, user.id);
@@ -75,7 +76,10 @@ export class TicketingController {
   })
   @ApiResponse({ status: 403, description: 'Forbidden' })
   @ApiResponse({ status: 404, description: 'Ticket type not found' })
-  getTicketType(@CurrentUser() user: any, @Param('id') id: string) {
+  getTicketType(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('id') id: string,
+  ) {
     return this.ticketingService.findOneTicketType(id, user.id);
   }
 
@@ -85,7 +89,7 @@ export class TicketingController {
   @ApiResponse({ status: 403, description: 'Forbidden' })
   @ApiResponse({ status: 404, description: 'Ticket type not found' })
   updateTicketType(
-    @CurrentUser() user: any,
+    @CurrentUser() user: AuthenticatedUser,
     @Param('id') id: string,
     @Body() updateTicketTypeDto: UpdateTicketTypeDto,
   ) {
@@ -101,7 +105,10 @@ export class TicketingController {
   @ApiResponse({ status: 200, description: 'Ticket type deleted successfully' })
   @ApiResponse({ status: 403, description: 'Forbidden' })
   @ApiResponse({ status: 404, description: 'Ticket type not found' })
-  removeTicketType(@CurrentUser() user: any, @Param('id') id: string) {
+  removeTicketType(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('id') id: string,
+  ) {
     return this.ticketingService.removeTicketType(id, user.id);
   }
 
@@ -112,7 +119,7 @@ export class TicketingController {
   @ApiResponse({ status: 403, description: 'Forbidden' })
   @ApiResponse({ status: 404, description: 'Ticket type not found' })
   createPriceTier(
-    @CurrentUser() user: any,
+    @CurrentUser() user: AuthenticatedUser,
     @Param('ticketTypeId') ticketTypeId: string,
     @Body() createPriceTierDto: CreateTicketPriceTierDto,
   ) {
@@ -129,7 +136,7 @@ export class TicketingController {
   @ApiResponse({ status: 403, description: 'Forbidden' })
   @ApiResponse({ status: 404, description: 'Price tier not found' })
   updatePriceTier(
-    @CurrentUser() user: any,
+    @CurrentUser() user: AuthenticatedUser,
     @Param('id') id: string,
     @Body() updatePriceTierDto: UpdateTicketPriceTierDto,
   ) {
@@ -145,7 +152,10 @@ export class TicketingController {
   @ApiResponse({ status: 200, description: 'Price tier deleted successfully' })
   @ApiResponse({ status: 403, description: 'Forbidden' })
   @ApiResponse({ status: 404, description: 'Price tier not found' })
-  removePriceTier(@CurrentUser() user: any, @Param('id') id: string) {
+  removePriceTier(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('id') id: string,
+  ) {
     return this.ticketingService.removePriceTier(id, user.id);
   }
 
@@ -156,7 +166,7 @@ export class TicketingController {
   @ApiResponse({ status: 403, description: 'Forbidden' })
   @ApiResponse({ status: 404, description: 'Event not found' })
   createHold(
-    @CurrentUser() user: any,
+    @CurrentUser() user: AuthenticatedUser,
     @Param('eventId') eventId: string,
     @Body() createHoldDto: CreateHoldDto,
   ) {
@@ -169,7 +179,7 @@ export class TicketingController {
   @ApiResponse({ status: 403, description: 'Forbidden' })
   @ApiResponse({ status: 404, description: 'Event not found' })
   getHoldsForEvent(
-    @CurrentUser() user: any,
+    @CurrentUser() user: AuthenticatedUser,
     @Param('eventId') eventId: string,
   ) {
     return this.ticketingService.getHoldsForEvent(eventId, user.id);
@@ -180,7 +190,10 @@ export class TicketingController {
   @ApiResponse({ status: 200, description: 'Hold released successfully' })
   @ApiResponse({ status: 403, description: 'Forbidden' })
   @ApiResponse({ status: 404, description: 'Hold not found' })
-  releaseHold(@CurrentUser() user: any, @Param('holdId') holdId: string) {
+  releaseHold(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('holdId') holdId: string,
+  ) {
     return this.ticketingService.releaseHold(holdId, user.id);
   }
 }

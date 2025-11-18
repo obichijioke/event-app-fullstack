@@ -9,6 +9,7 @@ export class UpdateProfileDto {
 
   @ApiProperty({ required: false })
   @IsString()
+  @IsPhoneNumber()
   @IsOptional()
   phone?: string;
 

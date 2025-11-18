@@ -24,7 +24,6 @@ import { AddMemberDto } from './dto/add-member.dto';
 import { UpdateMemberRoleDto } from './dto/update-member-role.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
-import { PlatformRole } from '@prisma/client';
 
 @ApiTags('Organizations')
 @Controller('organizations')

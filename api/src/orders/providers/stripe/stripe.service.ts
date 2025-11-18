@@ -47,6 +47,7 @@ export class StripePaymentProvider implements PaymentProvider {
         {
           amount: Number(order.totalCents),
           currency: order.currency,
+          payment_method: dto.paymentMethodId,
           metadata: {
             orderId: order.id,
             buyerId: order.buyer?.id,
@@ -174,7 +175,7 @@ export class StripePaymentProvider implements PaymentProvider {
         signature,
         this.webhookSecret,
       );
-    } catch (error) {
+    } catch {
       return null;
     }
   }

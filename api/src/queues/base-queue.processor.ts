@@ -13,7 +13,7 @@ export abstract class BaseQueueProcessor
     protected readonly queueName: string,
   ) {}
 
-  async onModuleInit() {
+  onModuleInit() {
     this.worker = new Worker(
       this.queueName,
       async (job: Job) => {

@@ -259,7 +259,7 @@ export class WebhookProcessorService {
     });
 
     // Create webhook attempt
-    const attempt = await this.prisma.webhookAttempt.create({
+    await this.prisma.webhookAttempt.create({
       data: {
         webhookEventId: webhookEvent.id,
         endpointId: endpoint.id,

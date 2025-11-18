@@ -6,7 +6,6 @@ import {
 import { PrismaService } from '../common/prisma/prisma.service';
 import { CreateVenueDto } from './dto/create-venue.dto';
 import { UpdateVenueDto } from './dto/update-venue.dto';
-import { OrgMemberRole } from '@prisma/client';
 import { checkOrgPermission } from '../common/utils';
 
 @Injectable()

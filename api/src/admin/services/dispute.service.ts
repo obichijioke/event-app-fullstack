@@ -264,7 +264,7 @@ export class AdminDisputeService {
   }
 
   async updateDisputeStatus(disputeId: string, dto: UpdateDisputeStatusDto) {
-    const { status, note } = dto;
+    const { status } = dto;
 
     const dispute = await this.prisma.dispute.findUnique({
       where: { id: disputeId },
@@ -275,7 +275,11 @@ export class AdminDisputeService {
     }
 
     // If status is being set to won/lost/charge_refunded, set closedAt
-    const shouldClose = ['won', 'lost', 'charge_refunded'].includes(status);
+    const shouldClose = [
+      DisputeStatus.won,
+      DisputeStatus.lost,
+      DisputeStatus.charge_refunded,
+    ].includes(status);
 
     const updatedDispute = await this.prisma.dispute.update({
       where: { id: disputeId },
@@ -326,7 +330,7 @@ export class AdminDisputeService {
   }
 
   async closeDispute(disputeId: string, dto: CloseDisputeDto) {
-    const { status, note, closedAt } = dto;
+    const { status, closedAt } = dto;
 
     const dispute = await this.prisma.dispute.findUnique({
       where: { id: disputeId },

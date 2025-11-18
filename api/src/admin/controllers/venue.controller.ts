@@ -127,8 +127,8 @@ export class AdminVenueController {
   @ApiOperation({ summary: 'Import venues from external sources' })
   @ApiResponse({ status: 200, description: 'Venues imported successfully' })
   @HttpCode(HttpStatus.OK)
-  async importVenues(@Body() dto: VenueCatalogImportOptionsDto) {
-    const result = await this.venueCatalogService.importVenues(dto);
+  importVenues(@Body() dto: VenueCatalogImportOptionsDto) {
+    const result = this.venueCatalogService.importVenues(dto);
     return {
       success: true,
       data: result,

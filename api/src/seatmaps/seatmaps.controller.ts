@@ -14,6 +14,7 @@ import {
   ApiResponse,
   ApiBearerAuth,
 } from '@nestjs/swagger';
+import type { AuthenticatedUser } from '../common/types/user.types';
 import { SeatmapsService } from './seatmaps.service';
 import { CreateSeatmapDto, CreateSeatDto } from './dto/create-seatmap.dto';
 import { UpdateSeatmapDto } from './dto/update-seatmap.dto';
@@ -33,7 +34,7 @@ export class SeatmapsController {
   @ApiResponse({ status: 403, description: 'Forbidden' })
   @ApiResponse({ status: 404, description: 'Venue not found' })
   createForVenue(
-    @CurrentUser() user: any,
+    @CurrentUser() user: AuthenticatedUser,
     @Param('venueId') venueId: string,
     @Body() createSeatmapDto: CreateSeatmapDto,
   ) {
@@ -47,7 +48,7 @@ export class SeatmapsController {
   @Get()
   @ApiOperation({ summary: 'Get all seatmaps for the current user' })
   @ApiResponse({ status: 200, description: 'Seatmaps retrieved successfully' })
-  findAll(@CurrentUser() user: any) {
+  findAll(@CurrentUser() user: AuthenticatedUser) {
     return this.seatmapsService.findAll(user.id);
   }
 
@@ -56,7 +57,7 @@ export class SeatmapsController {
   @ApiResponse({ status: 200, description: 'Seatmap retrieved successfully' })
   @ApiResponse({ status: 403, description: 'Forbidden' })
   @ApiResponse({ status: 404, description: 'Seatmap not found' })
-  findOne(@CurrentUser() user: any, @Param('id') id: string) {
+  findOne(@CurrentUser() user: AuthenticatedUser, @Param('id') id: string) {
     return this.seatmapsService.findOne(id, user.id);
   }
 
@@ -66,7 +67,7 @@ export class SeatmapsController {
   @ApiResponse({ status: 403, description: 'Forbidden' })
   @ApiResponse({ status: 404, description: 'Seatmap not found' })
   update(
-    @CurrentUser() user: any,
+    @CurrentUser() user: AuthenticatedUser,
     @Param('id') id: string,
     @Body() updateSeatmapDto: UpdateSeatmapDto,
   ) {
@@ -78,7 +79,7 @@ export class SeatmapsController {
   @ApiResponse({ status: 200, description: 'Seatmap deleted successfully' })
   @ApiResponse({ status: 403, description: 'Forbidden' })
   @ApiResponse({ status: 404, description: 'Seatmap not found' })
-  remove(@CurrentUser() user: any, @Param('id') id: string) {
+  remove(@CurrentUser() user: AuthenticatedUser, @Param('id') id: string) {
     return this.seatmapsService.remove(id, user.id);
   }
 
@@ -88,7 +89,7 @@ export class SeatmapsController {
   @ApiResponse({ status: 403, description: 'Forbidden' })
   @ApiResponse({ status: 404, description: 'Seatmap not found' })
   addSeats(
-    @CurrentUser() user: any,
+    @CurrentUser() user: AuthenticatedUser,
     @Param('id') id: string,
     @Body() seats: CreateSeatDto[],
   ) {
@@ -100,7 +101,7 @@ export class SeatmapsController {
   @ApiResponse({ status: 200, description: 'Seats retrieved successfully' })
   @ApiResponse({ status: 403, description: 'Forbidden' })
   @ApiResponse({ status: 404, description: 'Seatmap not found' })
-  getSeats(@CurrentUser() user: any, @Param('id') id: string) {
+  getSeats(@CurrentUser() user: AuthenticatedUser, @Param('id') id: string) {
     return this.seatmapsService.getSeats(id, user.id);
   }
 
@@ -109,7 +110,10 @@ export class SeatmapsController {
   @ApiResponse({ status: 200, description: 'Seat removed successfully' })
   @ApiResponse({ status: 403, description: 'Forbidden' })
   @ApiResponse({ status: 404, description: 'Seat not found' })
-  removeSeat(@CurrentUser() user: any, @Param('seatId') seatId: string) {
+  removeSeat(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('seatId') seatId: string,
+  ) {
     return this.seatmapsService.removeSeat(seatId, user.id);
   }
 }

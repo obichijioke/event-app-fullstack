@@ -77,7 +77,7 @@ export class ReportProcessor extends BaseQueueProcessor {
           break;
 
         default:
-          throw new Error(`Unknown report type: ${reportType}`);
+          throw new Error('Unknown report type');
       }
 
       // Format the data
@@ -97,7 +97,7 @@ export class ReportProcessor extends BaseQueueProcessor {
           break;
 
         default:
-          throw new Error(`Unknown format: ${format}`);
+          throw new Error('Unknown format');
       }
 
       // Store the report (in a real implementation, you would use a file storage service)

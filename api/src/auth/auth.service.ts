@@ -112,7 +112,7 @@ export class AuthService {
       payload = this.jwtService.verify(refreshToken, {
         secret: this.getRefreshSecret(),
       });
-    } catch (error) {
+    } catch {
       throw new UnauthorizedException('Invalid refresh token');
     }
 

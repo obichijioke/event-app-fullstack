@@ -1,8 +1,5 @@
 import { PartialType } from '@nestjs/mapped-types';
-import {
-  CreateFlagDto,
-  CreateModerationActionDto,
-} from './create-moderation.dto';
+import { CreateFlagDto } from './create-moderation.dto';
 
 export class UpdateFlagDto extends PartialType(CreateFlagDto) {}
 

@@ -12,7 +12,7 @@ import { UpdateOrganizationDto } from './dto/update-organization.dto';
 import { AddMemberDto } from './dto/add-member.dto';
 import { UpdateMemberRoleDto } from './dto/update-member-role.dto';
 import { UserFollowsService } from './user-follows.service';
-import { OrgMemberRole, PlatformRole } from '@prisma/client';
+import { OrgMemberRole } from '@prisma/client';
 import { checkOrgPermission, checkOwnerPermission } from '../common/utils';
 
 @Injectable()

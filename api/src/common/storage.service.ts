@@ -175,7 +175,9 @@ export class StorageService {
 
       const url = `${this.config.local.baseUrl}/${key}`;
 
-      this.logger.log(`File uploaded locally: ${filePath}`);
+      this.logger.log(
+        `File uploaded locally: ${filePath} (original filename: ${filename || 'n/a'})`,
+      );
 
       return {
         key,

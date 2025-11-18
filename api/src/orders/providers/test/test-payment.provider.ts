@@ -17,13 +17,14 @@ import {
 export class TestPaymentProvider implements PaymentProvider {
   public readonly name = 'test' as const;
 
-  async initializePayment(
+  initializePayment(
     order: OrderWithPaymentRelations,
     _dto: CreatePaymentDto,
   ): Promise<PaymentInitializationResponse> {
+    void _dto;
     const providerIntent = `test_intent_${order.id}_${Date.now()}`;
 
-    return {
+    return Promise.resolve({
       paymentRecord: {
         providerIntent,
         status: PaymentStatus.requires_action,
@@ -33,17 +34,18 @@ export class TestPaymentProvider implements PaymentProvider {
         providerIntent,
         message: 'Test payment initialized',
       },
-    };
+    });
   }
 
-  async confirmPayment(
+  confirmPayment(
     payment: Payment,
     _dto: ProcessPaymentDto,
   ): Promise<PaymentConfirmationResponse> {
+    void _dto;
     const providerIntent =
       payment.providerIntent ?? `test_intent_${payment.orderId}`;
 
-    return {
+    return Promise.resolve({
       status: PaymentStatus.captured,
       providerIntent,
       capturedAt: new Date(),
@@ -52,16 +54,16 @@ export class TestPaymentProvider implements PaymentProvider {
         providerIntent,
         message: 'Test payment confirmed',
       },
-    };
+    });
   }
 
-  async refundPayment(
+  refundPayment(
     payment: Payment,
     amountCents?: number,
   ): Promise<PaymentRefundResponse> {
     const refundAmount = amountCents ?? Number(payment.amountCents);
 
-    return {
+    return Promise.resolve({
       amountCents: BigInt(refundAmount),
       currency: payment.currency,
       status: 'refunded',
@@ -71,6 +73,6 @@ export class TestPaymentProvider implements PaymentProvider {
         amountCents: refundAmount,
         message: 'Test refund processed',
       },
-    };
+    });
   }
 }

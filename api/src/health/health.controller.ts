@@ -2,7 +2,6 @@ import { Controller, Get } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import {
   HealthCheckService,
-  HealthCheckResult,
   HealthIndicatorFunction,
   HealthIndicatorResult,
 } from '@nestjs/terminus';
@@ -34,8 +33,8 @@ export class HealthController {
   @ApiOperation({ summary: 'Get detailed health information' })
   @ApiResponse({ status: 200, description: 'Detailed health information' })
   async checkDetailed() {
-    const database = await this.createDatabaseIndicator();
-    const redis = await this.createRedisIndicator();
+    const database = this.createDatabaseIndicator();
+    const redis = this.createRedisIndicator();
 
     const databaseResult = await database();
     const redisResult = await redis();

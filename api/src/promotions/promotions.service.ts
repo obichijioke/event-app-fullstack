@@ -509,7 +509,7 @@ export class PromotionsService {
     validatePromoCodeDto: ValidatePromoCodeDto,
     userId?: string,
   ) {
-    const { code, eventId, ticketTypeIds, orderAmount } = validatePromoCodeDto;
+    const { code, eventId, orderAmount } = validatePromoCodeDto;
 
     // Find promo code
     const promoCode = await this.prisma.promoCode.findFirst({

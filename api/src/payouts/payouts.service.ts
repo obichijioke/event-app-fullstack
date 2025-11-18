@@ -298,14 +298,7 @@ export class PayoutsService {
       'You do not have permission to create payout accounts for this organization',
     );
 
-    const {
-      provider,
-      externalId,
-      accountType,
-      accountHolderName,
-      email,
-      defaultAccount,
-    } = createPayoutAccountDto;
+    const { provider, externalId, defaultAccount } = createPayoutAccountDto;
 
     // If this is set as default, unset all other default accounts for this org
     if (defaultAccount) {
@@ -389,14 +382,7 @@ export class PayoutsService {
       );
     }
 
-    const {
-      provider,
-      externalId,
-      accountType,
-      accountHolderName,
-      email,
-      defaultAccount,
-    } = updatePayoutAccountDto;
+    const { provider, externalId, defaultAccount } = updatePayoutAccountDto;
 
     // If this is set as default, unset all other default accounts for this org
     if (defaultAccount) {

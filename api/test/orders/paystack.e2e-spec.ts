@@ -7,6 +7,7 @@ import { PAYMENT_PROVIDERS } from '../../src/orders/tokens';
 import { ConfigService } from '@nestjs/config';
 import axios from 'axios';
 import { PaystackWebhookService } from '../../src/webhooks/services/paystack-webhook.service';
+import crypto from 'crypto';
 
 jest.mock('axios');
 jest.mock('@prisma/client', () => ({
@@ -227,7 +228,7 @@ describe('Paystack payments E2E', () => {
       },
     };
 
-    const signature = require('crypto')
+    const signature = crypto
       .createHmac('sha512', 'whsec_test')
       .update(JSON.stringify(payload))
       .digest('hex');

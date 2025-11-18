@@ -1,4 +1,4 @@
-import { Injectable, Inject, Optional } from '@nestjs/common';
+import { Injectable, Optional } from '@nestjs/common';
 import { Job } from 'bullmq';
 import { BaseQueueProcessor } from '../base-queue.processor';
 import { RedisService } from '../../common/redis/redis.service';
