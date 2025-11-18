@@ -28,7 +28,7 @@ export interface UseListDataOptions<T> {
   initialSortField?: string;
   initialSortDirection?: 'asc' | 'desc';
   initialFilters?: Record<string, unknown>;
-  dependencies?: any[];
+  dependencies?: unknown[];
   onError?: (error: unknown) => void;
 }
 

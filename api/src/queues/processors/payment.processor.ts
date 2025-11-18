@@ -33,6 +33,7 @@ export class PaymentProcessor extends BaseQueueProcessor {
       provider,
       userId,
     } = job.data;
+    void userId;
 
     this.logger.log(
       `Processing payment for order: ${orderId}, provider: ${provider}`,

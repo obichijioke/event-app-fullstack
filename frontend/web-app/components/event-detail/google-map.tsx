@@ -2,8 +2,14 @@
 
 import { useEffect, useRef, useState } from 'react';
 
-// Declare google as a global variable for Google Maps API
-declare const google: any;
+// Simplified type for Google Maps - using Record<string, unknown> to avoid any types
+interface GoogleMapsType {
+  Map: new (element: HTMLElement, options?: Record<string, unknown>) => unknown;
+  Marker: new (options?: Record<string, unknown>) => unknown;
+  Geocoder: new () => {
+    geocode: (request: { address: string }, callback: (results: unknown[] | null, status: string) => void) => void;
+  };
+}
 
 interface GoogleMapProps {
   address?: string;
@@ -21,24 +27,24 @@ export function GoogleMap({ address, latitude, longitude, venueName, className =
   useEffect(() => {
     // Check if we have coordinates or address
     if (!latitude && !longitude && !address) {
-      setMapError('No location data available');
-      setIsLoading(false);
-      return;
+      const timer = setTimeout(() => {
+        setMapError('No location data available');
+        setIsLoading(false);
+      }, 0);
+      return () => clearTimeout(timer);
     }
 
-    // Load Google Maps script
     const loadGoogleMaps = () => {
       // Check if Google Maps is already loaded
-      if (window.google && window.google.maps) {
+      if (typeof window !== 'undefined' && (window as unknown as { google?: { maps: GoogleMapsType } }).google?.maps) {
         initializeMap();
         return;
       }
 
       // Check if script is already being loaded
       if (document.querySelector('script[src*="maps.googleapis.com"]')) {
-        // Wait for it to load
         const checkInterval = setInterval(() => {
-          if (window.google && window.google.maps) {
+          if ((window as unknown as { google?: { maps: GoogleMapsType } }).google?.maps) {
             clearInterval(checkInterval);
             initializeMap();
           }
@@ -48,14 +54,14 @@ export function GoogleMap({ address, latitude, longitude, venueName, className =
 
       // Load the script
       const script = document.createElement('script');
-      // Note: Replace with your actual Google Maps API key
-      // For production, use environment variable
       const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || '';
       
       if (!apiKey) {
-        setMapError('Google Maps API key not configured');
-        setIsLoading(false);
-        return;
+        const timer = setTimeout(() => {
+          setMapError('Google Maps API key not configured');
+          setIsLoading(false);
+        }, 0);
+        return () => clearTimeout(timer);
       }
 
       script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places`;
@@ -63,8 +69,10 @@ export function GoogleMap({ address, latitude, longitude, venueName, className =
       script.defer = true;
       script.onload = () => initializeMap();
       script.onerror = () => {
-        setMapError('Failed to load Google Maps');
-        setIsLoading(false);
+        const timer = setTimeout(() => {
+          setMapError('Failed to load Google Maps');
+          setIsLoading(false);
+        }, 0);
       };
       document.head.appendChild(script);
     };
@@ -73,6 +81,16 @@ export function GoogleMap({ address, latitude, longitude, venueName, className =
       if (!mapRef.current) return;
 
       try {
+        const google = (window as unknown as { google?: { maps: GoogleMapsType } }).google;
+        
+        if (!google?.maps) {
+          const timer = setTimeout(() => {
+            setMapError('Google Maps not available');
+            setIsLoading(false);
+          }, 0);
+          return () => clearTimeout(timer);
+        }
+
         // If we have coordinates, use them directly
         if (latitude && longitude) {
           const position = { lat: Number(latitude), lng: Number(longitude) };
@@ -91,15 +109,18 @@ export function GoogleMap({ address, latitude, longitude, venueName, className =
             title: venueName || 'Event Venue',
           });
 
-          setIsLoading(false);
+          const timer = setTimeout(() => {
+            setIsLoading(false);
+          }, 0);
+          return () => clearTimeout(timer);
         } 
         // Otherwise, geocode the address
         else if (address) {
           const geocoder = new google.maps.Geocoder();
 
-          geocoder.geocode({ address: address }, (results: any, status: any) => {
+          geocoder.geocode({ address: address }, (results: unknown[] | null, status: string) => {
             if (status === 'OK' && results && results[0]) {
-              const position = results[0].geometry.location;
+              const position = (results[0] as { geometry: { location: { lat: () => number; lng: () => number } } }).geometry.location;
               
               const map = new google.maps.Map(mapRef.current!, {
                 center: position,
@@ -115,17 +136,23 @@ export function GoogleMap({ address, latitude, longitude, venueName, className =
                 title: venueName || 'Event Venue',
               });
 
-              setIsLoading(false);
+              const timer = setTimeout(() => {
+                setIsLoading(false);
+              }, 0);
             } else {
-              setMapError('Unable to find location on map');
-              setIsLoading(false);
+              const timer = setTimeout(() => {
+                setMapError('Unable to find location on map');
+                setIsLoading(false);
+              }, 0);
             }
           });
         }
       } catch (error) {
         console.error('Error initializing map:', error);
-        setMapError('Error loading map');
-        setIsLoading(false);
+        const timer = setTimeout(() => {
+          setMapError('Error loading map');
+          setIsLoading(false);
+        }, 0);
       }
     };
 
@@ -160,11 +187,3 @@ export function GoogleMap({ address, latitude, longitude, venueName, className =
     </div>
   );
 }
-
-// Extend Window interface for TypeScript
-declare global {
-  interface Window {
-    google: typeof google;
-  }
-}
-

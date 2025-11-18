@@ -13,7 +13,7 @@ export interface UseFormStateReturn<T> {
   loading: boolean;
   handleChange: (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => void;
   handleSubmit: (e: FormEvent) => Promise<void>;
-  updateField: (name: keyof T, value: any) => void;
+  updateField: (name: keyof T, value: unknown) => void;
   resetForm: () => void;
 }
 
@@ -32,7 +32,7 @@ export interface UseFormStateReturn<T> {
  *   onSuccess: () => toast.success('User created!'),
  * });
  */
-export function useFormState<T extends Record<string, any>>({
+export function useFormState<T extends Record<string, unknown>>({
   initialData,
   onSubmit,
   onSuccess,
@@ -47,7 +47,7 @@ export function useFormState<T extends Record<string, any>>({
     const { name, value, type } = e.target;
 
     setFormData((prev) => {
-      let processedValue: any = value;
+      let processedValue: unknown = value;
 
       // Handle different input types
       if (type === 'number') {
@@ -63,7 +63,7 @@ export function useFormState<T extends Record<string, any>>({
     });
   }, []);
 
-  const updateField = useCallback((name: keyof T, value: any) => {
+  const updateField = useCallback((name: keyof T, value: unknown) => {
     setFormData((prev) => ({
       ...prev,
       [name]: value,

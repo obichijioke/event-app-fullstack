@@ -5,6 +5,7 @@ import { NotificationsGateway } from './notifications.gateway';
 
 @Module({
   imports: [
+    ConfigModule,
     JwtModule.registerAsync({
       useFactory: (configService: ConfigService) => {
         const secret = configService.get<string>('JWT_SECRET');

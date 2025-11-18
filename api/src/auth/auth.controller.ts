@@ -30,6 +30,11 @@ import { UpdateProfileDto } from './dto/update-profile.dto';
 import { CreateApiKeyDto } from './dto/create-api-key.dto';
 import { UserFollowsService } from '../organizations/user-follows.service';
 import { extractRefreshTokenFromRequest } from './utils/refresh-token-extractor';
+import { RequestEmailVerificationDto } from './dto/request-email-verification.dto';
+import { VerifyEmailDto } from './dto/verify-email.dto';
+import { RequestPasswordResetDto } from './dto/request-password-reset.dto';
+import { ResetPasswordDto } from './dto/reset-password.dto';
+import { TwoFaCodeDto, RequestTwoFaCodeDto } from './dto/twofa.dto';
 
 @ApiTags('Authentication')
 @Controller('auth')
@@ -162,6 +167,25 @@ export class AuthController {
     res.json({ message: 'Logout from all devices successful' });
   }
 
+  @Get('sessions')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'List active and historical sessions for the user' })
+  async listSessions(@CurrentUser() user: any) {
+    return this.authService.listSessions(user.id);
+  }
+
+  @Delete('sessions/:sessionId')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Revoke a specific session' })
+  async revokeSession(
+    @CurrentUser() user: any,
+    @Param('sessionId') sessionId: string,
+  ) {
+    return this.authService.revokeSession(user.id, sessionId);
+  }
+
   @Post('change-password')
   @UseGuards(JwtAuthGuard)
   @HttpCode(HttpStatus.OK)
@@ -178,6 +202,68 @@ export class AuthController {
       changePasswordDto.currentPassword,
       changePasswordDto.newPassword,
     );
+  }
+
+  @Post('password/forgot')
+  @ApiOperation({ summary: 'Request password reset link' })
+  async requestPasswordReset(@Body() body: RequestPasswordResetDto) {
+    return this.authService.requestPasswordReset(body);
+  }
+
+  @Post('password/reset')
+  @ApiOperation({ summary: 'Reset password with token' })
+  async resetPassword(@Body() body: ResetPasswordDto) {
+    return this.authService.resetPassword(body);
+  }
+
+  @Post('email/verify/request')
+  @ApiOperation({ summary: 'Request email verification token' })
+  async requestEmailVerification(
+    @Body() body: RequestEmailVerificationDto,
+  ) {
+    return this.authService.requestEmailVerification(body);
+  }
+
+  @Post('email/verify')
+  @ApiOperation({ summary: 'Verify email using token' })
+  async verifyEmail(@Body() body: VerifyEmailDto) {
+    return this.authService.verifyEmail(body);
+  }
+
+  @Post('2fa/request')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Request a 2FA code (enable/disable)' })
+  async requestTwoFactor(
+    @CurrentUser() user: any,
+    @Body() body: RequestTwoFaCodeDto,
+  ) {
+    return this.authService.requestTwoFactorCode(
+      user.id,
+      body.purpose || 'enable',
+    );
+  }
+
+  @Post('2fa/enable')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Enable two-factor authentication' })
+  async enableTwoFactor(
+    @CurrentUser() user: any,
+    @Body() body: TwoFaCodeDto,
+  ) {
+    return this.authService.enableTwoFactor(user.id, body.code);
+  }
+
+  @Post('2fa/disable')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Disable two-factor authentication' })
+  async disableTwoFactor(
+    @CurrentUser() user: any,
+    @Body() body: TwoFaCodeDto,
+  ) {
+    return this.authService.disableTwoFactor(user.id, body.code);
   }
 
   @Get('profile')

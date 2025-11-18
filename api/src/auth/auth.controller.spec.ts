@@ -1,7 +1,6 @@
-import { Test, TestingModule } from '@nestjs/testing';
+import { TestingModule } from '@nestjs/testing';
 import { INestApplication } from '@nestjs/common';
 import * as request from 'supertest';
-import { AppModule } from '../app.module';
 import { PrismaService } from '../common/prisma/prisma.service';
 import { JwtService } from '@nestjs/jwt';
 import { createTestingModule, mockUser } from '../test/setup';

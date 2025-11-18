@@ -99,7 +99,7 @@ export class StripeWebhookService {
       if (charges?.created) {
         capturedAt = new Date(charges.created * 1000);
       }
-    } catch (error) {
+    } catch {
       this.logger.warn(
         `Could not retrieve charge details for ${paymentIntent.id}, using current time`,
       );
@@ -236,6 +236,7 @@ export class StripeWebhookService {
 
     // You could extend this to update order status to 'chargeback'
     // For now, just log it for manual review
+    await Promise.resolve();
   }
 
   /**
@@ -255,6 +256,7 @@ export class StripeWebhookService {
     );
 
     // You could extend this to handle won/lost disputes
+    await Promise.resolve();
   }
 
   /**

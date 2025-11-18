@@ -15,6 +15,7 @@ import {
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
+import type { AuthenticatedUser } from '../common/types/user.types';
 import { ReviewsService } from './reviews.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
@@ -33,7 +34,7 @@ export class ReviewsController {
   @ApiOperation({ summary: 'Create a review for an event' })
   @ApiResponse({ status: 201, description: 'Review created successfully' })
   createEventReview(
-    @CurrentUser() user: any,
+    @CurrentUser() user: AuthenticatedUser,
     @Param('eventId') eventId: string,
     @Body() dto: CreateReviewDto,
   ) {
@@ -46,7 +47,7 @@ export class ReviewsController {
   @ApiOperation({ summary: 'Update an event review' })
   @ApiResponse({ status: 200, description: 'Review updated successfully' })
   updateEventReview(
-    @CurrentUser() user: any,
+    @CurrentUser() user: AuthenticatedUser,
     @Param('eventId') eventId: string,
     @Param('reviewId') reviewId: string,
     @Body() dto: UpdateReviewDto,
@@ -65,7 +66,7 @@ export class ReviewsController {
   @ApiOperation({ summary: 'Delete an event review' })
   @ApiResponse({ status: 200, description: 'Review deleted successfully' })
   deleteEventReview(
-    @CurrentUser() user: any,
+    @CurrentUser() user: AuthenticatedUser,
     @Param('eventId') eventId: string,
     @Param('reviewId') reviewId: string,
   ) {
@@ -97,7 +98,7 @@ export class ReviewsController {
   @ApiOperation({ summary: 'Create a review for an organization' })
   @ApiResponse({ status: 201, description: 'Review created successfully' })
   createOrganizerReview(
-    @CurrentUser() user: any,
+    @CurrentUser() user: AuthenticatedUser,
     @Param('orgId') orgId: string,
     @Body() dto: CreateReviewDto,
   ) {
@@ -110,7 +111,7 @@ export class ReviewsController {
   @ApiOperation({ summary: 'Update an organization review' })
   @ApiResponse({ status: 200, description: 'Review updated successfully' })
   updateOrganizerReview(
-    @CurrentUser() user: any,
+    @CurrentUser() user: AuthenticatedUser,
     @Param('orgId') orgId: string,
     @Param('reviewId') reviewId: string,
     @Body() dto: UpdateReviewDto,
@@ -129,7 +130,7 @@ export class ReviewsController {
   @ApiOperation({ summary: 'Delete an organization review' })
   @ApiResponse({ status: 200, description: 'Review deleted successfully' })
   deleteOrganizerReview(
-    @CurrentUser() user: any,
+    @CurrentUser() user: AuthenticatedUser,
     @Param('orgId') orgId: string,
     @Param('reviewId') reviewId: string,
   ) {

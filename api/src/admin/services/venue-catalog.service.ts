@@ -31,7 +31,8 @@ export class AdminVenueCatalogService {
     return this.delete(id);
   }
 
-  async importVenues(options: VenueCatalogImportOptionsDto) {
+  importVenues(_options?: VenueCatalogImportOptionsDto) {
+    void _options;
     // Currently supports file-based imports; keep behavior explicit for now
     throw new BadRequestException(
       'Import venues requires a file upload. Use the dedicated import endpoint.',
@@ -148,13 +149,9 @@ export class AdminVenueCatalogService {
       throw new BadRequestException('Only CSV and JSON files are supported');
     }
 
-    let entries: any[];
-
-    if (isJSON) {
-      entries = await this.parseJSONFile(buffer);
-    } else {
-      entries = await this.parseCSVFile(buffer);
-    }
+    const entries = isJSON
+      ? this.parseJSONFile(buffer)
+      : this.parseCSVFile(buffer);
 
     if (!entries.length) {
       throw new BadRequestException('File does not contain any entries');
@@ -168,22 +165,22 @@ export class AdminVenueCatalogService {
       throw new BadRequestException('Upload a JSON file with catalog entries');
     }
 
-    const entries = await this.parseJSONFile(buffer);
+    const entries = this.parseJSONFile(buffer);
     return this.processImportEntries(entries, options);
   }
 
-  private async parseJSONFile(buffer: Buffer): Promise<any[]> {
+  private parseJSONFile(buffer: Buffer): any[] {
     let payload: unknown;
     try {
       payload = JSON.parse(buffer.toString('utf-8'));
-    } catch (error) {
+    } catch {
       throw new BadRequestException('Unable to parse JSON file');
     }
 
     return this.extractEntries(payload);
   }
 
-  private async parseCSVFile(buffer: Buffer): Promise<any[]> {
+  private parseCSVFile(buffer: Buffer): any[] {
     const csvText = buffer.toString('utf-8');
     const lines = csvText.split('\n').filter((line) => line.trim());
 
@@ -490,7 +487,7 @@ export class AdminVenueCatalogService {
     if (typeof input === 'string') {
       try {
         return JSON.parse(input);
-      } catch (error) {
+      } catch {
         throw new BadRequestException(
           'defaultSeatmapSpec must be valid JSON string',
         );

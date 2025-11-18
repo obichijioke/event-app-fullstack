@@ -41,7 +41,7 @@ export interface CreateSeatDto {
   pos?: SeatPosition;
 }
 
-export interface UpdateSeatmapDto extends Partial<CreateSeatmapDto> {}
+export type UpdateSeatmapDto = Partial<CreateSeatmapDto>;
 
 export const seatmapsApi = {
   /**

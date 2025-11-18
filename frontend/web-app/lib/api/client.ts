@@ -7,14 +7,14 @@ export class ApiError extends Error {
   constructor(
     public status: number,
     public message: string,
-    public data?: any
+    public data?: Record<string, unknown>
   ) {
     super(message);
     this.name = 'ApiError';
   }
 }
 
-export interface ApiResponse<T = any> {
+export interface ApiResponse<T = unknown> {
   data: T;
   status: number;
   message?: string;
@@ -80,7 +80,7 @@ export class ApiClient {
           });
 
           if (!response.ok) {
-            let errorData: any;
+            let errorData: Record<string, unknown>;
             try {
               errorData = await response.json();
             } catch {
@@ -88,7 +88,9 @@ export class ApiClient {
             }
             throw new ApiError(
               response.status,
-              errorData?.message || 'Failed to refresh session',
+              (errorData && typeof errorData === 'object' && 'message' in errorData)
+                ? String(errorData.message)
+                : 'Failed to refresh session',
               errorData
             );
           }
@@ -139,16 +141,20 @@ export class ApiClient {
       }
 
       if (!response.ok) {
-        let errorData;
+        let errorData: Record<string, unknown> | undefined;
         try {
           errorData = await response.json();
         } catch {
           errorData = { message: response.statusText };
         }
 
+        const errorMessage = (errorData && typeof errorData === 'object' && 'message' in errorData)
+          ? String(errorData.message)
+          : `HTTP ${response.status}`;
+
         throw new ApiError(
           response.status,
-          errorData.message || `HTTP ${response.status}`,
+          errorMessage,
           errorData
         );
       }
@@ -187,14 +193,14 @@ export class ApiClient {
     });
   }
 
-  async post<T>(endpoint: string, data?: any): Promise<T> {
+  async post<T>(endpoint: string, data?: unknown): Promise<T> {
     return this.request<T>(endpoint, {
       method: 'POST',
       body: data ? JSON.stringify(data) : undefined,
     });
   }
 
-  async patch<T>(endpoint: string, data?: any, params?: Record<string, unknown>): Promise<T> {
+  async patch<T>(endpoint: string, data?: unknown, params?: Record<string, unknown>): Promise<T> {
     let url = endpoint;
     if (params) {
       const queryString = buildQueryString(params);
@@ -209,7 +215,7 @@ export class ApiClient {
     });
   }
 
-  async put<T>(endpoint: string, data?: any): Promise<T> {
+  async put<T>(endpoint: string, data?: unknown): Promise<T> {
     return this.request<T>(endpoint, {
       method: 'PUT',
       body: data ? JSON.stringify(data) : undefined,

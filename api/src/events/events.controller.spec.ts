@@ -1,15 +1,9 @@
-import { Test, TestingModule } from '@nestjs/testing';
+import { TestingModule } from '@nestjs/testing';
 import { INestApplication } from '@nestjs/common';
 import * as request from 'supertest';
-import { AppModule } from '../app.module';
 import { PrismaService } from '../common/prisma/prisma.service';
 import { JwtService } from '@nestjs/jwt';
-import {
-  createTestingModule,
-  mockUser,
-  mockOrganization,
-  mockEvent,
-} from '../test/setup';
+import { createTestingModule, mockEvent } from '../test/setup';
 
 describe('Events (e2e)', () => {
   let app: INestApplication;

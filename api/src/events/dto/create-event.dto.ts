@@ -9,7 +9,7 @@ import {
   Max,
 } from 'class-validator';
 import { EventStatus, Visibility } from '@prisma/client';
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { ApiPropertyOptional } from '@nestjs/swagger';
 
 export class CreateEventDto {
   @IsString()

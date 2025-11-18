@@ -2,13 +2,11 @@ import {
   Injectable,
   NotFoundException,
   ForbiddenException,
-  BadRequestException,
 } from '@nestjs/common';
 import { PrismaService } from '../common/prisma/prisma.service';
 import {
   CreateWebhookDto,
   CreateWebhookEventDto,
-  RetryWebhookDto,
 } from './dto/create-webhook.dto';
 import { UpdateWebhookDto } from './dto/update-webhook.dto';
 import { WebhookProcessorService } from './services/webhook-processor.service';
@@ -35,7 +33,7 @@ export class WebhooksService {
       'You do not have permission to create webhooks for this organization',
     );
 
-    const { url, eventFilters, description, secret, active } = createWebhookDto;
+    const { url, eventFilters, secret, active } = createWebhookDto;
 
     // Create webhook endpoint
     const webhook = await this.prisma.webhookEndpoint.create({
@@ -179,7 +177,7 @@ export class WebhooksService {
       );
     }
 
-    const { url, eventFilters, description, secret, active } = updateWebhookDto;
+    const { url, eventFilters, secret, active } = updateWebhookDto;
 
     // Update webhook
     const updatedWebhook = await this.prisma.webhookEndpoint.update({

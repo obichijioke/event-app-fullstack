@@ -1,12 +1,33 @@
 import { Metadata } from 'next';
 import Link from 'next/link';
 
+import { useState } from 'react';
+import { authApi } from '@/lib/api/auth-api';
+
 export const metadata: Metadata = {
   title: 'Forgot Password',
   description: 'Reset your password',
 };
 
 export default function ForgotPasswordPage() {
+  const [email, setEmail] = useState('');
+  const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
+  const [message, setMessage] = useState<string>('');
+
+  const onSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setStatus('loading');
+    setMessage('');
+    try {
+      await authApi.requestPasswordReset(email);
+      setStatus('success');
+      setMessage('If an account exists, a reset link has been sent.');
+    } catch (err: any) {
+      setStatus('error');
+      setMessage(err?.message || 'Failed to send reset link');
+    }
+  };
+
   return (
     <div className="min-h-screen flex items-center justify-center px-4 py-12">
       <div className="w-full max-w-md">
@@ -16,7 +37,7 @@ export default function ForgotPasswordPage() {
             Enter your email and we&apos;ll send you a reset link
           </p>
 
-          <form className="space-y-4">
+          <form className="space-y-4" onSubmit={onSubmit}>
             {/* Email */}
             <div>
               <label htmlFor="email" className="block text-sm font-medium mb-2">
@@ -25,8 +46,11 @@ export default function ForgotPasswordPage() {
               <input
                 type="email"
                 id="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
                 className="w-full px-4 py-2 rounded-md border border-border bg-background focus:outline-none focus:ring-2 focus:ring-primary"
                 placeholder="you@example.com"
+                required
               />
             </div>
 
@@ -34,10 +58,21 @@ export default function ForgotPasswordPage() {
             <button
               type="submit"
               className="w-full bg-primary text-primary-foreground py-2 rounded-md hover:opacity-90 transition font-medium"
+              disabled={status === 'loading'}
             >
-              Send Reset Link
+              {status === 'loading' ? 'Sending...' : 'Send Reset Link'}
             </button>
           </form>
+
+          {message && (
+            <p
+              className={`text-sm mt-4 text-center ${
+                status === 'success' ? 'text-success' : 'text-error'
+              }`}
+            >
+              {message}
+            </p>
+          )}
 
           {/* Back to Login */}
           <p className="text-center text-sm text-muted-foreground mt-6">

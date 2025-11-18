@@ -1,12 +1,10 @@
 import {
   IsString,
   IsOptional,
-  IsEnum,
   IsNumber,
   IsDateString,
   IsBoolean,
 } from 'class-validator';
-import { PayoutStatus } from '@prisma/client';
 
 export class CreatePayoutDto {
   @IsString()

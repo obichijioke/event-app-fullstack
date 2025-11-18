@@ -1,26 +1,40 @@
-import { Metadata } from 'next';
+'use client';
+
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { authApi } from '@/lib/api/auth-api';
 
 type Props = {
   params: Promise<{ token: string }>;
 };
 
-export const metadata: Metadata = {
-  title: 'Verify Email',
-  description: 'Verify your email address',
-};
+export default function VerifyEmailPage({ params }: Props) {
+  const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
+  const [token, setToken] = useState('');
 
-export default async function VerifyEmailPage({ params }: Props) {
-  const { token } = await params;
+  useEffect(() => {
+    params.then(({ token }) => {
+      setToken(token);
+      authApi
+        .verifyEmail(token)
+        .then(() => setStatus('success'))
+        .catch(() => setStatus('error'));
+    });
+  }, [params]);
 
-  // TODO: Verify token with API
-  const isValid = true; // Placeholder
+  const isValid = status === 'success';
 
   return (
     <div className="min-h-screen flex items-center justify-center px-4 py-12">
       <div className="w-full max-w-md">
         <div className="bg-card rounded-lg shadow-card p-8 text-center">
-          {isValid ? (
+          {status === 'loading' && (
+            <>
+              <h1 className="text-2xl font-bold mb-2">Verifying email...</h1>
+              <p className="text-muted-foreground">Please wait</p>
+            </>
+          )}
+          {status !== 'loading' && isValid && (
             <>
               <div className="w-16 h-16 bg-success/10 rounded-full flex items-center justify-center mx-auto mb-4">
                 <svg
@@ -48,7 +62,8 @@ export default async function VerifyEmailPage({ params }: Props) {
                 Sign In
               </Link>
             </>
-          ) : (
+          )}
+          {status !== 'loading' && !isValid && (
             <>
               <div className="w-16 h-16 bg-error/10 rounded-full flex items-center justify-center mx-auto mb-4">
                 <svg
@@ -83,4 +98,3 @@ export default async function VerifyEmailPage({ params }: Props) {
     </div>
   );
 }
-

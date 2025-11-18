@@ -133,6 +133,7 @@ export class PaystackPaymentProvider implements PaymentProvider {
     payment: Payment,
     _dto: ProcessPaymentDto,
   ): Promise<PaymentConfirmationResponse> {
+    void _dto;
     try {
       const response = await this.client.get(
         `/transaction/verify/${payment.providerCharge}`,

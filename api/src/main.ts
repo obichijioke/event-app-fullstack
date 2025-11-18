@@ -4,7 +4,7 @@ import { ValidationPipe } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { join } from 'path';
 import { AppModule } from './app.module';
-import cookieParser = require('cookie-parser');
+import cookieParser from 'cookie-parser';
 
 // Enable BigInt serialization to JSON
 (BigInt.prototype as any).toJSON = function () {
@@ -79,4 +79,7 @@ async function bootstrap() {
   console.log(`Application is running on: http://localhost:${port}`);
   console.log(`API documentation available at: http://localhost:${port}/api`);
 }
-bootstrap();
+bootstrap().catch((error) => {
+  console.error('Failed to bootstrap application', error);
+  process.exit(1);
+});

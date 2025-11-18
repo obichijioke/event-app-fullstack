@@ -1,4 +1,4 @@
-import { IsEmail, IsEnum, IsString, IsOptional } from 'class-validator';
+import { IsEmail, IsEnum } from 'class-validator';
 import { OrgMemberRole } from '@prisma/client';
 
 export class AddMemberDto {

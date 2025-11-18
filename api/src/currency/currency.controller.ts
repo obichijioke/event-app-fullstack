@@ -70,7 +70,7 @@ export class CurrencyController {
   @Get('all-currencies')
   @ApiOperation({ summary: 'Get all valid currency codes' })
   @ApiResponse({ status: 200, description: 'All currencies retrieved' })
-  async getAllCurrencies() {
+  getAllCurrencies() {
     const currencies = this.currencyService.getAllValidCurrencies();
     return { currencies };
   }

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/unbound-method */
 import { PaymentService } from './payment.service';
 import { PaymentProvider } from '../providers/payment-provider.interface';
 

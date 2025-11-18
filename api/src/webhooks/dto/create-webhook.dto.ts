@@ -1,10 +1,8 @@
 import {
   IsString,
   IsOptional,
-  IsEnum,
   IsArray,
   IsBoolean,
-  IsNumber,
   IsUrl,
 } from 'class-validator';
 

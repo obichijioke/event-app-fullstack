@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import axios from 'axios';
 import type { Payment } from '@prisma/client';
 import { CreatePaymentDto } from '../../dto/create-order.dto';
+import crypto from 'crypto';
 
 jest.mock('axios');
 jest.mock('@prisma/client', () => ({
@@ -163,7 +164,6 @@ describe('PaystackPaymentProvider', () => {
   it('validates webhook signatures using the configured secret', () => {
     const payload = { event: 'charge.success', data: { reference: 'order' } };
     const serialized = JSON.stringify(payload);
-    const crypto = require('crypto');
     const signature = crypto
       .createHmac('sha512', 'whsec_test')
       .update(serialized)

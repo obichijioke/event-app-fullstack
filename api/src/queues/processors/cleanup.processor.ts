@@ -64,7 +64,7 @@ export class CleanupProcessor extends BaseQueueProcessor {
           break;
 
         default:
-          throw new Error(`Unknown cleanup type: ${type}`);
+          throw new Error('Unknown cleanup type');
       }
 
       this.logger.log(
@@ -78,7 +78,7 @@ export class CleanupProcessor extends BaseQueueProcessor {
     }
   }
 
-  private async cleanupExpiredSessions(cutoffDate: Date, dryRun: boolean) {
+  private cleanupExpiredSessions(cutoffDate: Date, dryRun: boolean) {
     // Note: Session model is not in the schema, so we'll skip this for now
     // Find expired sessions
     // const expiredSessions = await this.prisma.session.findMany({
@@ -90,14 +90,14 @@ export class CleanupProcessor extends BaseQueueProcessor {
     // });
 
     if (dryRun) {
-      return {
+      return Promise.resolve({
         type: 'expired_sessions',
         daysOld: Math.floor(
           (new Date().getTime() - cutoffDate.getTime()) / (1000 * 60 * 60 * 24),
         ),
         dryRun,
         deletedCount: 0, // expiredSessions.length,
-      };
+      });
     }
 
     // Delete expired sessions
@@ -109,17 +109,17 @@ export class CleanupProcessor extends BaseQueueProcessor {
     //   },
     // });
 
-    return {
+    return Promise.resolve({
       type: 'expired_sessions',
       daysOld: Math.floor(
         (new Date().getTime() - cutoffDate.getTime()) / (1000 * 60 * 60 * 24),
       ),
       dryRun,
       deletedCount: 0, // result.count,
-    };
+    });
   }
 
-  private async cleanupOldNotifications(cutoffDate: Date, dryRun: boolean) {
+  private cleanupOldNotifications(cutoffDate: Date, dryRun: boolean) {
     // Note: Notification model is not in the schema, so we'll skip this for now
     // Find old notifications
     // const oldNotifications = await this.prisma.notification.findMany({
@@ -132,14 +132,14 @@ export class CleanupProcessor extends BaseQueueProcessor {
     // });
 
     if (dryRun) {
-      return {
+      return Promise.resolve({
         type: 'old_notifications',
         daysOld: Math.floor(
           (new Date().getTime() - cutoffDate.getTime()) / (1000 * 60 * 60 * 24),
         ),
         dryRun,
         deletedCount: 0, // oldNotifications.length,
-      };
+      });
     }
 
     // Delete old notifications
@@ -152,14 +152,14 @@ export class CleanupProcessor extends BaseQueueProcessor {
     //   },
     // });
 
-    return {
+    return Promise.resolve({
       type: 'old_notifications',
       daysOld: Math.floor(
         (new Date().getTime() - cutoffDate.getTime()) / (1000 * 60 * 60 * 24),
       ),
       dryRun,
       deletedCount: 0, // result.count,
-    };
+    });
   }
 
   private async cleanupCompletedOrders(cutoffDate: Date, dryRun: boolean) {

@@ -8,6 +8,8 @@ import {
   Delete,
   UseGuards,
   Query,
+  DefaultValuePipe,
+  ParseIntPipe,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -49,13 +51,19 @@ export class OrdersController {
     @Query('status') status?: string,
     @Query('eventId') eventId?: string,
     @Query('orgId') orgId?: string,
+    @Query('startDate') startDate?: string,
+    @Query('endDate') endDate?: string,
+    @Query('page', new DefaultValuePipe(1), ParseIntPipe) page = 1,
+    @Query('limit', new DefaultValuePipe(20), ParseIntPipe) limit = 20,
   ) {
     const filters: any = {};
     if (status) filters.status = status;
     if (eventId) filters.eventId = eventId;
     if (orgId) filters.orgId = orgId;
+    if (startDate) filters.startDate = startDate;
+    if (endDate) filters.endDate = endDate;
 
-    return this.ordersService.findAll(user.id, filters);
+    return this.ordersService.findAll(user.id, filters, { page, limit });
   }
 
   @Get('stats')

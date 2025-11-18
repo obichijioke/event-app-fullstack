@@ -18,16 +18,16 @@ export function CreatorHeader() {
   const [versions, setVersions] = useState<Array<{ id: string; section?: string; reason?: string; createdAt: string; createdBy: string }>>([]);
   const [loadingVersions, setLoadingVersions] = useState(false);
 
-  if (!draft) {
-    return null;
-  }
-
   const savedLabel = useMemo(() => {
     if (!lastSavedAt) {
       return 'Autosave ready';
     }
     return `Saved ${formatDistanceToNow(lastSavedAt, { addSuffix: true })}`;
   }, [lastSavedAt]);
+
+  if (!draft) {
+    return null;
+  }
 
   const handlePreview = async () => {
     setIsPreviewLoading(true);

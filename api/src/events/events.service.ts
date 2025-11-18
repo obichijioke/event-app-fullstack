@@ -8,7 +8,6 @@ import {
 import { PrismaService } from '../common/prisma/prisma.service';
 import {
   CreateEventDto,
-  CreateEventPoliciesDto,
   CreateEventOccurrenceDto,
 } from './dto/create-event.dto';
 import { UpdateEventDto, UpdateEventPoliciesDto } from './dto/update-event.dto';

@@ -189,7 +189,6 @@ export function BasicsSection() {
           <label className="text-sm font-medium">Cover image</label>
           <div className="flex items-center gap-4">
             {coverUrl ? (
-              // eslint-disable-next-line @next/next/no-img-element
               <img src={resolveImageUrl(coverUrl) || undefined} alt="Cover" className="h-20 w-36 rounded-md object-cover border" />
             ) : (
               <div className="h-20 w-36 rounded-md border border-dashed flex items-center justify-center text-xs text-muted-foreground">No image</div>
@@ -237,4 +236,3 @@ export function BasicsSection() {
     </div>
   );
 }
-

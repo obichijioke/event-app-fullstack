@@ -3,7 +3,7 @@
 import { useCurrency } from '@/hooks/useCurrency';
 
 interface CurrencyDisplayProps {
-  amountCents: number;
+  amountCents: number | bigint; // Support both number and bigint
   currency?: string;
   className?: string;
   showFree?: boolean; // Show "Free" for 0 amounts
@@ -17,16 +17,26 @@ export function CurrencyDisplay({
 }: CurrencyDisplayProps) {
   const { formatAmount } = useCurrency();
 
-  if (showFree && amountCents === 0) {
+  // Convert bigint to number for comparison if needed
+  const isZero = typeof amountCents === 'bigint'
+    ? amountCents === BigInt(0)
+    : amountCents === 0;
+
+  if (showFree && isZero) {
     return <span className={className}>Free</span>;
   }
 
-  return <span className={className}>{formatAmount(amountCents, currency)}</span>;
+  // Convert bigint to number for formatAmount compatibility
+  const numericAmount = typeof amountCents === 'bigint'
+    ? Number(amountCents)
+    : amountCents;
+
+  return <span className={className}>{formatAmount(numericAmount, currency)}</span>;
 }
 
 interface PriceRangeDisplayProps {
-  minPriceCents: number;
-  maxPriceCents: number;
+  minPriceCents: number | bigint; // Support both number and bigint
+  maxPriceCents: number | bigint; // Support both number and bigint
   currency?: string;
   className?: string;
 }
@@ -39,17 +49,33 @@ export function PriceRangeDisplay({
 }: PriceRangeDisplayProps) {
   const { formatAmount } = useCurrency();
 
-  if (minPriceCents === 0 && maxPriceCents === 0) {
+  // Convert to numbers for comparison
+  const minValue = typeof minPriceCents === 'bigint'
+    ? Number(minPriceCents)
+    : minPriceCents;
+  const maxValue = typeof maxPriceCents === 'bigint'
+    ? Number(maxPriceCents)
+    : maxPriceCents;
+
+  if (minValue === 0 && maxValue === 0) {
     return <span className={className}>Free</span>;
   }
 
-  if (minPriceCents === maxPriceCents) {
-    return <span className={className}>{formatAmount(minPriceCents, currency)}</span>;
+  // Convert bigint to number for formatAmount compatibility
+  const numericMin = typeof minPriceCents === 'bigint'
+    ? Number(minPriceCents)
+    : minPriceCents;
+  const numericMax = typeof maxPriceCents === 'bigint'
+    ? Number(maxPriceCents)
+    : maxPriceCents;
+
+  if (minValue === maxValue) {
+    return <span className={className}>{formatAmount(numericMin, currency)}</span>;
   }
 
   return (
     <span className={className}>
-      {formatAmount(minPriceCents, currency)} - {formatAmount(maxPriceCents, currency)}
+      {formatAmount(numericMin, currency)} - {formatAmount(numericMax, currency)}
     </span>
   );
 }

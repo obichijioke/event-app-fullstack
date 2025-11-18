@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/unbound-method */
 import { Test, TestingModule } from '@nestjs/testing';
 import { AdminService } from './admin.service';
 import { PrismaService } from '../common/prisma/prisma.service';
@@ -187,16 +188,18 @@ describe('AdminService', () => {
 
     it('should create audit log entry', async () => {
       prismaService.event.findUnique.mockResolvedValue(mockEvent as any);
-      const mockTransaction = jest.fn().mockImplementation(async (callback) => {
-        return callback({
-          event: {
-            update: jest.fn().mockResolvedValue({
-              id: 'event-1',
-              status: EventStatus.approved,
-            }),
-          },
-          auditLog: { create: jest.fn().mockResolvedValue({}) },
-        } as any);
+      const mockTransaction = jest.fn().mockImplementation((callback) => {
+        return Promise.resolve(
+          callback({
+            event: {
+              update: jest.fn().mockResolvedValue({
+                id: 'event-1',
+                status: EventStatus.approved,
+              }),
+            },
+            auditLog: { create: jest.fn().mockResolvedValue({}) },
+          } as any),
+        );
       });
       prismaService.$transaction.mockImplementation(mockTransaction);
       prismaService.organization.findUnique.mockResolvedValue(null);

@@ -46,7 +46,11 @@ export class QueuesService {
       });
 
       queue.on('waiting', (jobId) => {
-        this.logger.debug(`Job ${jobId} waiting in queue ${queueName}`);
+        const safeJobId =
+          jobId && typeof jobId === 'object'
+            ? JSON.stringify(jobId)
+            : String(jobId);
+        this.logger.debug(`Job ${safeJobId} waiting in queue ${queueName}`);
       });
 
       // Note: BullMQ v4 has different event names

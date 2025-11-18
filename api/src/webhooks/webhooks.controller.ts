@@ -19,7 +19,6 @@ import { WebhooksService } from './webhooks.service';
 import {
   CreateWebhookDto,
   CreateWebhookEventDto,
-  RetryWebhookDto,
 } from './dto/create-webhook.dto';
 import { UpdateWebhookDto } from './dto/update-webhook.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -204,6 +203,6 @@ export class WebhooksController {
   ) {
     // This endpoint would be used to receive responses from webhook consumers
     // It could be used to verify delivery or handle callbacks
-    return { message: 'Webhook response received' };
+    return { message: 'Webhook response received', webhookId, response };
   }
 }

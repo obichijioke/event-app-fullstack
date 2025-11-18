@@ -1,11 +1,4 @@
-import {
-  IsString,
-  IsArray,
-  IsEnum,
-  IsNumber,
-  IsOptional,
-} from 'class-validator';
-import { OrderStatus } from '@prisma/client';
+import { IsString, IsArray, IsNumber, IsOptional } from 'class-validator';
 
 export class CreateOrderDto {
   @IsString()

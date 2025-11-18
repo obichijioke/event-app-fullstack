@@ -37,6 +37,14 @@ export class OrganizerDashboardService {
       );
     }
 
+    const allowedRoles: OrgMemberRole[] = [
+      OrgMemberRole.owner,
+      OrgMemberRole.manager,
+    ];
+    if (!allowedRoles.includes(membership.role)) {
+      throw new ForbiddenException('Insufficient permissions for overview');
+    }
+
     const now = new Date();
 
     const [

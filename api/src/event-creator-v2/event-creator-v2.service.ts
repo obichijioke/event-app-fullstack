@@ -2,12 +2,12 @@ import {
   BadRequestException,
   ForbiddenException,
   Injectable,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
 import {
   EventCreatorCollaboratorRole,
   EventCreatorDraftStatus,
-  EventCreatorEventType,
   EventCreatorSectionStatus,
   EventCreatorSectionType,
   Prisma,
@@ -46,6 +46,7 @@ type DraftWithSections = Prisma.EventCreatorDraftGetPayload<{
 
 @Injectable()
 export class EventCreatorV2Service {
+  private readonly logger = new Logger(EventCreatorV2Service.name);
   private readonly previewBaseUrl =
     process.env.FRONTEND_BASE_URL ?? 'http://localhost:4200';
 
@@ -62,7 +63,7 @@ export class EventCreatorV2Service {
       );
     }
 
-    const org = await this.ensureOrgAccess(userId, dto.organizationId);
+    await this.ensureOrgAccess(userId, dto.organizationId);
     const template = dto.templateId
       ? await this.prisma.eventCreatorTemplate.findFirst({
           where: {
@@ -354,9 +355,12 @@ export class EventCreatorV2Service {
             const set = new RRuleSet();
             set.rrule(RRule.fromString(rruleStr));
             for (const ex of exceptions) {
-              try {
-                set.exdate(new Date(ex));
-              } catch {}
+              const exDate = new Date(ex);
+              if (!Number.isNaN(exDate.getTime())) {
+                set.exdate(exDate);
+              } else {
+                this.logger.warn(`Skipping invalid exception date: ${ex}`);
+              }
             }
             const dtstart = rule.startsAt || new Date();
             const horizon = new Date(
@@ -375,7 +379,13 @@ export class EventCreatorV2Service {
               capacityOverride: null,
               venueId: null,
             }));
-          } catch {}
+          } catch (error) {
+            const message =
+              error instanceof Error
+                ? error.message
+                : 'Unknown recurrence error';
+            this.logger.warn(`Failed to generate recurring dates: ${message}`);
+          }
         } else if (occurrences.length) {
           toCreate = occurrences
             .filter((o) => o.startsAt)

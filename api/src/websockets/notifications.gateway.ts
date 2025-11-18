@@ -36,10 +36,11 @@ export class NotificationsGateway
   ) {}
 
   afterInit(server: Server) {
+    this.server = server;
     this.logger.log('WebSocket Gateway initialized');
   }
 
-  async handleConnection(client: AuthenticatedSocket, ...args: any[]) {
+  async handleConnection(client: AuthenticatedSocket) {
     try {
       // Extract token from handshake auth or query
       const token =
@@ -70,7 +71,7 @@ export class NotificationsGateway
 
       // Join user-specific room
       const room = `user-${client.userId}`;
-      client.join(room);
+      await client.join(room);
 
       this.logger.log(
         `Client ${client.id} connected and joined room ${room} (user: ${client.userId})`,

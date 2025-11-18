@@ -13,7 +13,6 @@ import {
   GetFlagsDto,
   GetModerationStatsDto,
 } from './dto/create-moderation.dto';
-import { UpdateModerationActionDto } from './dto/update-moderation.dto';
 import { ModerationStatus, PlatformRole } from '@prisma/client';
 
 @Injectable()
@@ -23,8 +22,7 @@ export class ModerationService {
   constructor(private prisma: PrismaService) {}
 
   async createFlag(createFlagDto: CreateFlagDto, userId?: string) {
-    const { reporterId, targetKind, targetId, reason, description, metadata } =
-      createFlagDto;
+    const { reporterId, targetKind, targetId, reason } = createFlagDto;
 
     // Check if target exists
     await this.validateTarget(targetKind, targetId);
@@ -237,7 +235,7 @@ export class ModerationService {
       );
     }
 
-    const { moderatorId, targetKind, targetId, action, notes, metadata } =
+    const { moderatorId, targetKind, targetId, action, notes } =
       createModerationActionDto;
 
     // Check if target exists
@@ -376,7 +374,7 @@ export class ModerationService {
 
   private async validateTarget(targetKind: string, targetId: string) {
     switch (targetKind) {
-      case 'user':
+      case 'user': {
         const user = await this.prisma.user.findUnique({
           where: { id: targetId },
         });
@@ -384,8 +382,9 @@ export class ModerationService {
           throw new NotFoundException('User not found');
         }
         break;
+      }
 
-      case 'organization':
+      case 'organization': {
         const org = await this.prisma.organization.findUnique({
           where: { id: targetId },
         });
@@ -393,8 +392,9 @@ export class ModerationService {
           throw new NotFoundException('Organization not found');
         }
         break;
+      }
 
-      case 'event':
+      case 'event': {
         const event = await this.prisma.event.findUnique({
           where: { id: targetId },
         });
@@ -402,8 +402,9 @@ export class ModerationService {
           throw new NotFoundException('Event not found');
         }
         break;
+      }
 
-      case 'ticket':
+      case 'ticket': {
         const ticket = await this.prisma.ticket.findUnique({
           where: { id: targetId },
         });
@@ -411,6 +412,7 @@ export class ModerationService {
           throw new NotFoundException('Ticket not found');
         }
         break;
+      }
 
       default:
         throw new BadRequestException('Invalid target kind');

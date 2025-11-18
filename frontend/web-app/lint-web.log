@@ -1,0 +1,677 @@
+
+> web-app@0.1.0 lint
+> eslint
+
+
+E:\projects\event-app-comprehensive\backend\frontend\web-app\app\(aa)\categories\page.tsx
+   29:42  error  `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+  205:48  error  `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+
+E:\projects\event-app-comprehensive\backend\frontend\web-app\app\(aa)\events\[id]\checkout\page.tsx
+  44:10  warning  'actionError' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+E:\projects\event-app-comprehensive\backend\frontend\web-app\app\(aa)\events\[id]\checkout\payment\page.tsx
+  153:6  warning  React Hook useEffect has a missing dependency: 'initializingPayment'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+E:\projects\event-app-comprehensive\backend\frontend\web-app\app\(aa)\organizers\page.tsx
+  130:51  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+E:\projects\event-app-comprehensive\backend\frontend\web-app\app\(admin)\admin\users\[userId]\manage\page.tsx
+  10:1  warning  Prevent Client Components from being async functions. See: https://nextjs.org/docs/messages/no-async-client-component  @next/next/no-async-client-component
+
+E:\projects\event-app-comprehensive\backend\frontend\web-app\app\(organizer)\organizer\events\[eventId]\seatmap\page.tsx
+  11:11  warning  'eventId' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+E:\projects\event-app-comprehensive\backend\frontend\web-app\app\(organizer)\organizer\events\page.tsx
+   4:10  warning  'Metadata' is defined but never used      @typescript-eslint/no-unused-vars
+  27:23  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+E:\projects\event-app-comprehensive\backend\frontend\web-app\app\(organizer)\organizer\notifications\page.tsx
+  11:10  warning  'selectedCategory' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+E:\projects\event-app-comprehensive\backend\frontend\web-app\app\(organizer)\organizer\seatmaps\[seatmapId]\edit\page.tsx
+  11:11  warning  'seatmapId' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+E:\projects\event-app-comprehensive\backend\frontend\web-app\app\(organizer)\organizer\venues\[venueId]\edit\page.tsx
+  10:11  warning  'venueId' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+E:\projects\event-app-comprehensive\backend\frontend\web-app\app\(organizer)\organizer\venues\create\page.tsx
+  3:10  warning  'VenueForm' is defined but never used  @typescript-eslint/no-unused-vars
+
+E:\projects\event-app-comprehensive\backend\frontend\web-app\components\admin\audit-logs\audit-log-list.tsx
+  38:6  warning  React Hook React.useEffect has a missing dependency: 'loadAuditLogs'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+E:\projects\event-app-comprehensive\backend\frontend\web-app\components\admin\categories\category-management.tsx
+   43:6   warning  React Hook useEffect has a missing dependency: 'loadCategories'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  124:21  error    Unexpected any. Specify a different type                                                                           @typescript-eslint/no-explicit-any
+  138:21  error    Unexpected any. Specify a different type                                                                           @typescript-eslint/no-explicit-any
+
+E:\projects\event-app-comprehensive\backend\frontend\web-app\components\admin\dashboard\admin-dashboard-content.tsx
+   40:6   warning  React Hook React.useEffect has a missing dependency: 'loadDashboardData'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  159:35  error    Unexpected any. Specify a different type                                                                                    @typescript-eslint/no-explicit-any
+
+E:\projects\event-app-comprehensive\backend\frontend\web-app\components\admin\dashboard\revenue-chart.tsx
+  46:11  warning  'maxOrders' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+E:\projects\event-app-comprehensive\backend\frontend\web-app\components\admin\disputes\dispute-list.tsx
+   8:10  warning  'StatusBadge' is defined but never used                                                                                                  @typescript-eslint/no-unused-vars
+  36:6   warning  React Hook React.useEffect has missing dependencies: 'loadDisputes' and 'loadStats'. Either include them or remove the dependency array  react-hooks/exhaustive-deps
+
+E:\projects\event-app-comprehensive\backend\frontend\web-app\components\admin\events\event-detail.tsx
+  17:3  warning  'Users' is defined but never used                                              @typescript-eslint/no-unused-vars
+  18:3  warning  'DollarSign' is defined but never used                                         @typescript-eslint/no-unused-vars
+  43:3  warning  Unused eslint-disable directive (no problems were reported from 'no-console')
+  75:5  warning  Unused eslint-disable directive (no problems were reported from 'no-console')
+  78:7  warning  Unused eslint-disable directive (no problems were reported from 'no-console')
+  91:7  warning  Unused eslint-disable directive (no problems were reported from 'no-console')
+
+E:\projects\event-app-comprehensive\backend\frontend\web-app\components\admin\events\event-list.tsx
+   5:10  warning  'Button' is defined but never used                                                                                   @typescript-eslint/no-unused-vars
+  59:13  warning  'res' is assigned a value but never used                                                                             @typescript-eslint/no-unused-vars
+  90:6   warning  React Hook React.useEffect has a missing dependency: 'loadEvents'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+E:\projects\event-app-comprehensive\backend\frontend\web-app\components\admin\fee-schedules\fee-schedule-manager.tsx
+  43:6  warning  React Hook React.useEffect has missing dependencies: 'loadFeeSchedules' and 'loadStats'. Either include them or remove the dependency array  react-hooks/exhaustive-deps
+
+E:\projects\event-app-comprehensive\backend\frontend\web-app\components\admin\moderation\moderation-list.tsx
+   5:16  warning  'Button' is defined but never used                                                                                  @typescript-eslint/no-unused-vars
+  33:6   warning  React Hook React.useEffect has a missing dependency: 'loadFlags'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+E:\projects\event-app-comprehensive\backend\frontend\web-app\components\admin\notifications\notification-list.tsx
+  18:10  warning  'showBroadcastForm' is assigned a value but never used                                                                      @typescript-eslint/no-unused-vars
+  34:6   warning  React Hook React.useEffect has a missing dependency: 'loadNotifications'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+E:\projects\event-app-comprehensive\backend\frontend\web-app\components\admin\orders\order-list.tsx
+   5:16  warning  'Button' is defined but never used                                                                                   @typescript-eslint/no-unused-vars
+  34:6   warning  React Hook React.useEffect has a missing dependency: 'loadOrders'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+E:\projects\event-app-comprehensive\backend\frontend\web-app\components\admin\organizations\organization-details.tsx
+  23:6  warning  React Hook React.useEffect has a missing dependency: 'loadOrganization'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+E:\projects\event-app-comprehensive\backend\frontend\web-app\components\admin\organizations\organization-list.tsx
+   27:11  warning  'user' is assigned a value but never used                                                                                   @typescript-eslint/no-unused-vars
+   56:6   warning  React Hook React.useEffect has a missing dependency: 'loadOrganizations'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  164:40  error    Unexpected any. Specify a different type                                                                                    @typescript-eslint/no-explicit-any
+
+E:\projects\event-app-comprehensive\backend\frontend\web-app\components\admin\payments\payment-list.tsx
+  36:6  warning  React Hook React.useEffect has a missing dependency: 'loadPayments'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+E:\projects\event-app-comprehensive\backend\frontend\web-app\components\admin\payouts\payout-list.tsx
+  36:6  warning  React Hook React.useEffect has a missing dependency: 'loadPayouts'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+E:\projects\event-app-comprehensive\backend\frontend\web-app\components\admin\promotions\promotion-list.tsx
+   4:21  warning  'FiltersPanel' is defined but never used                                                                           @typescript-eslint/no-unused-vars
+  28:19  warning  'setFilters' is assigned a value but never used                                                                    @typescript-eslint/no-unused-vars
+  37:6   warning  React Hook React.useEffect has a missing dependency: 'loadData'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+E:\projects\event-app-comprehensive\backend\frontend\web-app\components\admin\refunds\refund-list.tsx
+   5:10  warning  'Button' is defined but never used                                                                                    @typescript-eslint/no-unused-vars
+  21:10  warning  'selectedRefund' is assigned a value but never used                                                                   @typescript-eslint/no-unused-vars
+  21:26  warning  'setSelectedRefund' is assigned a value but never used                                                                @typescript-eslint/no-unused-vars
+  40:6   warning  React Hook React.useEffect has a missing dependency: 'loadRefunds'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+E:\projects\event-app-comprehensive\backend\frontend\web-app\components\admin\revenue\revenue-analytics.tsx
+  22:6  warning  React Hook React.useEffect has a missing dependency: 'loadMetrics'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+E:\projects\event-app-comprehensive\backend\frontend\web-app\components\admin\reviews\review-list.tsx
+   4:21  warning  'FiltersPanel' is defined but never used                                                                              @typescript-eslint/no-unused-vars
+  28:19  warning  'setFilters' is assigned a value but never used                                                                       @typescript-eslint/no-unused-vars
+  37:6   warning  React Hook React.useEffect has a missing dependency: 'loadReviews'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+E:\projects\event-app-comprehensive\backend\frontend\web-app\components\admin\sessions\session-list.tsx
+  33:6  warning  React Hook React.useEffect has a missing dependency: 'loadSessions'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+E:\projects\event-app-comprehensive\backend\frontend\web-app\components\admin\settings\currency-settings-form.tsx
+   12:10  warning  'config' is assigned a value but never used  @typescript-eslint/no-unused-vars
+   83:21  error    Unexpected any. Specify a different type     @typescript-eslint/no-explicit-any
+  103:21  error    Unexpected any. Specify a different type     @typescript-eslint/no-explicit-any
+  131:21  error    Unexpected any. Specify a different type     @typescript-eslint/no-explicit-any
+
+E:\projects\event-app-comprehensive\backend\frontend\web-app\components\admin\settings\site-settings-form.tsx
+  34:11  warning  'user' is assigned a value but never used                                                                        @typescript-eslint/no-unused-vars
+  66:6   warning  React Hook useEffect has a missing dependency: 'loadSettings'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+E:\projects\event-app-comprehensive\backend\frontend\web-app\components\admin\shared\data-table.tsx
+   5:18  warning  'Badge' is defined but never used         @typescript-eslint/no-unused-vars
+  43:52  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  86:28  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+E:\projects\event-app-comprehensive\backend\frontend\web-app\components\admin\tax-rates\tax-rate-manager.tsx
+   43:6   warning  React Hook React.useEffect has missing dependencies: 'loadStats' and 'loadTaxRates'. Either include them or remove the dependency array  react-hooks/exhaustive-deps
+  179:35  error    Unexpected any. Specify a different type                                                                                                 @typescript-eslint/no-explicit-any
+
+E:\projects\event-app-comprehensive\backend\frontend\web-app\components\admin\tickets\ticket-list.tsx
+  34:6  warning  React Hook React.useEffect has a missing dependency: 'loadTickets'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+E:\projects\event-app-comprehensive\backend\frontend\web-app\components\admin\users\role-management.tsx
+  150:51  error  `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+  153:45  error  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`  react/no-unescaped-entities
+  153:54  error  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`  react/no-unescaped-entities
+
+E:\projects\event-app-comprehensive\backend\frontend\web-app\components\admin\users\user-list.tsx
+  27:11  warning  'user' is assigned a value but never used                                                                           @typescript-eslint/no-unused-vars
+  56:6   warning  React Hook React.useEffect has a missing dependency: 'loadUsers'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+E:\projects\event-app-comprehensive\backend\frontend\web-app\components\admin\venues\venue-management.tsx
+    3:21  warning  'useMemo' is defined but never used                                                                                                                                                                                                                                                      @typescript-eslint/no-unused-vars
+   60:75  error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                 @typescript-eslint/no-explicit-any
+   61:24  error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                 @typescript-eslint/no-explicit-any
+   89:10  warning  'imageFile' is assigned a value but never used                                                                                                                                                                                                                                           @typescript-eslint/no-unused-vars
+  212:21  error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                 @typescript-eslint/no-explicit-any
+  227:21  error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                 @typescript-eslint/no-explicit-any
+  240:21  error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                 @typescript-eslint/no-explicit-any
+  252:21  error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                 @typescript-eslint/no-explicit-any
+  308:21  error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                 @typescript-eslint/no-explicit-any
+  397:21  error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                 @typescript-eslint/no-explicit-any
+  768:23  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+E:\projects\event-app-comprehensive\backend\frontend\web-app\components\admin\webhooks\webhook-list.tsx
+   4:21  warning  'FiltersPanel' is defined but never used                                                                           @typescript-eslint/no-unused-vars
+  32:6   warning  React Hook React.useEffect has a missing dependency: 'loadData'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+E:\projects\event-app-comprehensive\backend\frontend\web-app\components\checkout\order-summary.tsx
+  76:15  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+E:\projects\event-app-comprehensive\backend\frontend\web-app\components\checkout\paystack-payment-button.tsx
+   3:20  warning  'useEffect' is defined but never used     @typescript-eslint/no-unused-vars
+  22:24  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  60:28  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+E:\projects\event-app-comprehensive\backend\frontend\web-app\components\checkout\stripe-payment-form.tsx
+   3:20  warning  'useEffect' is defined but never used  @typescript-eslint/no-unused-vars
+  70:14  warning  'err' is defined but never used        @typescript-eslint/no-unused-vars
+
+E:\projects\event-app-comprehensive\backend\frontend\web-app\components\creator-v2\review\review-publish.tsx
+  16:9   warning  The 'sections' logical expression could make the dependencies of useMemo Hook (at line 19) change on every render. To fix this, wrap the initialization of 'sections' in its own useMemo() Hook  react-hooks/exhaustive-deps
+  29:22  error    Unexpected any. Specify a different type                                                                                                                                                         @typescript-eslint/no-explicit-any
+  34:17  error    Unexpected any. Specify a different type                                                                                                                                                         @typescript-eslint/no-explicit-any
+
+E:\projects\event-app-comprehensive\backend\frontend\web-app\components\creator-v2\sections\basics-section.tsx
+   50:52  error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      @typescript-eslint/no-explicit-any
+   50:94  error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      @typescript-eslint/no-explicit-any
+   87:26  warning  Compilation Skipped: Use of incompatible library
+
+This API returns functions which cannot be memoized without leading to stale UI. To prevent this, by default React Compiler will skip memoizing this component/hook. However, you may see issues if values from this API are passed to other components/hooks that are memoized.
+
+E:\projects\event-app-comprehensive\backend\frontend\web-app\components\creator-v2\sections\basics-section.tsx:87:26
+  85 |
+  86 |   useEffect(() => {
+> 87 |     const subscription = form.watch((values) => {
+     |                          ^^^^ React Hook Form's `useForm()` API returns a `watch()` function which cannot be memoized safely.
+  88 |       const parsed = schema.safeParse(values);
+  89 |       if (parsed.success) {
+  90 |         debouncedSave(parsed.data);  react-hooks/incompatible-library
+  120:51  error    `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               react/no-unescaped-entities
+  143:78  error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      @typescript-eslint/no-explicit-any
+
+E:\projects\event-app-comprehensive\backend\frontend\web-app\components\creator-v2\sections\checkout-section.tsx
+   35:43   error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       @typescript-eslint/no-explicit-any
+   38:38   error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       @typescript-eslint/no-explicit-any
+   40:61   error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       @typescript-eslint/no-explicit-any
+   43:47   error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       @typescript-eslint/no-explicit-any
+  137:30   warning  Compilation Skipped: Use of incompatible library
+
+This API returns functions which cannot be memoized without leading to stale UI. To prevent this, by default React Compiler will skip memoizing this component/hook. However, you may see issues if values from this API are passed to other components/hooks that are memoized.
+
+E:\projects\event-app-comprehensive\backend\frontend\web-app\components\creator-v2\sections\checkout-section.tsx:137:30
+  135 |                     <label className="text-xs font-medium">Field type</label>
+  136 |                     <Select
+> 137 |                       value={form.watch(`questions.${index}.fieldType` as const) as any}
+      |                              ^^^^ React Hook Form's `useForm()` API returns a `watch()` function which cannot be memoized safely.
+  138 |                       onChange={(e) => form.setValue(`questions.${index}.fieldType` as const, e.target.value as any)}
+  139 |                     >
+  140 |                       <option value="text">Text</option>  react-hooks/incompatible-library
+  137:85   error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       @typescript-eslint/no-explicit-any
+  138:113  error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       @typescript-eslint/no-explicit-any
+
+E:\projects\event-app-comprehensive\backend\frontend\web-app\components\creator-v2\sections\recurrence-builder.tsx
+   38:45   warning  'timezone' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         @typescript-eslint/no-unused-vars
+   41:19   error    Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+E:\projects\event-app-comprehensive\backend\frontend\web-app\components\creator-v2\sections\recurrence-builder.tsx:41:19
+  39 |   const [local, setLocal] = useState<RecurrenceConfig>(config);
+  40 |
+> 41 |   useEffect(() => setLocal(config), [config.start, config.end, config.freq, config.interval, config.byWeekday, config.ends, config.exceptions]);
+     |                   ^^^^^^^^ Avoid calling setState() directly within an effect
+  42 |
+  43 |   const rruleString = useMemo(() => {
+  44 |     try {  react-hooks/set-state-in-effect
+   41:37   warning  React Hook useEffect has a missing dependency: 'config'. Either include it or remove the dependency array. If 'setLocal' needs the current value of 'config', you can also switch to useReducer instead of useState and read 'config' in the reducer                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         react-hooks/exhaustive-deps
+   45:22   error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     @typescript-eslint/no-explicit-any
+   51:66   error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     @typescript-eslint/no-explicit-any
+   60:14   warning  '_' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                @typescript-eslint/no-unused-vars
+   71:113  warning  'd' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                @typescript-eslint/no-unused-vars
+   74:14   warning  '_' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                @typescript-eslint/no-unused-vars
+  101:125  error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     @typescript-eslint/no-explicit-any
+
+E:\projects\event-app-comprehensive\backend\frontend\web-app\components\creator-v2\sections\schedule-section.tsx
+   53:40   error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   53:61   error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   55:102  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   56:45   error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   59:16   error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   85:29   error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  160:44   error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  161:72   error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  201:43   warning  'preview' is defined but never used       @typescript-eslint/no-unused-vars
+  202:47   error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  203:57   error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  275:82   error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  278:94   error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+E:\projects\event-app-comprehensive\backend\frontend\web-app\components\creator-v2\sections\section-router.tsx
+  5:10  warning  'SectionPlaceholder' is defined but never used  @typescript-eslint/no-unused-vars
+
+E:\projects\event-app-comprehensive\backend\frontend\web-app\components\creator-v2\sections\story-section.tsx
+    4:30  warning  'useState' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      @typescript-eslint/no-unused-vars
+   52:50  error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  @typescript-eslint/no-explicit-any
+   56:36  error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  @typescript-eslint/no-explicit-any
+   59:38  error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  @typescript-eslint/no-explicit-any
+   62:41  error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  @typescript-eslint/no-explicit-any
+   63:40  error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  @typescript-eslint/no-explicit-any
+   74:39  error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  @typescript-eslint/no-explicit-any
+   79:43  error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  @typescript-eslint/no-explicit-any
+  111:26  warning  Compilation Skipped: Use of incompatible library
+
+This API returns functions which cannot be memoized without leading to stale UI. To prevent this, by default React Compiler will skip memoizing this component/hook. However, you may see issues if values from this API are passed to other components/hooks that are memoized.
+
+E:\projects\event-app-comprehensive\backend\frontend\web-app\components\creator-v2\sections\story-section.tsx:111:26
+  109 |
+  110 |   useEffect(() => {
+> 111 |     const subscription = form.watch((values) => {
+      |                          ^^^^ React Hook Form's `useForm()` API returns a `watch()` function which cannot be memoized safely.
+  112 |       const parsed = storySchema.safeParse(values);
+  113 |       if (parsed.success) {
+  114 |         debouncedSave(parsed.data);  react-hooks/incompatible-library
+  262:86  error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  @typescript-eslint/no-explicit-any
+
+E:\projects\event-app-comprehensive\backend\frontend\web-app\components\creator-v2\sections\tickets-section.tsx
+   51:41   error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  @typescript-eslint/no-explicit-any
+   53:26   error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  @typescript-eslint/no-explicit-any
+   56:38   error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  @typescript-eslint/no-explicit-any
+   62:40   error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  @typescript-eslint/no-explicit-any
+   64:42   error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  @typescript-eslint/no-explicit-any
+   70:36   error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  @typescript-eslint/no-explicit-any
+  143:30   warning  Compilation Skipped: Use of incompatible library
+
+This API returns functions which cannot be memoized without leading to stale UI. To prevent this, by default React Compiler will skip memoizing this component/hook. However, you may see issues if values from this API are passed to other components/hooks that are memoized.
+
+E:\projects\event-app-comprehensive\backend\frontend\web-app\components\creator-v2\sections\tickets-section.tsx:143:30
+  141 |                     <label className="text-xs font-medium">Type</label>
+  142 |                     <Select
+> 143 |                       value={form.watch(`tickets.${index}.kind` as const) as any}
+      |                              ^^^^ React Hook Form's `useForm()` API returns a `watch()` function which cannot be memoized safely.
+  144 |                       onChange={(e) => form.setValue(`tickets.${index}.kind` as const, e.target.value as any)}
+  145 |                     >
+  146 |                       <option value="paid">Paid</option>  react-hooks/incompatible-library
+  143:78   error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  @typescript-eslint/no-explicit-any
+  144:106  error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  @typescript-eslint/no-explicit-any
+  167:84   error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  @typescript-eslint/no-explicit-any
+  168:112  error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  @typescript-eslint/no-explicit-any
+  219:54   error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  @typescript-eslint/no-explicit-any
+  219:161  error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  @typescript-eslint/no-explicit-any
+  227:82   error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  @typescript-eslint/no-explicit-any
+  231:87   error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  @typescript-eslint/no-explicit-any
+  235:89   error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  @typescript-eslint/no-explicit-any
+  252:78   error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  @typescript-eslint/no-explicit-any
+  252:169  error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  @typescript-eslint/no-explicit-any
+  256:81   error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  @typescript-eslint/no-explicit-any
+  256:173  error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  @typescript-eslint/no-explicit-any
+  260:100  error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  @typescript-eslint/no-explicit-any
+  260:114  error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  @typescript-eslint/no-explicit-any
+  260:190  error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  @typescript-eslint/no-explicit-any
+  265:60   error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  @typescript-eslint/no-explicit-any
+  265:159  error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  @typescript-eslint/no-explicit-any
+
+E:\projects\event-app-comprehensive\backend\frontend\web-app\components\creator-v2\shell\creator-header.tsx
+  25:22  error  React Hook "useMemo" is called conditionally. React Hooks must be called in the exact same order in every component render  react-hooks/rules-of-hooks
+
+E:\projects\event-app-comprehensive\backend\frontend\web-app\components\event-detail\event-content-tabs.tsx
+   62:37  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   63:89  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   66:39  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   67:51  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   69:39  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   70:67  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   78:37  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   80:41  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  102:45  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  103:45  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  104:45  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  105:45  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  115:43  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  116:43  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  117:43  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  118:43  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  122:51  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  122:92  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  123:52  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  123:94  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+E:\projects\event-app-comprehensive\backend\frontend\web-app\components\event-detail\event-sidebar.tsx
+  37:15  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  38:15  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  39:15  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  40:15  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+E:\projects\event-app-comprehensive\backend\frontend\web-app\components\event-detail\google-map.tsx
+   72:15  warning  'timer' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  139:21  warning  'timer' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  143:21  warning  'timer' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  152:15  warning  'timer' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+E:\projects\event-app-comprehensive\backend\frontend\web-app\components\event-detail\social-share-dropdown.tsx
+  32:5  error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+E:\projects\event-app-comprehensive\backend\frontend\web-app\components\event-detail\social-share-dropdown.tsx:32:5
+  30 |
+  31 |   useEffect(() => {
+> 32 |     setShowNativeShare(isNativeShareAvailable());
+     |     ^^^^^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  33 |   }, []);
+  34 |
+  35 |   // Close dropdown when clicking outside  react-hooks/set-state-in-effect
+
+E:\projects\event-app-comprehensive\backend\frontend\web-app\components\organizer\analytics\ticket-status-chart.tsx
+  32:15  warning  '_' is defined but never used             @typescript-eslint/no-unused-vars
+  55:26  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+E:\projects\event-app-comprehensive\backend\frontend\web-app\components\organizer\api-keys\api-key-list.tsx
+   4:35  warning  'Eye' is defined but never used           @typescript-eslint/no-unused-vars
+   4:40  warning  'EyeOff' is defined but never used        @typescript-eslint/no-unused-vars
+  29:21  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  47:21  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+E:\projects\event-app-comprehensive\backend\frontend\web-app\components\organizer\api-keys\create-api-key-modal.tsx
+   46:21  error  Unexpected any. Specify a different type                         @typescript-eslint/no-explicit-any
+  187:65  error  `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+
+E:\projects\event-app-comprehensive\backend\frontend\web-app\components\organizer\attendees\attendees-content.tsx
+  46:6  warning  React Hook useEffect has a missing dependency: 'loadAttendees'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+E:\projects\event-app-comprehensive\backend\frontend\web-app\components\organizer\check-in\check-in-content.tsx
+   34:6   warning  React Hook useEffect has missing dependencies: 'loadRecentCheckins' and 'loadStats'. Either include them or remove the dependency array  react-hooks/exhaustive-deps
+   86:21  error    Unexpected any. Specify a different type                                                                                                 @typescript-eslint/no-explicit-any
+  290:47  error    `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`                                                                          react/no-unescaped-entities
+  291:59  error    `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`                                                                          react/no-unescaped-entities
+  291:68  error    `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`                                                                          react/no-unescaped-entities
+
+E:\projects\event-app-comprehensive\backend\frontend\web-app\components\organizer\dashboard\financial-summary-widget.tsx
+  65:6   warning  React Hook useEffect has a missing dependency: 'loadFinancialSummary'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  75:21  error    Unexpected any. Specify a different type                                                                                 @typescript-eslint/no-explicit-any
+
+E:\projects\event-app-comprehensive\backend\frontend\web-app\components\organizer\dashboard\revenue-chart.tsx
+  26:6   warning  React Hook useEffect has a missing dependency: 'loadRevenueData'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  43:21  error    Unexpected any. Specify a different type                                                                            @typescript-eslint/no-explicit-any
+
+E:\projects\event-app-comprehensive\backend\frontend\web-app\components\organizer\events\event-card.tsx
+  15:36  warning  'orgId' is defined but never used  @typescript-eslint/no-unused-vars
+
+E:\projects\event-app-comprehensive\backend\frontend\web-app\components\organizer\events\event-detail-content.tsx
+  12:3   warning  'BarChart3' is defined but never used                                                                         @typescript-eslint/no-unused-vars
+  15:3   warning  'Settings' is defined but never used                                                                          @typescript-eslint/no-unused-vars
+  26:15  warning  'DashboardEvent' is defined but never used                                                                    @typescript-eslint/no-unused-vars
+  34:38  error    Unexpected any. Specify a different type                                                                      @typescript-eslint/no-explicit-any
+  56:6   warning  React Hook useEffect has a missing dependency: 'loadEvent'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+E:\projects\event-app-comprehensive\backend\frontend\web-app\components\organizer\events\event-edit-form.tsx
+  21:44  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  68:24  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+E:\projects\event-app-comprehensive\backend\frontend\web-app\components\organizer\events\event-seatmap-assignment.tsx
+  23:6   warning  React Hook useEffect has a missing dependency: 'loadSeatmaps'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  37:21  error    Unexpected any. Specify a different type                                                                         @typescript-eslint/no-explicit-any
+  53:21  error    Unexpected any. Specify a different type                                                                         @typescript-eslint/no-explicit-any
+  76:21  error    Unexpected any. Specify a different type                                                                         @typescript-eslint/no-explicit-any
+
+E:\projects\event-app-comprehensive\backend\frontend\web-app\components\organizer\financials\export-orders-button.tsx
+   4:20  warning  'Calendar' is defined but never used      @typescript-eslint/no-unused-vars
+  50:21  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+E:\projects\event-app-comprehensive\backend\frontend\web-app\components\organizer\holds\holds-content.tsx
+    9:3   warning  'User' is defined but never used                                                                              @typescript-eslint/no-unused-vars
+   50:6   warning  React Hook useEffect has a missing dependency: 'loadHolds'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+   95:21  error    Unexpected any. Specify a different type                                                                      @typescript-eslint/no-explicit-any
+  202:58  error    Unexpected any. Specify a different type                                                                      @typescript-eslint/no-explicit-any
+  377:21  error    Unexpected any. Specify a different type                                                                      @typescript-eslint/no-explicit-any
+  427:85  error    Unexpected any. Specify a different type                                                                      @typescript-eslint/no-explicit-any
+
+E:\projects\event-app-comprehensive\backend\frontend\web-app\components\organizer\layout\organizer-sidebar.tsx
+   9:3  warning  'Users' is defined but never used       @typescript-eslint/no-unused-vars
+  10:3  warning  'CreditCard' is defined but never used  @typescript-eslint/no-unused-vars
+  11:3  warning  'BarChart3' is defined but never used   @typescript-eslint/no-unused-vars
+  14:3  warning  'Map' is defined but never used         @typescript-eslint/no-unused-vars
+  17:3  warning  'FileText' is defined but never used    @typescript-eslint/no-unused-vars
+  18:3  warning  'Webhook' is defined but never used     @typescript-eslint/no-unused-vars
+  19:3  warning  'Receipt' is defined but never used     @typescript-eslint/no-unused-vars
+
+E:\projects\event-app-comprehensive\backend\frontend\web-app\components\organizer\notifications\notification-bell.tsx
+  19:9  warning  'storeNotifications' is assigned a value but never used                                                                        @typescript-eslint/no-unused-vars
+  29:6  warning  React Hook useEffect has a missing dependency: 'recentNotifications.length'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+E:\projects\event-app-comprehensive\backend\frontend\web-app\components\organizer\notifications\notification-item.tsx
+   64:9   warning  'handleClick' is assigned a value but never used                                                                                                                                                                                                                                         @typescript-eslint/no-unused-vars
+  111:13  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+E:\projects\event-app-comprehensive\backend\frontend\web-app\components\organizer\notifications\notification-list.tsx
+  42:6  warning  React Hook useEffect has a missing dependency: 'loadNotifications'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+E:\projects\event-app-comprehensive\backend\frontend\web-app\components\organizer\occurrences\occurrence-card.tsx
+  5:10  warning  'formatDateTime' is defined but never used  @typescript-eslint/no-unused-vars
+
+E:\projects\event-app-comprehensive\backend\frontend\web-app\components\organizer\occurrences\occurrence-management-content.tsx
+  26:6   warning  React Hook useEffect has a missing dependency: 'loadOccurrences'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  65:31  warning  'occurrence' is defined but never used                                                                              @typescript-eslint/no-unused-vars
+
+E:\projects\event-app-comprehensive\backend\frontend\web-app\components\organizer\orders\event-orders-content.tsx
+  37:6  warning  React Hook useEffect has a missing dependency: 'loadOrders'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+E:\projects\event-app-comprehensive\backend\frontend\web-app\components\organizer\organization-provider.tsx
+  142:17  error  Do not use an `<a>` element to navigate to `/`. Use `<Link />` from `next/link` instead. See: https://nextjs.org/docs/messages/no-html-link-for-pages  @next/next/no-html-link-for-pages
+
+E:\projects\event-app-comprehensive\backend\frontend\web-app\components\organizer\organization-setup.tsx
+  58:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  77:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+E:\projects\event-app-comprehensive\backend\frontend\web-app\components\organizer\organization\add-member-form.tsx
+  44:19  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+E:\projects\event-app-comprehensive\backend\frontend\web-app\components\organizer\organization\profile-form.tsx
+  203:18  error  `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+
+E:\projects\event-app-comprehensive\backend\frontend\web-app\components\organizer\payouts\add-payout-account-modal.tsx
+   33:21  error  Unexpected any. Specify a different type                         @typescript-eslint/no-explicit-any
+   62:33  error  `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+  157:63  error  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`  react/no-unescaped-entities
+  157:69  error  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`  react/no-unescaped-entities
+  168:53  error  `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+  180:65  error  `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+
+E:\projects\event-app-comprehensive\backend\frontend\web-app\components\organizer\payouts\payout-account-list.tsx
+  26:6   warning  React Hook useEffect has a missing dependency: 'loadAccounts'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  35:21  error    Unexpected any. Specify a different type                                                                         @typescript-eslint/no-explicit-any
+  55:21  error    Unexpected any. Specify a different type                                                                         @typescript-eslint/no-explicit-any
+
+E:\projects\event-app-comprehensive\backend\frontend\web-app\components\organizer\payouts\payout-detail.tsx
+  59:6   warning  React Hook useEffect has a missing dependency: 'loadPayout'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  69:21  error    Unexpected any. Specify a different type                                                                       @typescript-eslint/no-explicit-any
+  96:19  error    Unexpected any. Specify a different type                                                                       @typescript-eslint/no-explicit-any
+
+E:\projects\event-app-comprehensive\backend\frontend\web-app\components\organizer\payouts\payout-list.tsx
+  44:6   warning  React Hook useEffect has a missing dependency: 'loadPayouts'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  54:21  error    Unexpected any. Specify a different type                                                                        @typescript-eslint/no-explicit-any
+
+E:\projects\event-app-comprehensive\backend\frontend\web-app\components\organizer\payouts\request-payout-modal.tsx
+   33:6   warning  React Hook useEffect has a missing dependency: 'calculatePayout'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+   58:21  error    Unexpected any. Specify a different type                                                                            @typescript-eslint/no-explicit-any
+   83:21  error    Unexpected any. Specify a different type                                                                            @typescript-eslint/no-explicit-any
+  300:78  error    `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`                                                     react/no-unescaped-entities
+
+E:\projects\event-app-comprehensive\backend\frontend\web-app\components\organizer\promo-codes\campaign-analytics-modal.tsx
+  127:49  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+E:\projects\event-app-comprehensive\backend\frontend\web-app\components\organizer\promo-codes\campaign-details-modal.tsx
+   4:44  warning  'TrendingUp' is defined but never used    @typescript-eslint/no-unused-vars
+  67:47  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+E:\projects\event-app-comprehensive\backend\frontend\web-app\components\organizer\promo-codes\promo-codes-content.tsx
+  38:6  warning  React Hook useEffect has a missing dependency: 'loadData'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+E:\projects\event-app-comprehensive\backend\frontend\web-app\components\organizer\promo-codes\promotion-form.tsx
+  259:21  error  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`  react/no-unescaped-entities
+  259:29  error  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`  react/no-unescaped-entities
+  259:32  error  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`  react/no-unescaped-entities
+  259:39  error  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`  react/no-unescaped-entities
+
+E:\projects\event-app-comprehensive\backend\frontend\web-app\components\organizer\refunds\refund-list.tsx
+  41:6   warning  React Hook useEffect has a missing dependency: 'loadRefunds'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  72:39  error    Unexpected any. Specify a different type                                                                        @typescript-eslint/no-explicit-any
+  73:36  error    Unexpected any. Specify a different type                                                                        @typescript-eslint/no-explicit-any
+  73:62  error    Unexpected any. Specify a different type                                                                        @typescript-eslint/no-explicit-any
+  91:21  error    Unexpected any. Specify a different type                                                                        @typescript-eslint/no-explicit-any
+
+E:\projects\event-app-comprehensive\backend\frontend\web-app\components\organizer\reports\financial-reports.tsx
+   4:44  warning  'Download' is defined but never used                                                                                     @typescript-eslint/no-unused-vars
+  27:6   warning  React Hook useEffect has a missing dependency: 'loadFinancialSummary'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  56:21  error    Unexpected any. Specify a different type                                                                                 @typescript-eslint/no-explicit-any
+
+E:\projects\event-app-comprehensive\backend\frontend\web-app\components\organizer\seatmaps\create-seatmap-form.tsx
+    5:10  warning  'ArrowLeft' is defined but never used                                                                          @typescript-eslint/no-unused-vars
+   23:10  warning  'saving' is assigned a value but never used                                                                    @typescript-eslint/no-unused-vars
+   29:6   warning  React Hook useEffect has a missing dependency: 'loadVenues'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+   77:21  error    Unexpected any. Specify a different type                                                                       @typescript-eslint/no-explicit-any
+  169:52  error    `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`                                                react/no-unescaped-entities
+
+E:\projects\event-app-comprehensive\backend\frontend\web-app\components\organizer\seatmaps\edit-seatmap-form.tsx
+  18:10  warning  'saving' is assigned a value but never used                                                                     @typescript-eslint/no-unused-vars
+  22:6   warning  React Hook useEffect has a missing dependency: 'loadSeatmap'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  30:21  error    Unexpected any. Specify a different type                                                                        @typescript-eslint/no-explicit-any
+  47:21  error    Unexpected any. Specify a different type                                                                        @typescript-eslint/no-explicit-any
+
+E:\projects\event-app-comprehensive\backend\frontend\web-app\components\organizer\seatmaps\seatmap-editor.tsx
+    3:28  warning  'useEffect' is defined but never used               @typescript-eslint/no-unused-vars
+    4:30  warning  'Text' is defined but never used                    @typescript-eslint/no-unused-vars
+    4:36  warning  'Circle' is defined but never used                  @typescript-eslint/no-unused-vars
+   16:3   warning  'Grid3x3' is defined but never used                 @typescript-eslint/no-unused-vars
+   58:10  warning  'isDragging' is assigned a value but never used     @typescript-eslint/no-unused-vars
+   58:22  warning  'setIsDragging' is assigned a value but never used  @typescript-eslint/no-unused-vars
+   93:32  error    Unexpected any. Specify a different type            @typescript-eslint/no-explicit-any
+  107:33  error    Unexpected any. Specify a different type            @typescript-eslint/no-explicit-any
+
+E:\projects\event-app-comprehensive\backend\frontend\web-app\components\organizer\seatmaps\seatmap-list.tsx
+   19:10  warning  'showCreateDialog' is assigned a value but never used                                                            @typescript-eslint/no-unused-vars
+   19:28  warning  'setShowCreateDialog' is assigned a value but never used                                                         @typescript-eslint/no-unused-vars
+   20:10  warning  'editingSeatmap' is assigned a value but never used                                                              @typescript-eslint/no-unused-vars
+   20:26  warning  'setEditingSeatmap' is assigned a value but never used                                                           @typescript-eslint/no-unused-vars
+   26:6   warning  React Hook useEffect has a missing dependency: 'loadSeatmaps'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+   35:21  error    Unexpected any. Specify a different type                                                                         @typescript-eslint/no-explicit-any
+   52:21  error    Unexpected any. Specify a different type                                                                         @typescript-eslint/no-explicit-any
+  120:49  error    `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`                                                  react/no-unescaped-entities
+  120:63  error    `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`                                                  react/no-unescaped-entities
+
+E:\projects\event-app-comprehensive\backend\frontend\web-app\components\organizer\tickets\ticket-management-content.tsx
+  30:6  warning  React Hook useEffect has a missing dependency: 'loadData'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+E:\projects\event-app-comprehensive\backend\frontend\web-app\components\organizer\venues\edit-venue-wrapper.tsx
+  24:6  warning  React Hook useEffect has a missing dependency: 'loadVenue'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+E:\projects\event-app-comprehensive\backend\frontend\web-app\components\organizer\venues\venue-catalog-search.tsx
+  162:23  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+E:\projects\event-app-comprehensive\backend\frontend\web-app\components\organizer\venues\venue-detail.tsx
+    8:52  warning  'Calendar' is defined but never used                                                                                                                                                                                                                                                     @typescript-eslint/no-unused-vars
+   28:6   warning  React Hook useEffect has missing dependencies: 'loadSeatmaps' and 'loadVenue'. Either include them or remove the dependency array                                                                                                                                                        react-hooks/exhaustive-deps
+   65:21  error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                 @typescript-eslint/no-explicit-any
+   81:21  error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                 @typescript-eslint/no-explicit-any
+  203:11  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+  216:15  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+E:\projects\event-app-comprehensive\backend\frontend\web-app\components\organizer\venues\venue-form.tsx
+  33:11  warning  'currentOrganization' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+E:\projects\event-app-comprehensive\backend\frontend\web-app\components\organizer\venues\venue-list.tsx
+   24:6   warning  React Hook useEffect has a missing dependency: 'loadVenues'. Either include it or remove the dependency array                                                                                                                                                                            react-hooks/exhaustive-deps
+  135:19  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+E:\projects\event-app-comprehensive\backend\frontend\web-app\components\organizer\webhooks\create-webhook-modal.tsx
+  69:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+E:\projects\event-app-comprehensive\backend\frontend\web-app\components\organizer\webhooks\edit-webhook-modal.tsx
+   3:20  warning  'useEffect' is defined but never used     @typescript-eslint/no-unused-vars
+  64:21  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+E:\projects\event-app-comprehensive\backend\frontend\web-app\components\organizer\webhooks\webhook-list.tsx
+  12:8   warning  'Link' is defined but never used                                                                                 @typescript-eslint/no-unused-vars
+  28:6   warning  React Hook useEffect has a missing dependency: 'loadWebhooks'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  37:21  error    Unexpected any. Specify a different type                                                                         @typescript-eslint/no-explicit-any
+  56:21  error    Unexpected any. Specify a different type                                                                         @typescript-eslint/no-explicit-any
+  74:21  error    Unexpected any. Specify a different type                                                                         @typescript-eslint/no-explicit-any
+
+E:\projects\event-app-comprehensive\backend\frontend\web-app\components\ui\text.tsx
+  41:31  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+E:\projects\event-app-comprehensive\backend\frontend\web-app\lib\api\currency-api.ts
+  165:70  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+E:\projects\event-app-comprehensive\backend\frontend\web-app\lib\api\organizer-api.ts
+   44:3   warning  'CalculatePayoutsParams' is defined but never used    @typescript-eslint/no-unused-vars
+   45:3   warning  'CalculatePayoutsResponse' is defined but never used  @typescript-eslint/no-unused-vars
+  242:53  warning  'orgId' is defined but never used                     @typescript-eslint/no-unused-vars
+  246:31  warning  'orgId' is defined but never used                     @typescript-eslint/no-unused-vars
+  280:60  warning  'orgId' is defined but never used                     @typescript-eslint/no-unused-vars
+  294:55  warning  'orgId' is defined but never used                     @typescript-eslint/no-unused-vars
+  301:62  warning  'orgId' is defined but never used                     @typescript-eslint/no-unused-vars
+  405:58  warning  'orgId' is defined but never used                     @typescript-eslint/no-unused-vars
+  413:63  warning  'orgId' is defined but never used                     @typescript-eslint/no-unused-vars
+  417:36  warning  'orgId' is defined but never used                     @typescript-eslint/no-unused-vars
+  423:68  warning  'orgId' is defined but never used                     @typescript-eslint/no-unused-vars
+  427:71  warning  'orgId' is defined but never used                     @typescript-eslint/no-unused-vars
+  431:30  warning  'orgId' is defined but never used                     @typescript-eslint/no-unused-vars
+  437:69  warning  'orgId' is defined but never used                     @typescript-eslint/no-unused-vars
+  455:52  warning  'orgId' is defined but never used                     @typescript-eslint/no-unused-vars
+  459:30  warning  'orgId' is defined but never used                     @typescript-eslint/no-unused-vars
+
+E:\projects\event-app-comprehensive\backend\frontend\web-app\lib\api\seatmaps-api.ts
+  24:9   error  Unexpected any. Specify a different type                          @typescript-eslint/no-explicit-any
+  34:9   error  Unexpected any. Specify a different type                          @typescript-eslint/no-explicit-any
+  44:18  error  An interface declaring no members is equivalent to its supertype  @typescript-eslint/no-empty-object-type
+
+E:\projects\event-app-comprehensive\backend\frontend\web-app\lib\api\venues-api.ts
+  34:18  error  An interface declaring no members is equivalent to its supertype  @typescript-eslint/no-empty-object-type
+
+E:\projects\event-app-comprehensive\backend\frontend\web-app\lib\events.ts
+  425:11  warning  'amount' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+E:\projects\event-app-comprehensive\backend\frontend\web-app\lib\hooks\use-list-data.ts
+  105:6   warning  React Hook useCallback has a missing dependency: 'pagination'. Either include it or remove the dependency array                                            react-hooks/exhaustive-deps
+  105:78  warning  React Hook useCallback has a spread element in its dependency array. This means we can't statically verify whether you've passed the correct dependencies  react-hooks/exhaustive-deps
+
+E:\projects\event-app-comprehensive\backend\frontend\web-app\lib\types\event-creator-v2.ts
+  29:27  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  31:26  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  89:27  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  91:27  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+E:\projects\event-app-comprehensive\backend\frontend\web-app\lib\types\organizer.ts
+  605:24  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  844:12  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  943:10  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+E:\projects\event-app-comprehensive\backend\frontend\web-app\lib\utils\error-handler.ts
+  39:26  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+Ô£û 367 problems (197 errors, 170 warnings)
+  0 errors and 4 warnings potentially fixable with the `--fix` option.
+

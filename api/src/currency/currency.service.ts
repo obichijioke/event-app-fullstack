@@ -7,7 +7,7 @@ import {
 import { PrismaService } from '../common/prisma/prisma.service';
 import { UpdateCurrencyConfigDto } from './dto/update-currency-config.dto';
 import { AddExchangeRateDto } from './dto/add-exchange-rate.dto';
-import { CurrencyConfiguration, ExchangeRate } from '@prisma/client';
+import { CurrencyConfiguration, ExchangeRate, Prisma } from '@prisma/client';
 import { Decimal } from '@prisma/client/runtime/library';
 
 @Injectable()
@@ -362,6 +362,10 @@ export class CurrencyService {
         validFrom: dto.validFrom || new Date(),
         validUntil: dto.validUntil,
         isActive: true,
+        metadata: {
+          updatedBy: adminId,
+          source: dto.source || 'manual',
+        } satisfies Prisma.JsonObject,
       },
     });
 

@@ -509,7 +509,7 @@ export class PromotionsService {
     validatePromoCodeDto: ValidatePromoCodeDto,
     userId?: string,
   ) {
-    const { code, eventId, ticketTypeIds, orderAmount } = validatePromoCodeDto;
+    const { code, eventId, orderAmount } = validatePromoCodeDto;
 
     // Find promo code
     const promoCode = await this.prisma.promoCode.findFirst({
@@ -572,7 +572,7 @@ export class PromotionsService {
 
     // Calculate discount
     let discountAmount = BigInt(0);
-    if (promoCode.percentOff) {
+    if (promoCode.percentOff !== null && promoCode.percentOff !== undefined) {
       discountAmount =
         (BigInt(orderAmount || 0) * BigInt(Number(promoCode.percentOff))) /
         BigInt(100);
