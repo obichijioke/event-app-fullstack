@@ -88,6 +88,58 @@ import type {
   WebhookStats,
 } from '../types/organizer';
 
+// Additional interfaces to replace 'any' types
+interface EventPolicies {
+  refundPolicy?: string;
+  transferAllowed: boolean;
+  transferCutoff?: string;
+  resaleAllowed: boolean;
+}
+
+interface RefundResponse {
+  success: boolean;
+  refundId: string;
+  message: string;
+}
+
+interface Attendee {
+  id: string;
+  name: string;
+  email: string;
+  ticketType: string;
+  status: string;
+  checkinTime?: string;
+  orderId: string;
+}
+
+interface TransferResponse {
+  success: boolean;
+  message: string;
+  transferId?: string;
+}
+
+interface ResendResponse {
+  success: boolean;
+  message: string;
+}
+
+interface CheckinResponse {
+  success: boolean;
+  message: string;
+  checkinId?: string;
+}
+
+interface BulkSeatAssignmentResponse {
+  success: boolean;
+  assigned: number;
+  message: string;
+}
+
+interface FlagResolutionResponse {
+  success: boolean;
+  message: string;
+}
+
 // ============================================================================
 // Dashboard Overview
 // ============================================================================
@@ -246,8 +298,8 @@ export const organizerApi = {
 
     // Policies
     policies: {
-      createOrUpdate: (eventId: string, data: any, orgId: string) => {
-        return apiClient.post<any>(`/organizer/events/${eventId}/policies`, data);
+      createOrUpdate: (eventId: string, data: EventPolicies, orgId: string) => {
+        return apiClient.post<EventPolicies>(`/organizer/events/${eventId}/policies`, data);
       },
     },
   },
@@ -284,13 +336,13 @@ export const organizerApi = {
     },
 
     refund: (orderId: string, data: RefundDto, orgId: string) => {
-      return apiClient.post<any>(`/organizer/orders/${orderId}/refund`, { ...data, orgId });
+      return apiClient.post<RefundResponse>(`/organizer/orders/${orderId}/refund`, { ...data, orgId });
     },
   },
 
   attendees: {
     list: (eventId: string, orgId: string, params?: { search?: string; status?: string }) => {
-      return apiClient.get<any[]>(`/organizer/events/${eventId}/attendees`, {
+      return apiClient.get<Attendee[]>(`/organizer/events/${eventId}/attendees`, {
         orgId,
         ...(params?.search && { search: params.search }),
         ...(params?.status && { status: params.status }),
@@ -300,17 +352,17 @@ export const organizerApi = {
 
   tickets: {
     transfer: (ticketId: string, data: TransferTicketDto, orgId: string) => {
-      return apiClient.post<any>(`/organizer/tickets/${ticketId}/transfer`, { ...data, orgId });
+      return apiClient.post<TransferResponse>(`/organizer/tickets/${ticketId}/transfer`, { ...data, orgId });
     },
 
     resend: (ticketId: string, orgId: string) => {
-      return apiClient.post<any>(`/organizer/tickets/${ticketId}/resend`, { orgId });
+      return apiClient.post<ResendResponse>(`/organizer/tickets/${ticketId}/resend`, { orgId });
     },
   },
 
   checkins: {
     create: (data: CheckinDto, orgId: string) => {
-      return apiClient.post<any>('/organizer/checkins', { ...data, orgId });
+      return apiClient.post<CheckinResponse>('/organizer/checkins', { ...data, orgId });
     },
     getStats: (eventId: string, orgId: string) => {
       return apiClient.get<CheckinStats>(
@@ -337,11 +389,9 @@ export const organizerApi = {
     },
 
     resolveFlag: (flagId: string, orgId: string) => {
-      return apiClient.post<any>(`/organizer/flags/${flagId}/resolve`, { orgId });
+      return apiClient.post<FlagResolutionResponse>(`/organizer/flags/${flagId}/resolve`, { orgId });
     },
   },
-
-  // Note: Financials & Payouts section moved to line 470+
 
   // ============================================================================
   // Tickets & Inventory
@@ -385,7 +435,7 @@ export const organizerApi = {
 
   seats: {
     bulkAssign: (ticketTypeId: string, data: BulkSeatAssignmentDto, orgId: string) => {
-      return apiClient.post<any>(`/organizer/tickets/${ticketTypeId}/seats/bulk`, data);
+      return apiClient.post<BulkSeatAssignmentResponse>(`/organizer/tickets/${ticketTypeId}/seats/bulk`, data);
     },
   },
 

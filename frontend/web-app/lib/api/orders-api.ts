@@ -7,10 +7,10 @@ export interface Order {
   eventId: string;
   occurrenceId?: string;
   status: 'pending' | 'paid' | 'canceled' | 'refunded' | 'chargeback';
-  subtotalCents: number;
-  feesCents: number;
-  taxCents: number;
-  totalCents: number;
+  subtotalCents: bigint; // Changed from number to bigint to match Prisma schema
+  feesCents: bigint; // Changed from number to bigint to match Prisma schema
+  taxCents: bigint; // Changed from number to bigint to match Prisma schema
+  totalCents: bigint; // Changed from number to bigint to match Prisma schema
   currency: string;
   paymentIntentId?: string;
   createdAt: string;
@@ -25,7 +25,7 @@ export interface Order {
     bannerImageUrl?: string;
     venue?: {
       name: string;
-      address: any;
+      address?: Record<string, unknown>;
     };
   };
 }
@@ -36,8 +36,9 @@ export interface OrderItem {
   ticketTypeId: string;
   seatId?: string;
   quantity: number;
-  unitPriceCents: number;
-  unitFeeCents: number;
+  unitPriceCents: bigint; // Changed from number to bigint to match Prisma schema
+  unitFeeCents: bigint; // Changed from number to bigint to match Prisma schema
+  currency: string;
 }
 
 export interface CreateOrderDto {
@@ -63,6 +64,20 @@ export interface ProcessPaymentDto {
   paymentMethodId?: string;
 }
 
+export interface PaymentResponse {
+  clientSecret?: string;
+  authorizationUrl?: string;
+  providerIntent?: string;
+  reference?: string;
+  payment?: Record<string, unknown>;
+}
+
+export interface ProcessPaymentResponse {
+  success: boolean;
+  transactionId?: string;
+  error?: string;
+}
+
 export const ordersApi = {
   async createOrder(data: CreateOrderDto): Promise<Order> {
     return apiClient.post<Order>('/orders', data);
@@ -83,17 +98,12 @@ export const ordersApi = {
     return apiClient.delete<Order>(`/orders/${id}`);
   },
 
-  async initiatePayment(orderId: string, data: CreatePaymentDto): Promise<{
-    clientSecret?: string;
-    authorizationUrl?: string;
-    providerIntent?: string;
-    payment?: any;
-  }> {
-    return apiClient.post(`/orders/${orderId}/payment`, data);
+  async initiatePayment(orderId: string, data: CreatePaymentDto): Promise<PaymentResponse> {
+    return apiClient.post<PaymentResponse>(`/orders/${orderId}/payment`, data);
   },
 
-  async processPayment(data: ProcessPaymentDto): Promise<any> {
-    return apiClient.post(
+  async processPayment(data: ProcessPaymentDto): Promise<ProcessPaymentResponse> {
+    return apiClient.post<ProcessPaymentResponse>(
       `/orders/${data.orderId}/payment/process`,
       data,
     );

@@ -84,8 +84,8 @@ export function useNotificationsSocket(accessToken: string | null, enabled: bool
     };
   }, [accessToken, enabled, addNotification, setConnected]);
 
+  // Return connection status instead of socket ref to avoid render-time ref access
   return {
-    socket: socketRef.current,
     isConnected: useNotificationStore((state) => state.isConnected),
   };
 }
