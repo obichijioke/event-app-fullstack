@@ -47,15 +47,20 @@ export class AdminPromotionService {
       where.endsAt = { gte: now };
     } else if (active === 'false') {
       const now = new Date();
-      where.OR = [
-        { startsAt: { gt: now } },
-        { endsAt: { lt: now } },
-      ];
+      where.OR = [{ startsAt: { gt: now } }, { endsAt: { lt: now } }];
     }
 
     const orderBy: Prisma.PromotionOrderByWithRelationInput = {};
     if (sortBy) {
-      const allowedSortFields = ['id', 'name', 'type', 'redemptions', 'startsAt', 'endsAt', 'createdAt'] as const;
+      const allowedSortFields = [
+        'id',
+        'name',
+        'type',
+        'redemptions',
+        'startsAt',
+        'endsAt',
+        'createdAt',
+      ] as const;
       if (!allowedSortFields.includes(sortBy as any)) {
         throw new BadRequestException(`Invalid sort field: ${sortBy}`);
       }
@@ -227,7 +232,14 @@ export class AdminPromotionService {
 
     const orderBy: Prisma.PromoCodeOrderByWithRelationInput = {};
     if (sortBy) {
-      const allowedSortFields = ['id', 'code', 'kind', 'createdAt', 'startsAt', 'endsAt'] as const;
+      const allowedSortFields = [
+        'id',
+        'code',
+        'kind',
+        'createdAt',
+        'startsAt',
+        'endsAt',
+      ] as const;
       if (!allowedSortFields.includes(sortBy as any)) {
         throw new BadRequestException(`Invalid sort field: ${sortBy}`);
       }
@@ -297,7 +309,9 @@ export class AdminPromotionService {
       code: promoCode.code,
       kind: promoCode.kind,
       percentOff: promoCode.percentOff ? Number(promoCode.percentOff) : null,
-      amountOffCents: promoCode.amountOffCents ? Number(promoCode.amountOffCents) : null,
+      amountOffCents: promoCode.amountOffCents
+        ? Number(promoCode.amountOffCents)
+        : null,
       currency: promoCode.currency,
       maxRedemptions: promoCode.maxRedemptions,
       redemptions: promoCode._count.redemptions,
@@ -308,7 +322,8 @@ export class AdminPromotionService {
       isActive:
         (!promoCode.startsAt || promoCode.startsAt <= now) &&
         (!promoCode.endsAt || promoCode.endsAt >= now) &&
-        (!promoCode.maxRedemptions || promoCode._count.redemptions < promoCode.maxRedemptions),
+        (!promoCode.maxRedemptions ||
+          promoCode._count.redemptions < promoCode.maxRedemptions),
     }));
 
     return {
@@ -323,18 +338,22 @@ export class AdminPromotionService {
   }
 
   async getPromotionStats() {
-    const [totalPromotions, totalPromoCodes, totalRedemptions, activePromotions] =
-      await Promise.all([
-        this.prisma.promotion.count(),
-        this.prisma.promoCode.count(),
-        this.prisma.promoRedemption.count(),
-        this.prisma.promotion.count({
-          where: {
-            startsAt: { lte: new Date() },
-            endsAt: { gte: new Date() },
-          },
-        }),
-      ]);
+    const [
+      totalPromotions,
+      totalPromoCodes,
+      totalRedemptions,
+      activePromotions,
+    ] = await Promise.all([
+      this.prisma.promotion.count(),
+      this.prisma.promoCode.count(),
+      this.prisma.promoRedemption.count(),
+      this.prisma.promotion.count({
+        where: {
+          startsAt: { lte: new Date() },
+          endsAt: { gte: new Date() },
+        },
+      }),
+    ]);
 
     const topPromoCodes = await this.prisma.promoCode.findMany({
       select: {

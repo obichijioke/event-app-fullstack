@@ -3,6 +3,7 @@
 import * as React from 'react';
 import { DataTable, FiltersPanel, StatusBadge } from '@/components/admin';
 import { Text } from '@/components/ui';
+import { CurrencyDisplay } from '@/components/common/currency-display';
 import { adminApiService, type AdminPayment } from '@/services/admin-api.service';
 import { useAuth } from '@/components/auth';
 import { cn } from '@/lib/utils';
@@ -81,12 +82,6 @@ export function PaymentList({ className }: PaymentListProps) {
     setPagination(prev => ({ ...prev, page }));
   };
 
-  const formatCurrency = (cents: number, currency: string): string => {
-    const amount = cents / 100;
-    const symbol = currency === 'NGN' ? '₦' : currency === 'USD' ? '$' : currency;
-    return `${symbol}${amount.toLocaleString()}`;
-  };
-
   const columns = [
     {
       key: 'id',
@@ -121,7 +116,11 @@ export function PaymentList({ className }: PaymentListProps) {
       sortable: true,
       render: (value: unknown, payment: AdminPayment) => (
         <Text className="font-medium">
-          {formatCurrency(payment.amountCents, payment.currency)}
+          <CurrencyDisplay
+            amountCents={payment.amountCents}
+            currency={payment.currency}
+            showFree={false}
+          />
         </Text>
       ),
     },

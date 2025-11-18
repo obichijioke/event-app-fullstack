@@ -177,10 +177,7 @@ export class AdminFeeScheduleService {
     return feeSchedule;
   }
 
-  async updateFeeSchedule(
-    feeScheduleId: string,
-    dto: UpdateFeeScheduleDto,
-  ) {
+  async updateFeeSchedule(feeScheduleId: string, dto: UpdateFeeScheduleDto) {
     const feeSchedule = await this.prisma.feeSchedule.findUnique({
       where: { id: feeScheduleId },
     });
@@ -268,10 +265,7 @@ export class AdminFeeScheduleService {
       where: {
         orgId,
         feeScheduleId,
-        OR: [
-          { endsAt: null },
-          { endsAt: { gte: new Date() } },
-        ],
+        OR: [{ endsAt: null }, { endsAt: { gte: new Date() } }],
       },
     });
 
@@ -313,10 +307,7 @@ export class AdminFeeScheduleService {
     return overrides;
   }
 
-  async updateOrgFeeOverride(
-    overrideId: string,
-    dto: UpdateOrgFeeOverrideDto,
-  ) {
+  async updateOrgFeeOverride(overrideId: string, dto: UpdateOrgFeeOverrideDto) {
     const override = await this.prisma.orgFeeOverride.findUnique({
       where: { id: overrideId },
     });

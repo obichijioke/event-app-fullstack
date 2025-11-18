@@ -40,7 +40,10 @@ export class AdminFeeScheduleController {
 
   @Get()
   @ApiOperation({ summary: 'List all fee schedules' })
-  @ApiResponse({ status: 200, description: 'Fee schedules retrieved successfully' })
+  @ApiResponse({
+    status: 200,
+    description: 'Fee schedules retrieved successfully',
+  })
   async getFeeSchedules(@Query() query: FeeScheduleQueryDto) {
     const result = await this.feeScheduleService.findAll(query);
     return {
@@ -51,7 +54,10 @@ export class AdminFeeScheduleController {
 
   @Get('stats')
   @ApiOperation({ summary: 'Get fee schedule statistics' })
-  @ApiResponse({ status: 200, description: 'Statistics retrieved successfully' })
+  @ApiResponse({
+    status: 200,
+    description: 'Statistics retrieved successfully',
+  })
   async getStats() {
     const stats = await this.feeScheduleService.getStats();
     return {
@@ -62,7 +68,10 @@ export class AdminFeeScheduleController {
 
   @Get(':id')
   @ApiOperation({ summary: 'Get fee schedule by ID' })
-  @ApiResponse({ status: 200, description: 'Fee schedule retrieved successfully' })
+  @ApiResponse({
+    status: 200,
+    description: 'Fee schedule retrieved successfully',
+  })
   async getFeeSchedule(@Param('id') id: string) {
     const schedule = await this.feeScheduleService.findOne(id);
     return {
@@ -73,7 +82,10 @@ export class AdminFeeScheduleController {
 
   @Post()
   @ApiOperation({ summary: 'Create fee schedule' })
-  @ApiResponse({ status: 201, description: 'Fee schedule created successfully' })
+  @ApiResponse({
+    status: 201,
+    description: 'Fee schedule created successfully',
+  })
   async createFeeSchedule(@Body() dto: CreateFeeScheduleDto) {
     const schedule = await this.feeScheduleService.create(dto);
     return {
@@ -84,7 +96,10 @@ export class AdminFeeScheduleController {
 
   @Patch(':id')
   @ApiOperation({ summary: 'Update fee schedule' })
-  @ApiResponse({ status: 200, description: 'Fee schedule updated successfully' })
+  @ApiResponse({
+    status: 200,
+    description: 'Fee schedule updated successfully',
+  })
   async updateFeeSchedule(
     @Param('id') id: string,
     @Body() dto: UpdateFeeScheduleDto,
@@ -98,7 +113,10 @@ export class AdminFeeScheduleController {
 
   @Delete(':id')
   @ApiOperation({ summary: 'Delete fee schedule' })
-  @ApiResponse({ status: 200, description: 'Fee schedule deleted successfully' })
+  @ApiResponse({
+    status: 200,
+    description: 'Fee schedule deleted successfully',
+  })
   @HttpCode(HttpStatus.OK)
   async deleteFeeSchedule(@Param('id') id: string) {
     const result = await this.feeScheduleService.remove(id);
@@ -110,7 +128,10 @@ export class AdminFeeScheduleController {
 
   @Post(':id/deactivate')
   @ApiOperation({ summary: 'Deactivate fee schedule' })
-  @ApiResponse({ status: 200, description: 'Fee schedule deactivated successfully' })
+  @ApiResponse({
+    status: 200,
+    description: 'Fee schedule deactivated successfully',
+  })
   @HttpCode(HttpStatus.OK)
   async deactivateFeeSchedule(@Param('id') id: string) {
     const schedule = await this.feeScheduleService.deactivate(id);
@@ -145,8 +166,14 @@ export class AdminFeeScheduleController {
   @Patch('overrides/:id')
   @ApiOperation({ summary: 'Update fee override' })
   @ApiResponse({ status: 200, description: 'Override updated successfully' })
-  async updateOverride(@Param('id') id: string, @Body() dto: UpdateOrgFeeOverrideDto) {
-    const override = await this.feeScheduleService.updateOrgFeeOverride(id, dto);
+  async updateOverride(
+    @Param('id') id: string,
+    @Body() dto: UpdateOrgFeeOverrideDto,
+  ) {
+    const override = await this.feeScheduleService.updateOrgFeeOverride(
+      id,
+      dto,
+    );
     return {
       success: true,
       data: override,

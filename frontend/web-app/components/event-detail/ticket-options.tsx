@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { Badge, Text, buttonVariants } from '@/components/ui';
-import { formatCurrency, cn } from '@/lib/utils';
+import { CurrencyDisplay } from '@/components/common/currency-display';
+import { cn } from '@/lib/utils';
 import type { EventDetailSummary } from '@/lib/events';
 
 type TicketOptionsProps = {
@@ -34,27 +35,30 @@ export function TicketOptions({ eventId, tickets }: TicketOptionsProps) {
 
       <div className="space-y-3">
         {sortedTickets.map((ticket) => (
-              <div
-                key={ticket.id}
-                className="rounded-xl border border-border/70 bg-muted/10 px-4 py-3"
-              >
-                <div className="flex items-center justify-between gap-3">
-                  <div>
-                    <p className="text-sm font-medium text-foreground">{ticket.name}</p>
-                    <Text className="text-xs text-muted-foreground">
-                      {formatCurrency(Number(ticket.priceCents), ticket.currency)}{' '}
-                      {ticket.capacity ? `• ${ticket.capacity} available` : ''}
-                    </Text>
-                  </div>
-                  <Link
-                    href={`/events/${eventId}/checkout`}
-                    className={cn(buttonVariants({ size: 'sm' }))}
-                  >
-                    Select
-                  </Link>
-                </div>
+          <div
+            key={ticket.id}
+            className="rounded-xl border border-border/70 bg-muted/10 px-4 py-3"
+          >
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <p className="text-sm font-medium text-foreground">{ticket.name}</p>
+                <Text className="text-xs text-muted-foreground">
+                  <CurrencyDisplay
+                    amountCents={Number(ticket.priceCents)}
+                    currency={ticket.currency}
+                  />{' '}
+                  {ticket.capacity ? `• ${ticket.capacity} available` : ''}
+                </Text>
               </div>
-            ))}
+              <Link
+                href={`/events/${eventId}/checkout`}
+                className={cn(buttonVariants({ size: 'sm' }))}
+              >
+                Select
+              </Link>
+            </div>
+          </div>
+        ))}
       </div>
 
       <Text className="text-xs text-muted-foreground">

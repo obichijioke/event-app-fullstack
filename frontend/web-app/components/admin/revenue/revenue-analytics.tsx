@@ -2,6 +2,7 @@
 
 import * as React from 'react';
 import { Text } from '@/components/ui';
+import { CurrencyDisplay } from '@/components/common/currency-display';
 import { adminApiService, type AdminRevenueMetrics } from '@/services/admin-api.service';
 import { useAuth } from '@/components/auth';
 import { cn } from '@/lib/utils';
@@ -36,12 +37,6 @@ export function RevenueAnalytics({ className }: RevenueAnalyticsProps) {
     }
   };
 
-  const formatCurrency = (cents: number, currency: string): string => {
-    const amount = cents / 100;
-    const symbol = currency === 'NGN' ? '₦' : currency === 'USD' ? '$' : currency;
-    return `${symbol}${amount.toLocaleString()}`;
-  };
-
   if (loading) {
     return <div>Loading...</div>;
   }
@@ -60,19 +55,43 @@ export function RevenueAnalytics({ className }: RevenueAnalyticsProps) {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <div className="bg-card p-6 rounded-lg border border-border">
           <Text className="text-sm text-muted-foreground">Total Revenue</Text>
-          <Text className="text-2xl font-bold mt-2">{formatCurrency(metrics.totalRevenueCents, metrics.currency)}</Text>
+          <Text className="text-2xl font-bold mt-2">
+            <CurrencyDisplay
+              amountCents={metrics.totalRevenueCents}
+              currency={metrics.currency}
+              showFree={false}
+            />
+          </Text>
         </div>
         <div className="bg-card p-6 rounded-lg border border-border">
           <Text className="text-sm text-muted-foreground">Platform Fees</Text>
-          <Text className="text-2xl font-bold mt-2">{formatCurrency(metrics.platformFeeCents, metrics.currency)}</Text>
+          <Text className="text-2xl font-bold mt-2">
+            <CurrencyDisplay
+              amountCents={metrics.platformFeeCents}
+              currency={metrics.currency}
+              showFree={false}
+            />
+          </Text>
         </div>
         <div className="bg-card p-6 rounded-lg border border-border">
           <Text className="text-sm text-muted-foreground">Processing Fees</Text>
-          <Text className="text-2xl font-bold mt-2">{formatCurrency(metrics.processingFeeCents, metrics.currency)}</Text>
+          <Text className="text-2xl font-bold mt-2">
+            <CurrencyDisplay
+              amountCents={metrics.processingFeeCents}
+              currency={metrics.currency}
+              showFree={false}
+            />
+          </Text>
         </div>
         <div className="bg-card p-6 rounded-lg border border-border">
           <Text className="text-sm text-muted-foreground">Organizer Payouts</Text>
-          <Text className="text-2xl font-bold mt-2">{formatCurrency(metrics.organizerPayoutCents, metrics.currency)}</Text>
+          <Text className="text-2xl font-bold mt-2">
+            <CurrencyDisplay
+              amountCents={metrics.organizerPayoutCents}
+              currency={metrics.currency}
+              showFree={false}
+            />
+          </Text>
         </div>
       </div>
 
@@ -87,7 +106,13 @@ export function RevenueAnalytics({ className }: RevenueAnalyticsProps) {
         </div>
         <div className="bg-card p-6 rounded-lg border border-border">
           <Text className="text-sm text-muted-foreground">Refunds</Text>
-          <Text className="text-2xl font-bold mt-2">{formatCurrency(metrics.refundAmountCents, metrics.currency)}</Text>
+          <Text className="text-2xl font-bold mt-2">
+            <CurrencyDisplay
+              amountCents={metrics.refundAmountCents}
+              currency={metrics.currency}
+              showFree={false}
+            />
+          </Text>
           <Text className="text-xs text-muted-foreground mt-1">({metrics.refundCount} refunds)</Text>
         </div>
       </div>

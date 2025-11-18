@@ -2,7 +2,7 @@
 
 import { TicketType } from '@/lib/types/organizer';
 import { Edit, Trash2, DollarSign, Users, Calendar } from 'lucide-react';
-import { formatCurrency } from '@/lib/utils/format';
+import { CurrencyDisplay } from '@/components/common/currency-display';
 
 interface TicketTypeCardProps {
   ticketType: TicketType;
@@ -65,7 +65,11 @@ export function TicketTypeCard({ ticketType, onEdit, onDelete }: TicketTypeCardP
           <div>
             <p className="text-xs text-muted-foreground">Price</p>
             <p className="font-semibold">
-              {formatCurrency(ticketType.priceCents, ticketType.currency)}
+              <CurrencyDisplay
+                amountCents={ticketType.priceCents}
+                currency={ticketType.currency}
+                showFree={false}
+              />
             </p>
           </div>
         </div>

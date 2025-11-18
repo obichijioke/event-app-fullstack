@@ -1,7 +1,18 @@
-import { IsOptional, IsString, IsInt, Min, IsEnum, IsArray } from 'class-validator';
+import {
+  IsOptional,
+  IsString,
+  IsInt,
+  Min,
+  IsEnum,
+  IsArray,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiPropertyOptional, ApiProperty } from '@nestjs/swagger';
-import { NotificationType, NotificationCategory, NotificationChannel } from '@prisma/client';
+import {
+  NotificationType,
+  NotificationCategory,
+  NotificationChannel,
+} from '@prisma/client';
 
 export class NotificationQueryDto {
   @ApiPropertyOptional({ description: 'Page number', default: 1 })
@@ -23,12 +34,18 @@ export class NotificationQueryDto {
   @IsString()
   userId?: string;
 
-  @ApiPropertyOptional({ description: 'Filter by type', enum: NotificationType })
+  @ApiPropertyOptional({
+    description: 'Filter by type',
+    enum: NotificationType,
+  })
   @IsOptional()
   @IsEnum(NotificationType)
   type?: NotificationType;
 
-  @ApiPropertyOptional({ description: 'Filter by category', enum: NotificationCategory })
+  @ApiPropertyOptional({
+    description: 'Filter by category',
+    enum: NotificationCategory,
+  })
   @IsOptional()
   @IsEnum(NotificationCategory)
   category?: NotificationCategory;
@@ -49,7 +66,10 @@ export class BroadcastNotificationDto {
   @IsEnum(NotificationType)
   type: NotificationType;
 
-  @ApiProperty({ description: 'Notification category', enum: NotificationCategory })
+  @ApiProperty({
+    description: 'Notification category',
+    enum: NotificationCategory,
+  })
   @IsEnum(NotificationCategory)
   category: NotificationCategory;
 
@@ -61,7 +81,11 @@ export class BroadcastNotificationDto {
   @IsString()
   message: string;
 
-  @ApiPropertyOptional({ description: 'Notification channels', enum: NotificationChannel, isArray: true })
+  @ApiPropertyOptional({
+    description: 'Notification channels',
+    enum: NotificationChannel,
+    isArray: true,
+  })
   @IsOptional()
   @IsArray()
   @IsEnum(NotificationChannel, { each: true })
@@ -81,7 +105,9 @@ export class BroadcastNotificationDto {
   @IsString()
   actionText?: string;
 
-  @ApiPropertyOptional({ description: 'Target user IDs (leave empty for all users)' })
+  @ApiPropertyOptional({
+    description: 'Target user IDs (leave empty for all users)',
+  })
   @IsOptional()
   @IsArray()
   @IsString({ each: true })

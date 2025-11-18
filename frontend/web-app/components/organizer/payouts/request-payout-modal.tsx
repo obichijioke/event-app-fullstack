@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { X, DollarSign, Calendar, AlertTriangle, CheckCircle } from 'lucide-react';
 import { organizerApi } from '@/lib/api/organizer-api';
 import { useOrganizerStore } from '@/lib/stores/organizer-store';
+import { CurrencyDisplay } from '@/components/common/currency-display';
 import toast from 'react-hot-toast';
 import type { CreatePayoutDto, FinancialSummary } from '@/lib/types/organizer';
 
@@ -87,13 +88,6 @@ export function RequestPayoutModal({ onSuccess, onCancel }: RequestPayoutModalPr
     }
   };
 
-  const formatCurrency = (cents: number, currency: string = 'USD') => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency,
-    }).format(cents / 100);
-  };
-
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
       <div className="bg-card rounded-lg shadow-lg max-w-lg w-full max-h-[90vh] overflow-y-auto">
@@ -132,23 +126,44 @@ export function RequestPayoutModal({ onSuccess, onCancel }: RequestPayoutModalPr
                 <div className="flex-1">
                   <p className="font-medium text-blue-900 mb-1">Available Balance</p>
                   <p className="text-2xl font-bold text-blue-900 mb-3">
-                    {formatCurrency(
-                      Math.max(0, summary.totals.netRevenueCents - summary.totals.payoutsCents),
-                      'USD'
-                    )}
+                    <CurrencyDisplay
+                      amountCents={Math.max(0, summary.totals.netRevenueCents - summary.totals.payoutsCents)}
+                      currency={summary.currency}
+                      showFree={false}
+                    />
                   </p>
                   <div className="space-y-1 text-sm text-blue-800">
                     <div className="flex justify-between">
                       <span>Gross Revenue:</span>
-                      <span className="font-medium">{formatCurrency(summary.totals.grossRevenueCents, 'USD')}</span>
+                      <span className="font-medium">
+                        <CurrencyDisplay
+                          amountCents={summary.totals.grossRevenueCents}
+                          currency={summary.currency}
+                          showFree={false}
+                        />
+                      </span>
                     </div>
                     <div className="flex justify-between">
                       <span>Platform Fees:</span>
-                      <span className="font-medium">-{formatCurrency(summary.totals.feeCents, 'USD')}</span>
+                      <span className="font-medium">
+                        -
+                        <CurrencyDisplay
+                          amountCents={summary.totals.feeCents}
+                          currency={summary.currency}
+                          showFree={false}
+                        />
+                      </span>
                     </div>
                     <div className="flex justify-between">
                       <span>Already Paid Out:</span>
-                      <span className="font-medium">-{formatCurrency(summary.totals.payoutsCents, 'USD')}</span>
+                      <span className="font-medium">
+                        -
+                        <CurrencyDisplay
+                          amountCents={summary.totals.payoutsCents}
+                          currency={summary.currency}
+                          showFree={false}
+                        />
+                      </span>
                     </div>
                     <div className="flex justify-between">
                       <span>Total Orders:</span>
@@ -199,7 +214,12 @@ export function RequestPayoutModal({ onSuccess, onCancel }: RequestPayoutModalPr
                 />
               </div>
               <p className="text-xs text-muted-foreground mt-1">
-                {formatCurrency(formData.amountCents, formData.currency)} will be transferred to your account
+                <CurrencyDisplay
+                  amountCents={formData.amountCents}
+                  currency={formData.currency}
+                  showFree={false}
+                />{' '}
+                will be transferred to your account
               </p>
             </div>
 

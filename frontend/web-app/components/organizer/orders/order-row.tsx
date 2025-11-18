@@ -1,7 +1,8 @@
 'use client';
 
 import { OrderDetail } from '@/lib/types/organizer';
-import { formatCurrency, formatDateTime } from '@/lib/utils/format';
+import { formatDateTime } from '@/lib/utils/format';
+import { CurrencyDisplay } from '@/components/common/currency-display';
 import { Eye, RefreshCw } from 'lucide-react';
 
 interface OrderRowProps {
@@ -38,7 +39,7 @@ export function OrderRow({ order, onViewDetails, onRefund }: OrderRowProps) {
         </span>
       </td>
       <td className="px-4 py-3 font-medium">
-        {formatCurrency(order.totalCents, order.currency)}
+        <CurrencyDisplay amountCents={order.totalCents} currency={order.currency} showFree={false} />
       </td>
       <td className="px-4 py-3 text-sm text-muted-foreground">
         {formatDateTime(order.createdAt)}

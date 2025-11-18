@@ -43,8 +43,13 @@ export class AdminOrganizationController {
   constructor(private readonly orgService: AdminOrganizationService) {}
 
   @Get()
-  @ApiOperation({ summary: 'List all organizations with pagination and filters' })
-  @ApiResponse({ status: 200, description: 'Organizations retrieved successfully' })
+  @ApiOperation({
+    summary: 'List all organizations with pagination and filters',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Organizations retrieved successfully',
+  })
   async getOrganizations(@Query() query: OrganizationQueryDto) {
     const result = await this.orgService.findAll(query);
     return {
@@ -55,7 +60,10 @@ export class AdminOrganizationController {
 
   @Get('verification')
   @ApiOperation({ summary: 'List organizations pending verification' })
-  @ApiResponse({ status: 200, description: 'Verification queue retrieved successfully' })
+  @ApiResponse({
+    status: 200,
+    description: 'Verification queue retrieved successfully',
+  })
   async getVerificationQueue(@Query() query: OrganizationVerificationQueryDto) {
     const result = await this.orgService.getVerificationQueue(query);
     return {
@@ -66,7 +74,10 @@ export class AdminOrganizationController {
 
   @Get(':id')
   @ApiOperation({ summary: 'Get organization by ID' })
-  @ApiResponse({ status: 200, description: 'Organization retrieved successfully' })
+  @ApiResponse({
+    status: 200,
+    description: 'Organization retrieved successfully',
+  })
   async getOrganization(@Param('id') id: string) {
     const org = await this.orgService.findOne(id);
     return {
@@ -77,7 +88,10 @@ export class AdminOrganizationController {
 
   @Get(':id/verification')
   @ApiOperation({ summary: 'Get organization verification details' })
-  @ApiResponse({ status: 200, description: 'Verification details retrieved successfully' })
+  @ApiResponse({
+    status: 200,
+    description: 'Verification details retrieved successfully',
+  })
   async getVerificationDetails(@Param('id') id: string) {
     const verification = await this.orgService.getVerificationDetails(id);
     return {
@@ -88,7 +102,10 @@ export class AdminOrganizationController {
 
   @Patch(':id')
   @ApiOperation({ summary: 'Update organization details' })
-  @ApiResponse({ status: 200, description: 'Organization updated successfully' })
+  @ApiResponse({
+    status: 200,
+    description: 'Organization updated successfully',
+  })
   async updateOrganization(
     @Param('id') id: string,
     @Body() dto: AdminUpdateOrganizationDto,
@@ -102,7 +119,10 @@ export class AdminOrganizationController {
 
   @Post(':id/verification/submit')
   @ApiOperation({ summary: 'Submit organization for verification' })
-  @ApiResponse({ status: 200, description: 'Organization submitted for verification' })
+  @ApiResponse({
+    status: 200,
+    description: 'Organization submitted for verification',
+  })
   @HttpCode(HttpStatus.OK)
   async submitForVerification(
     @Param('id') id: string,
@@ -119,7 +139,10 @@ export class AdminOrganizationController {
   @ApiOperation({ summary: 'Upload verification document' })
   @ApiResponse({ status: 200, description: 'Document uploaded successfully' })
   @HttpCode(HttpStatus.OK)
-  async uploadDocument(@Param('id') id: string, @Body() dto: UploadDocumentDto) {
+  async uploadDocument(
+    @Param('id') id: string,
+    @Body() dto: UploadDocumentDto,
+  ) {
     const document = await this.orgService.uploadVerificationDocument(id, dto);
     return {
       success: true,
@@ -131,7 +154,10 @@ export class AdminOrganizationController {
   @ApiOperation({ summary: 'Review verification document' })
   @ApiResponse({ status: 200, description: 'Document reviewed successfully' })
   @HttpCode(HttpStatus.OK)
-  async reviewDocument(@Param('id') id: string, @Body() dto: ReviewDocumentDto) {
+  async reviewDocument(
+    @Param('id') id: string,
+    @Body() dto: ReviewDocumentDto,
+  ) {
     const document = await this.orgService.reviewDocument(id, dto);
     return {
       success: true,
@@ -141,7 +167,10 @@ export class AdminOrganizationController {
 
   @Post(':id/verification/approve')
   @ApiOperation({ summary: 'Approve organization verification' })
-  @ApiResponse({ status: 200, description: 'Organization approved successfully' })
+  @ApiResponse({
+    status: 200,
+    description: 'Organization approved successfully',
+  })
   @HttpCode(HttpStatus.OK)
   async approveVerification(
     @Param('id') id: string,
@@ -171,7 +200,10 @@ export class AdminOrganizationController {
 
   @Post(':id/verification/suspend')
   @ApiOperation({ summary: 'Suspend organization' })
-  @ApiResponse({ status: 200, description: 'Organization suspended successfully' })
+  @ApiResponse({
+    status: 200,
+    description: 'Organization suspended successfully',
+  })
   @HttpCode(HttpStatus.OK)
   async suspendOrganization(
     @Param('id') id: string,

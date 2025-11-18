@@ -46,7 +46,12 @@ export class AdminReviewService {
 
     const orderBy: Prisma.EventReviewOrderByWithRelationInput = {};
     if (sortBy) {
-      const allowedSortFields = ['id', 'rating', 'createdAt', 'updatedAt'] as const;
+      const allowedSortFields = [
+        'id',
+        'rating',
+        'createdAt',
+        'updatedAt',
+      ] as const;
       if (!allowedSortFields.includes(sortBy as any)) {
         throw new BadRequestException(`Invalid sort field: ${sortBy}`);
       }
@@ -146,7 +151,12 @@ export class AdminReviewService {
 
     const orderBy: Prisma.OrganizerReviewOrderByWithRelationInput = {};
     if (sortBy) {
-      const allowedSortFields = ['id', 'rating', 'createdAt', 'updatedAt'] as const;
+      const allowedSortFields = [
+        'id',
+        'rating',
+        'createdAt',
+        'updatedAt',
+      ] as const;
       if (!allowedSortFields.includes(sortBy as any)) {
         throw new BadRequestException(`Invalid sort field: ${sortBy}`);
       }
@@ -244,16 +254,17 @@ export class AdminReviewService {
   }
 
   async getReviewStats() {
-    const [eventReviews, organizerReviews, eventAvgRating, organizerAvgRating] = await Promise.all([
-      this.prisma.eventReview.count(),
-      this.prisma.organizerReview.count(),
-      this.prisma.eventReview.aggregate({
-        _avg: { rating: true },
-      }),
-      this.prisma.organizerReview.aggregate({
-        _avg: { rating: true },
-      }),
-    ]);
+    const [eventReviews, organizerReviews, eventAvgRating, organizerAvgRating] =
+      await Promise.all([
+        this.prisma.eventReview.count(),
+        this.prisma.organizerReview.count(),
+        this.prisma.eventReview.aggregate({
+          _avg: { rating: true },
+        }),
+        this.prisma.organizerReview.aggregate({
+          _avg: { rating: true },
+        }),
+      ]);
 
     const recent24h = await Promise.all([
       this.prisma.eventReview.count({

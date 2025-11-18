@@ -257,11 +257,7 @@ export class AdminTaxRateService {
         country,
         active: true,
       },
-      orderBy: [
-        { region: 'asc' },
-        { city: 'asc' },
-        { postal: 'asc' },
-      ],
+      orderBy: [{ region: 'asc' }, { city: 'asc' }, { postal: 'asc' }],
     });
 
     return taxRates;

@@ -6,6 +6,7 @@ import { organizerApi } from '@/lib/api/organizer-api';
 import { useOrganizerStore } from '@/lib/stores/organizer-store';
 import { useAuth } from '@/components/auth';
 import { ExportOrdersButton } from '@/components/organizer/financials/export-orders-button';
+import { CurrencyDisplay } from '@/components/common/currency-display';
 import type { FinancialSummary } from '@/lib/types/organizer';
 
 type ReportPeriod = '7d' | '30d' | '90d' | 'custom';
@@ -57,13 +58,6 @@ export function FinancialReports() {
     } finally {
       setLoading(false);
     }
-  };
-
-  const formatCurrency = (cents: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-    }).format(cents / 100);
   };
 
   const formatPercentage = (numerator: number, denominator: number) => {
@@ -162,7 +156,13 @@ export function FinancialReports() {
             <FileText className="w-4 h-4 text-muted-foreground" />
           </div>
           <div className="text-2xl font-bold mb-1">
-            {loading ? '...' : formatCurrency(summary?.totals.grossRevenueCents || 0)}
+            {loading ? '...' : (
+              <CurrencyDisplay
+                amountCents={summary?.totals.grossRevenueCents || 0}
+                currency={summary?.currency || 'USD'}
+                showFree={false}
+              />
+            )}
           </div>
           <div className="text-sm text-muted-foreground">Gross Revenue</div>
         </div>
@@ -175,7 +175,13 @@ export function FinancialReports() {
             <BarChart3 className="w-4 h-4 text-muted-foreground" />
           </div>
           <div className="text-2xl font-bold mb-1">
-            {loading ? '...' : formatCurrency(summary?.totals.netRevenueCents || 0)}
+            {loading ? '...' : (
+              <CurrencyDisplay
+                amountCents={summary?.totals.netRevenueCents || 0}
+                currency={summary?.currency || 'USD'}
+                showFree={false}
+              />
+            )}
           </div>
           <div className="text-sm text-muted-foreground">Net Revenue</div>
         </div>
@@ -226,7 +232,13 @@ export function FinancialReports() {
                 <p className="text-sm text-muted-foreground">Total sales before fees and refunds</p>
               </div>
               <div className="text-right">
-                <p className="text-xl font-bold">{formatCurrency(summary?.totals.grossRevenueCents || 0)}</p>
+                <p className="text-xl font-bold">
+                  <CurrencyDisplay
+                    amountCents={summary?.totals.grossRevenueCents || 0}
+                    currency={summary?.currency || 'USD'}
+                    showFree={false}
+                  />
+                </p>
                 <p className="text-sm text-muted-foreground">100%</p>
               </div>
             </div>
@@ -238,7 +250,12 @@ export function FinancialReports() {
               </div>
               <div className="text-right">
                 <p className="text-xl font-bold text-red-600">
-                  -{formatCurrency(summary?.totals.feeCents || 0)}
+                  -
+                  <CurrencyDisplay
+                    amountCents={summary?.totals.feeCents || 0}
+                    currency={summary?.currency || 'USD'}
+                    showFree={false}
+                  />
                 </p>
                 <p className="text-sm text-muted-foreground">
                   {formatPercentage(
@@ -256,7 +273,12 @@ export function FinancialReports() {
               </div>
               <div className="text-right">
                 <p className="text-xl font-bold text-red-600">
-                  -{formatCurrency(summary?.totals.refundCents || 0)}
+                  -
+                  <CurrencyDisplay
+                    amountCents={summary?.totals.refundCents || 0}
+                    currency={summary?.currency || 'USD'}
+                    showFree={false}
+                  />
                 </p>
                 <p className="text-sm text-muted-foreground">
                   {formatPercentage(
@@ -274,7 +296,11 @@ export function FinancialReports() {
               </div>
               <div className="text-right">
                 <p className="text-2xl font-bold text-green-900">
-                  {formatCurrency(summary?.totals.netRevenueCents || 0)}
+                  <CurrencyDisplay
+                    amountCents={summary?.totals.netRevenueCents || 0}
+                    currency={summary?.currency || 'USD'}
+                    showFree={false}
+                  />
                 </p>
                 <p className="text-sm text-green-700">
                   {formatPercentage(
@@ -295,7 +321,13 @@ export function FinancialReports() {
           <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
             <p className="text-sm text-blue-900 mb-1">Total Payouts</p>
             <p className="text-2xl font-bold text-blue-900">
-              {loading ? '...' : formatCurrency(summary?.totals.payoutsCents || 0)}
+              {loading ? '...' : (
+                <CurrencyDisplay
+                  amountCents={summary?.totals.payoutsCents || 0}
+                  currency={summary?.currency || 'USD'}
+                  showFree={false}
+                />
+              )}
             </p>
           </div>
           <div className="p-4 bg-amber-50 rounded-lg border border-amber-200">
@@ -303,9 +335,13 @@ export function FinancialReports() {
             <p className="text-2xl font-bold text-amber-900">
               {loading
                 ? '...'
-                : formatCurrency(
-                    (summary?.totals.netRevenueCents || 0) - (summary?.totals.payoutsCents || 0)
-                  )}
+                : (
+                  <CurrencyDisplay
+                    amountCents={(summary?.totals.netRevenueCents || 0) - (summary?.totals.payoutsCents || 0)}
+                    currency={summary?.currency || 'USD'}
+                    showFree={false}
+                  />
+                )}
             </p>
           </div>
         </div>

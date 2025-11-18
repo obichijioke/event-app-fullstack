@@ -43,7 +43,9 @@ export class AdminSessionService {
     }
 
     // Filter by status
-    const resolvedStatus = status ?? (active === true ? 'active' : active === false ? 'expired' : undefined);
+    const resolvedStatus =
+      status ??
+      (active === true ? 'active' : active === false ? 'expired' : undefined);
 
     if (resolvedStatus === 'active') {
       where.revokedAt = null;
@@ -56,7 +58,10 @@ export class AdminSessionService {
     }
 
     const orderBy: Prisma.UserSessionOrderByWithRelationInput = {};
-    const allowedSortFields: Record<string, keyof Prisma.UserSessionOrderByWithRelationInput> = {
+    const allowedSortFields: Record<
+      string,
+      keyof Prisma.UserSessionOrderByWithRelationInput
+    > = {
       id: 'id',
       userId: 'userId',
       createdAt: 'createdAt',

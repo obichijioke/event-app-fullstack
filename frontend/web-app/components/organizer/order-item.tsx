@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { DashboardOrder } from '@/lib/types/organizer';
-import { formatCurrency } from '@/lib/utils';
+import { CurrencyDisplay } from '@/components/common/currency-display';
 
 interface OrderItemProps {
   order: DashboardOrder;
@@ -38,7 +38,7 @@ export function OrderItem({ order }: OrderItemProps) {
       </div>
       <div className="text-right ml-4">
         <p className="font-semibold text-foreground">
-          {formatCurrency(order.totalCents, order.currency)}
+          <CurrencyDisplay amountCents={order.totalCents} currency={order.currency} showFree={false} />
         </p>
       </div>
     </Link>

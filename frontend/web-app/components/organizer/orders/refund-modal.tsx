@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { OrderDetail, RefundDto } from '@/lib/types/organizer';
-import { formatCurrency } from '@/lib/utils/format';
+import { CurrencyDisplay } from '@/components/common/currency-display';
 import { X, AlertTriangle } from 'lucide-react';
 
 interface RefundModalProps {
@@ -64,7 +64,9 @@ export function RefundModal({ order, onSubmit, onCancel }: RefundModalProps) {
             </div>
             <div className="flex justify-between">
               <span className="text-muted-foreground">Total Amount:</span>
-              <span className="font-bold">{formatCurrency(order.totalCents, order.currency)}</span>
+              <span className="font-bold">
+                <CurrencyDisplay amountCents={order.totalCents} currency={order.currency} showFree={false} />
+              </span>
             </div>
           </div>
 
@@ -87,8 +89,8 @@ export function RefundModal({ order, onSubmit, onCancel }: RefundModalProps) {
               className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
             />
             <p className="text-xs text-muted-foreground mt-1">
-              {formatCurrency(formData.amountCents, order.currency)} • Maximum:{' '}
-              {formatCurrency(order.totalCents, order.currency)}
+              <CurrencyDisplay amountCents={formData.amountCents} currency={order.currency} showFree={false} /> • Maximum:{' '}
+              <CurrencyDisplay amountCents={order.totalCents} currency={order.currency} showFree={false} />
             </p>
           </div>
 

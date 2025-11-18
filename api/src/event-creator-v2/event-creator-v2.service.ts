@@ -16,6 +16,7 @@ import {
 import { randomBytes } from 'crypto';
 import { PrismaService } from '../common/prisma/prisma.service';
 import { StorageService } from '../common/storage.service';
+import { CurrencyService } from '../currency/currency.service';
 import { RRule, RRuleSet } from 'rrule';
 import { CreateDraftDto } from './dto/create-draft.dto';
 import { UpdateDraftSectionDto } from './dto/update-draft-section.dto';
@@ -51,6 +52,7 @@ export class EventCreatorV2Service {
   constructor(
     private readonly prisma: PrismaService,
     private readonly storage: StorageService,
+    private readonly currencyService: CurrencyService,
   ) {}
 
   async createDraft(userId: string, dto: CreateDraftDto) {
@@ -705,6 +707,9 @@ export class EventCreatorV2Service {
     const targetPublishAt = dto.publishAt ? new Date(dto.publishAt) : null;
     const liveNow = !targetPublishAt || targetPublishAt <= new Date();
 
+    // Get default currency for the platform
+    const defaultCurrency = await this.currencyService.getDefaultCurrency();
+
     // Create Event and associated data
     // Note: Database unique constraint on eventId prevents duplicate events
     let created;
@@ -716,7 +721,8 @@ export class EventCreatorV2Service {
             title: draft.title || basics?.title || 'Untitled event',
             descriptionMd: story?.description || null,
             status: liveNow ? 'live' : 'pending',
-            visibility: dto.visibility || basics?.visibility || draft.visibility,
+            visibility:
+              dto.visibility || basics?.visibility || draft.visibility,
             categoryId: basics?.categoryId || null,
             startAt,
             endAt: endAt || new Date(startAt.getTime() + 2 * 60 * 60 * 1000),
@@ -727,130 +733,130 @@ export class EventCreatorV2Service {
           },
         });
 
-      // Policies (from story payload)
-      const refundPolicy: string | null =
-        (story?.refundPolicy as string) || null;
-      const transferEnabled: boolean =
-        (story?.transferEnabled as boolean) ?? true;
-      const cutoffKey: string | undefined = story?.transferCutoff as
-        | string
-        | undefined;
-      // Map UI cutoff values to hours string expected by TicketsService (parseInt)
-      const cutoffHours: string | undefined = (() => {
-        switch (cutoffKey) {
-          case '2h':
-            return '2';
-          case '24h':
-            return '24';
-          case '48h':
-            return '48';
-          case '72h':
-            return '72';
-          case '7d':
-            return '168';
-          case 'at_start':
-            return '0';
-          default:
-            return undefined;
+        // Policies (from story payload)
+        const refundPolicy: string | null =
+          (story?.refundPolicy as string) || null;
+        const transferEnabled: boolean =
+          (story?.transferEnabled as boolean) ?? true;
+        const cutoffKey: string | undefined = story?.transferCutoff as
+          | string
+          | undefined;
+        // Map UI cutoff values to hours string expected by TicketsService (parseInt)
+        const cutoffHours: string | undefined = (() => {
+          switch (cutoffKey) {
+            case '2h':
+              return '2';
+            case '24h':
+              return '24';
+            case '48h':
+              return '48';
+            case '72h':
+              return '72';
+            case '7d':
+              return '168';
+            case 'at_start':
+              return '0';
+            default:
+              return undefined;
+          }
+        })();
+        const resaleAllowed: boolean | undefined = story?.resaleEnabled as
+          | boolean
+          | undefined;
+
+        await tx.eventPolicies.upsert({
+          where: { eventId: event.id },
+          update: {
+            refundPolicy: refundPolicy ?? undefined,
+            transferAllowed: transferEnabled,
+            transferCutoff: cutoffHours,
+            resaleAllowed: resaleAllowed ?? undefined,
+          },
+          create: {
+            eventId: event.id,
+            refundPolicy: refundPolicy ?? undefined,
+            transferAllowed: transferEnabled,
+            transferCutoff: cutoffHours,
+            resaleAllowed: resaleAllowed ?? false,
+          },
+        });
+
+        // Occurrences
+        for (const o of occurrences) {
+          await tx.eventOccurrence.create({
+            data: {
+              eventId: event.id,
+              startsAt: o.startsAt,
+              endsAt: (o as any).endsAt || null,
+              gateOpenAt: (o as any).doorTime || null,
+            },
+          });
         }
-      })();
-      const resaleAllowed: boolean | undefined = story?.resaleEnabled as
-        | boolean
-        | undefined;
 
-      await tx.eventPolicies.upsert({
-        where: { eventId: event.id },
-        update: {
-          refundPolicy: refundPolicy ?? undefined,
-          transferAllowed: transferEnabled,
-          transferCutoff: cutoffHours,
-          resaleAllowed: resaleAllowed ?? undefined,
-        },
-        create: {
-          eventId: event.id,
-          refundPolicy: refundPolicy ?? undefined,
-          transferAllowed: transferEnabled,
-          transferCutoff: cutoffHours,
-          resaleAllowed: resaleAllowed ?? false,
-        },
-      });
+        // Tickets
+        const ticketTypes = (tickets?.ticketTypes as any[]) || [];
+        for (const t of ticketTypes) {
+          const priceCents =
+            typeof t.priceCents === 'number'
+              ? t.priceCents
+              : t.kind === 'free'
+                ? 0
+                : 0;
+          const capacity = typeof t.quantity === 'number' ? t.quantity : null;
+          const perOrder = t.perOrderMax || t.perOrderLimit || null;
+          await tx.ticketType.create({
+            data: {
+              eventId: event.id,
+              name: t.name || 'General Admission',
+              kind: 'GA',
+              currency: t.currency || defaultCurrency,
+              priceCents: BigInt(priceCents || 0),
+              feeCents: BigInt(0),
+              capacity: capacity,
+              perOrderLimit: perOrder,
+              salesStart: t.salesStart ? new Date(t.salesStart) : null,
+              salesEnd: t.salesEnd ? new Date(t.salesEnd) : null,
+            },
+          });
+        }
 
-      // Occurrences
-      for (const o of occurrences) {
-        await tx.eventOccurrence.create({
-          data: {
+        // Promo codes (optional)
+        const promos = (tickets?.promoCodes as any[]) || [];
+        for (const p of promos) {
+          const promoData = {
+            orgId: draft.organizationId,
             eventId: event.id,
-            startsAt: o.startsAt,
-            endsAt: (o as any).endsAt || null,
-            gateOpenAt: (o as any).doorTime || null,
-          },
-        });
-      }
+            code: p.code,
+            kind: p.discountType || 'percent',
+            percentOff:
+              p.percentOff != null ? new Prisma.Decimal(p.percentOff) : null,
+            amountOffCents:
+              p.amountOffCents != null ? BigInt(p.amountOffCents) : null,
+            currency: p.currency || defaultCurrency,
+            maxRedemptions: p.usageLimit || null,
+          };
 
-      // Tickets
-      const ticketTypes = (tickets?.ticketTypes as any[]) || [];
-      for (const t of ticketTypes) {
-        const priceCents =
-          typeof t.priceCents === 'number'
-            ? t.priceCents
-            : t.kind === 'free'
-              ? 0
-              : 0;
-        const capacity = typeof t.quantity === 'number' ? t.quantity : null;
-        const perOrder = t.perOrderMax || t.perOrderLimit || null;
-        await tx.ticketType.create({
+          // Ensure org/code uniqueness by updating existing promo when it already exists
+          await tx.promoCode.upsert({
+            where: {
+              orgId_code: { orgId: draft.organizationId, code: p.code },
+            },
+            create: promoData,
+            update: promoData,
+          });
+        }
+
+        // Update draft status
+        await tx.eventCreatorDraft.update({
+          where: { id: draftId },
           data: {
+            status: liveNow
+              ? EventCreatorDraftStatus.published
+              : EventCreatorDraftStatus.scheduled,
+            targetPublishAt: targetPublishAt,
             eventId: event.id,
-            name: t.name || 'General Admission',
-            kind: 'GA',
-            currency: t.currency || 'USD',
-            priceCents: BigInt(priceCents || 0),
-            feeCents: BigInt(0),
-            capacity: capacity,
-            perOrderLimit: perOrder,
-            salesStart: t.salesStart ? new Date(t.salesStart) : null,
-            salesEnd: t.salesEnd ? new Date(t.salesEnd) : null,
           },
         });
-      }
-
-      // Promo codes (optional)
-      const promos = (tickets?.promoCodes as any[]) || [];
-      for (const p of promos) {
-        const promoData = {
-          orgId: draft.organizationId,
-          eventId: event.id,
-          code: p.code,
-          kind: p.discountType || 'percent',
-          percentOff:
-            p.percentOff != null ? new Prisma.Decimal(p.percentOff) : null,
-          amountOffCents:
-            p.amountOffCents != null ? BigInt(p.amountOffCents) : null,
-          currency: p.currency || 'USD',
-          maxRedemptions: p.usageLimit || null,
-        };
-
-        // Ensure org/code uniqueness by updating existing promo when it already exists
-        await tx.promoCode.upsert({
-          where: {
-            orgId_code: { orgId: draft.organizationId, code: p.code },
-          },
-          create: promoData,
-          update: promoData,
-        });
-      }
-
-      // Update draft status
-      await tx.eventCreatorDraft.update({
-        where: { id: draftId },
-        data: {
-          status: liveNow
-            ? EventCreatorDraftStatus.published
-            : EventCreatorDraftStatus.scheduled,
-          targetPublishAt: targetPublishAt,
-          eventId: event.id,
-        },
-      });
 
         return event;
       });

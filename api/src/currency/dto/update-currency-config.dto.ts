@@ -95,7 +95,8 @@ export class UpdateCurrencyConfigDto {
   @IsBoolean()
   @ApiProperty({
     example: false,
-    description: 'Allow organizers to set their own currency (multi-currency mode only)',
+    description:
+      'Allow organizers to set their own currency (multi-currency mode only)',
   })
   allowOrganizerCurrency?: boolean;
 

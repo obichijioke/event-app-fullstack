@@ -43,7 +43,10 @@ export class AdminSessionController {
 
   @Get('stats')
   @ApiOperation({ summary: 'Get session statistics' })
-  @ApiResponse({ status: 200, description: 'Session stats retrieved successfully' })
+  @ApiResponse({
+    status: 200,
+    description: 'Session stats retrieved successfully',
+  })
   async getSessionStats() {
     const stats = await this.sessionService.getSessionStats();
     return {
@@ -66,7 +69,10 @@ export class AdminSessionController {
 
   @Post('users/:userId/revoke-all')
   @ApiOperation({ summary: 'Revoke all user sessions' })
-  @ApiResponse({ status: 200, description: 'All sessions revoked successfully' })
+  @ApiResponse({
+    status: 200,
+    description: 'All sessions revoked successfully',
+  })
   @HttpCode(HttpStatus.OK)
   async revokeAllUserSessions(@Param('userId') userId: string) {
     const result = await this.sessionService.revokeAllUserSessions(userId);

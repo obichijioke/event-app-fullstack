@@ -49,7 +49,10 @@ export class AdminTaxRateController {
 
   @Get('stats')
   @ApiOperation({ summary: 'Get tax rate statistics' })
-  @ApiResponse({ status: 200, description: 'Statistics retrieved successfully' })
+  @ApiResponse({
+    status: 200,
+    description: 'Statistics retrieved successfully',
+  })
   async getStats() {
     const stats = await this.taxRateService.getStats();
     return {
@@ -116,7 +119,10 @@ export class AdminTaxRateController {
 
   @Post(':id/deactivate')
   @ApiOperation({ summary: 'Deactivate tax rate' })
-  @ApiResponse({ status: 200, description: 'Tax rate deactivated successfully' })
+  @ApiResponse({
+    status: 200,
+    description: 'Tax rate deactivated successfully',
+  })
   @HttpCode(HttpStatus.OK)
   async deactivateTaxRate(@Param('id') id: string) {
     const rate = await this.taxRateService.deactivate(id);

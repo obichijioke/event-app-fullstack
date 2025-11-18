@@ -5,6 +5,7 @@ import { DollarSign, Filter, Search, Calendar, AlertCircle } from 'lucide-react'
 import { organizerApi } from '@/lib/api/organizer-api';
 import { useOrganizerStore } from '@/lib/stores/organizer-store';
 import { useAuth } from '@/components/auth';
+import { CurrencyDisplay } from '@/components/common/currency-display';
 import toast from 'react-hot-toast';
 import type { OrderDetail, RefundStatus } from '@/lib/types/organizer';
 import Link from 'next/link';
@@ -93,13 +94,6 @@ export function RefundList() {
     } finally {
       setLoading(false);
     }
-  };
-
-  const formatCurrency = (cents: number, currency: string) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: currency.toUpperCase(),
-    }).format(cents / 100);
   };
 
   const formatDate = (dateString: string) => {
@@ -204,7 +198,15 @@ export function RefundList() {
             <div>
               <p className="text-sm text-muted-foreground">Total Amount</p>
               <p className="text-2xl font-bold mt-1">
-                {refunds.length > 0 ? formatCurrency(stats.totalAmount, refunds[0].currency) : '$0.00'}
+                {refunds.length > 0 ? (
+                  <CurrencyDisplay
+                    amountCents={stats.totalAmount}
+                    currency={refunds[0].currency}
+                    showFree={false}
+                  />
+                ) : (
+                  '$0.00'
+                )}
               </p>
             </div>
             <DollarSign className="w-8 h-8 text-muted-foreground" />
@@ -342,7 +344,11 @@ export function RefundList() {
                 <div className="flex md:flex-col items-end gap-4 md:gap-2">
                   <div className="text-right">
                     <p className="text-2xl font-bold">
-                      {formatCurrency(refund.amountCents, refund.currency)}
+                      <CurrencyDisplay
+                        amountCents={refund.amountCents}
+                        currency={refund.currency}
+                        showFree={false}
+                      />
                     </p>
                   </div>
                   <span className={`px-3 py-1 rounded-full text-xs font-medium border ${getStatusColor(refund.status)}`}>

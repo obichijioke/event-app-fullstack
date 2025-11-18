@@ -19,7 +19,11 @@ import { RolesGuard } from '../../auth/guards/roles.guard';
 import { Roles } from '../../auth/decorators/roles.decorator';
 import { PlatformRole } from '@prisma/client';
 import { AdminTicketService } from '../services/ticket.service';
-import { TicketAdminQueryDto, TransferQueryDto, CheckinQueryDto } from '../dto/ticket.dto';
+import {
+  TicketAdminQueryDto,
+  TransferQueryDto,
+  CheckinQueryDto,
+} from '../dto/ticket.dto';
 
 @ApiTags('Admin - Tickets')
 @Controller('admin/tickets')
@@ -42,7 +46,10 @@ export class AdminTicketController {
 
   @Get('stats')
   @ApiOperation({ summary: 'Get ticket statistics' })
-  @ApiResponse({ status: 200, description: 'Ticket stats retrieved successfully' })
+  @ApiResponse({
+    status: 200,
+    description: 'Ticket stats retrieved successfully',
+  })
   async getTicketStats() {
     const stats = await this.ticketService.getTicketStats();
     return {

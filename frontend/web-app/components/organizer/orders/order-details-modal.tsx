@@ -1,7 +1,8 @@
 'use client';
 
 import { OrderDetail } from '@/lib/types/organizer';
-import { formatCurrency, formatDateTime } from '@/lib/utils/format';
+import { formatDateTime } from '@/lib/utils/format';
+import { CurrencyDisplay } from '@/components/common/currency-display';
 import { X, User, CreditCard, Ticket, Package } from 'lucide-react';
 
 interface OrderDetailsModalProps {
@@ -42,7 +43,9 @@ export function OrderDetailsModal({ order, onClose }: OrderDetailsModalProps) {
             </span>
             <div className="text-right">
               <p className="text-sm text-muted-foreground">Total Amount</p>
-              <p className="text-2xl font-bold">{formatCurrency(order.totalCents, order.currency)}</p>
+            <p className="text-2xl font-bold">
+              <CurrencyDisplay amountCents={order.totalCents} currency={order.currency} showFree={false} />
+            </p>
             </div>
           </div>
 
@@ -84,7 +87,11 @@ export function OrderDetailsModal({ order, onClose }: OrderDetailsModalProps) {
                     </p>
                   </div>
                   <p className="font-semibold">
-                    {formatCurrency(item.unitPriceCents * item.quantity, order.currency)}
+                    <CurrencyDisplay
+                      amountCents={item.unitPriceCents * item.quantity}
+                      currency={order.currency}
+                      showFree={false}
+                    />
                   </p>
                 </div>
               ))}
@@ -130,7 +137,11 @@ export function OrderDetailsModal({ order, onClose }: OrderDetailsModalProps) {
                       <p className="text-xs text-muted-foreground">{payment.status}</p>
                     </div>
                     <p className="font-semibold">
-                      {formatCurrency(payment.amountCents, payment.currency)}
+                    <CurrencyDisplay
+                      amountCents={payment.amountCents}
+                      currency={payment.currency}
+                      showFree={false}
+                    />
                     </p>
                   </div>
                 ))}
@@ -152,7 +163,12 @@ export function OrderDetailsModal({ order, onClose }: OrderDetailsModalProps) {
                       )}
                     </div>
                     <p className="font-semibold">
-                      -{formatCurrency(refund.amountCents, order.currency)}
+                      -
+                      <CurrencyDisplay
+                        amountCents={refund.amountCents}
+                        currency={order.currency}
+                        showFree={false}
+                      />
                     </p>
                   </div>
                 ))}

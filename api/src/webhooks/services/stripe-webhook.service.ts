@@ -32,33 +32,27 @@ export class StripeWebhookService {
 
     switch (event.type) {
       case 'payment_intent.succeeded':
-        await this.handlePaymentIntentSucceeded(
-          event.data.object as Stripe.PaymentIntent,
-        );
+        await this.handlePaymentIntentSucceeded(event.data.object);
         break;
 
       case 'payment_intent.payment_failed':
-        await this.handlePaymentIntentFailed(
-          event.data.object as Stripe.PaymentIntent,
-        );
+        await this.handlePaymentIntentFailed(event.data.object);
         break;
 
       case 'payment_intent.canceled':
-        await this.handlePaymentIntentCanceled(
-          event.data.object as Stripe.PaymentIntent,
-        );
+        await this.handlePaymentIntentCanceled(event.data.object);
         break;
 
       case 'charge.refunded':
-        await this.handleChargeRefunded(event.data.object as Stripe.Charge);
+        await this.handleChargeRefunded(event.data.object);
         break;
 
       case 'charge.dispute.created':
-        await this.handleDisputeCreated(event.data.object as Stripe.Dispute);
+        await this.handleDisputeCreated(event.data.object);
         break;
 
       case 'charge.dispute.closed':
-        await this.handleDisputeClosed(event.data.object as Stripe.Dispute);
+        await this.handleDisputeClosed(event.data.object);
         break;
 
       default:
@@ -252,9 +246,7 @@ export class StripeWebhookService {
       typeof dispute.charge === 'string' ? dispute.charge : dispute.charge?.id;
 
     if (!chargeId) {
-      this.logger.warn(
-        `Received dispute.closed without charge: ${dispute.id}`,
-      );
+      this.logger.warn(`Received dispute.closed without charge: ${dispute.id}`);
       return;
     }
 

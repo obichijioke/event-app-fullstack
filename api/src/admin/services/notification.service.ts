@@ -4,7 +4,10 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { PrismaService } from '../../common/prisma/prisma.service';
-import { NotificationQueryDto, BroadcastNotificationDto } from '../dto/notification.dto';
+import {
+  NotificationQueryDto,
+  BroadcastNotificationDto,
+} from '../dto/notification.dto';
 import { Prisma, NotificationChannel } from '@prisma/client';
 
 @Injectable()
@@ -39,7 +42,13 @@ export class AdminNotificationService {
 
     const orderBy: Prisma.NotificationOrderByWithRelationInput = {};
     if (sortBy) {
-      const allowedSortFields = ['id', 'type', 'category', 'createdAt', 'readAt'] as const;
+      const allowedSortFields = [
+        'id',
+        'type',
+        'category',
+        'createdAt',
+        'readAt',
+      ] as const;
       if (!allowedSortFields.includes(sortBy as any)) {
         throw new BadRequestException(`Invalid sort field: ${sortBy}`);
       }
@@ -124,7 +133,7 @@ export class AdminNotificationService {
       const users = await this.prisma.user.findMany({
         select: { id: true },
       });
-      targetUserIds = users.map(u => u.id);
+      targetUserIds = users.map((u) => u.id);
     }
 
     if (targetUserIds.length === 0) {
@@ -133,7 +142,7 @@ export class AdminNotificationService {
 
     // Create notifications for all target users
     const notifications = await this.prisma.notification.createMany({
-      data: targetUserIds.map(userId => ({
+      data: targetUserIds.map((userId) => ({
         userId,
         type,
         category,
@@ -196,11 +205,11 @@ export class AdminNotificationService {
       unread,
       read: total - unread,
       recent24h,
-      byCategory: byCategory.map(item => ({
+      byCategory: byCategory.map((item) => ({
         category: item.category,
         count: item._count.id,
       })),
-      byType: byType.map(item => ({
+      byType: byType.map((item) => ({
         type: item.type,
         count: item._count.id,
       })),

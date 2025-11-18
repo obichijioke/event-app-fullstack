@@ -22,7 +22,7 @@ import { MetricCard } from '../metric-card';
 import { StatCard } from '../stat-card';
 import { EmptyState } from '../empty-state';
 import { EventStatusActions } from './event-status-actions';
-import { formatCurrency } from '@/lib/utils';
+import { CurrencyDisplay } from '@/components/common/currency-display';
 import type { DashboardEvent } from '@/lib/types/organizer';
 
 interface EventDetailContentProps {
@@ -172,7 +172,13 @@ export function EventDetailContent({ eventId }: EventDetailContentProps) {
         />
         <MetricCard
           label="Revenue"
-          value={formatCurrency(event.revenue || 0, 'USD')}
+          value={
+            <CurrencyDisplay
+              amountCents={event.revenue || 0}
+              currency={event.currency || 'USD'}
+              showFree={false}
+            />
+          }
           icon={<DollarSign className="w-5 h-5" />}
         />
         <MetricCard

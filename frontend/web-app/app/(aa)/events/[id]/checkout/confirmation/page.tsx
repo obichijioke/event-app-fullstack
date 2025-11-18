@@ -9,6 +9,7 @@ import { ordersApi, type Order } from '@/lib/api/orders-api';
 import { CheckCircle2, Download, Mail, Calendar, MapPin, Ticket } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { getErrorMessage } from '@/lib/utils/error-message';
+import { CurrencyDisplay } from '@/components/common/currency-display';
 
 const STEPS = [
   { id: 1, title: 'Select Tickets', subtitle: 'Choose your tickets' },
@@ -247,10 +248,10 @@ export default function ConfirmationPage({ params }: Props) {
                 {order.items?.map((item) => (
                   <div key={item.id} className="flex justify-between">
                     <span>
-                      {item.quantity} x Ticket (${(item.unitPriceCents / 100).toFixed(2)} each)
+                      {item.quantity} x Ticket (<CurrencyDisplay amountCents={item.unitPriceCents} currency={item.currency} showFree={false} /> each)
                     </span>
                     <span className="font-medium">
-                      ${((item.unitPriceCents * item.quantity) / 100).toFixed(2)}
+                      <CurrencyDisplay amountCents={item.unitPriceCents * item.quantity} currency={item.currency} showFree={false} />
                     </span>
                   </div>
                 ))}
@@ -260,21 +261,21 @@ export default function ConfirmationPage({ params }: Props) {
             <div className="mt-4 border-t border-border/60 pt-4 text-sm">
               <div className="flex justify-between">
                 <span>Subtotal</span>
-                <span>${(order.subtotalCents / 100).toFixed(2)}</span>
+                <CurrencyDisplay amountCents={order.subtotalCents} currency={order.currency} showFree={false} />
               </div>
               <div className="flex justify-between">
                 <span>Fees</span>
-                <span>${(order.feesCents / 100).toFixed(2)}</span>
+                <CurrencyDisplay amountCents={order.feesCents} currency={order.currency} showFree={false} />
               </div>
               {order.taxCents > 0 && (
                 <div className="flex justify-between">
                   <span>Tax</span>
-                  <span>${(order.taxCents / 100).toFixed(2)}</span>
+                  <CurrencyDisplay amountCents={order.taxCents} currency={order.currency} showFree={false} />
                 </div>
               )}
               <div className="mt-3 flex justify-between border-t border-border/60 pt-3 text-lg font-bold">
                 <span>Total</span>
-                <span>${(order.totalCents / 100).toFixed(2)}</span>
+                <CurrencyDisplay amountCents={order.totalCents} currency={order.currency} showFree={false} />
               </div>
             </div>
           </div>

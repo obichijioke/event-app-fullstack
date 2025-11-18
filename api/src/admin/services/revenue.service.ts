@@ -7,7 +7,11 @@ import { Prisma } from '@prisma/client';
 export class AdminRevenueService {
   constructor(private prisma: PrismaService) {}
 
-  private getDateRange(period: RevenuePeriod, startDate?: string, endDate?: string) {
+  private getDateRange(
+    period: RevenuePeriod,
+    startDate?: string,
+    endDate?: string,
+  ) {
     const now = new Date();
     let start: Date;
     let end: Date = now;
@@ -29,7 +33,9 @@ export class AdminRevenueService {
         start = new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000);
         break;
       case RevenuePeriod.CUSTOM:
-        start = startDate ? new Date(startDate) : new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+        start = startDate
+          ? new Date(startDate)
+          : new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
         end = endDate ? new Date(endDate) : now;
         break;
       default:
@@ -40,7 +46,13 @@ export class AdminRevenueService {
   }
 
   async getRevenueMetrics(query: RevenueQueryDto) {
-    const { period = RevenuePeriod.MONTH, startDate, endDate, organizationId, categoryId } = query;
+    const {
+      period = RevenuePeriod.MONTH,
+      startDate,
+      endDate,
+      organizationId,
+      categoryId,
+    } = query;
     const { start, end } = this.getDateRange(period, startDate, endDate);
 
     const orderWhere: Prisma.OrderWhereInput = {
@@ -61,47 +73,54 @@ export class AdminRevenueService {
       };
     }
 
-    const [revenue, platformFees, orderCount, ticketsSold, refunds, refundCount, sampleOrder] =
-      await Promise.all([
-        this.prisma.order.aggregate({
-          where: orderWhere,
-          _sum: { totalCents: true },
-        }),
-        this.prisma.order.aggregate({
-          where: orderWhere,
-          _sum: { feesCents: true },
-        }),
-        this.prisma.order.count({ where: orderWhere }),
-        this.prisma.orderItem.aggregate({
-          where: {
-            order: orderWhere,
+    const [
+      revenue,
+      platformFees,
+      orderCount,
+      ticketsSold,
+      refunds,
+      refundCount,
+      sampleOrder,
+    ] = await Promise.all([
+      this.prisma.order.aggregate({
+        where: orderWhere,
+        _sum: { totalCents: true },
+      }),
+      this.prisma.order.aggregate({
+        where: orderWhere,
+        _sum: { feesCents: true },
+      }),
+      this.prisma.order.count({ where: orderWhere }),
+      this.prisma.orderItem.aggregate({
+        where: {
+          order: orderWhere,
+        },
+        _sum: { quantity: true },
+      }),
+      this.prisma.refund.aggregate({
+        where: {
+          status: 'processed',
+          processedAt: {
+            gte: start,
+            lte: end,
           },
-          _sum: { quantity: true },
-        }),
-        this.prisma.refund.aggregate({
-          where: {
-            status: 'processed',
-            processedAt: {
-              gte: start,
-              lte: end,
-            },
+        },
+        _sum: { amountCents: true },
+      }),
+      this.prisma.refund.count({
+        where: {
+          status: 'processed',
+          processedAt: {
+            gte: start,
+            lte: end,
           },
-          _sum: { amountCents: true },
-        }),
-        this.prisma.refund.count({
-          where: {
-            status: 'processed',
-            processedAt: {
-              gte: start,
-              lte: end,
-            },
-          },
-        }),
-        this.prisma.order.findFirst({
-          where: orderWhere,
-          select: { currency: true },
-        }),
-      ]);
+        },
+      }),
+      this.prisma.order.findFirst({
+        where: orderWhere,
+        select: { currency: true },
+      }),
+    ]);
 
     const grossCents = revenue._sum.totalCents || BigInt(0);
     const platformFeeCents = platformFees._sum.feesCents || BigInt(0);
@@ -109,7 +128,8 @@ export class AdminRevenueService {
 
     // Processing fees are not tracked separately; expose as 0 for now.
     const processingFeeCents = BigInt(0);
-    const organizerPayoutCents = grossCents - platformFeeCents - processingFeeCents - refundedCents;
+    const organizerPayoutCents =
+      grossCents - platformFeeCents - processingFeeCents - refundedCents;
 
     return {
       totalRevenueCents: Number(grossCents),
@@ -125,7 +145,13 @@ export class AdminRevenueService {
   }
 
   async getRevenueOverview(query: RevenueQueryDto) {
-    const { period = RevenuePeriod.MONTH, startDate, endDate, organizationId, categoryId } = query;
+    const {
+      period = RevenuePeriod.MONTH,
+      startDate,
+      endDate,
+      organizationId,
+      categoryId,
+    } = query;
     const { start, end } = this.getDateRange(period, startDate, endDate);
 
     const where: Prisma.OrderWhereInput = {
@@ -146,41 +172,42 @@ export class AdminRevenueService {
       };
     }
 
-    const [orders, totalRevenue, totalFees, totalOrders, refunds] = await Promise.all([
-      this.prisma.order.findMany({
-        where,
-        select: {
-          totalCents: true,
-          feesCents: true,
-          currency: true,
-        },
-      }),
-      this.prisma.order.aggregate({
-        where,
-        _sum: {
-          totalCents: true,
-        },
-      }),
-      this.prisma.order.aggregate({
-        where,
-        _sum: {
-          feesCents: true,
-        },
-      }),
-      this.prisma.order.count({ where }),
-      this.prisma.refund.aggregate({
-        where: {
-          status: 'processed',
-          processedAt: {
-            gte: start,
-            lte: end,
+    const [orders, totalRevenue, totalFees, totalOrders, refunds] =
+      await Promise.all([
+        this.prisma.order.findMany({
+          where,
+          select: {
+            totalCents: true,
+            feesCents: true,
+            currency: true,
           },
-        },
-        _sum: {
-          amountCents: true,
-        },
-      }),
-    ]);
+        }),
+        this.prisma.order.aggregate({
+          where,
+          _sum: {
+            totalCents: true,
+          },
+        }),
+        this.prisma.order.aggregate({
+          where,
+          _sum: {
+            feesCents: true,
+          },
+        }),
+        this.prisma.order.count({ where }),
+        this.prisma.refund.aggregate({
+          where: {
+            status: 'processed',
+            processedAt: {
+              gte: start,
+              lte: end,
+            },
+          },
+          _sum: {
+            amountCents: true,
+          },
+        }),
+      ]);
 
     // Calculate platform revenue (fees collected)
     const platformRevenueCents = totalFees._sum.feesCents || BigInt(0);
@@ -189,7 +216,8 @@ export class AdminRevenueService {
     const netRevenueCents = grossRevenueCents - refundedCents;
 
     // Calculate average order value
-    const averageOrderCents = totalOrders > 0 ? Number(grossRevenueCents) / totalOrders : 0;
+    const averageOrderCents =
+      totalOrders > 0 ? Number(grossRevenueCents) / totalOrders : 0;
 
     return {
       period: {
@@ -212,7 +240,14 @@ export class AdminRevenueService {
   }
 
   async getRevenueByPeriod(query: RevenueQueryDto) {
-    const { period = RevenuePeriod.MONTH, startDate, endDate, organizationId, categoryId, groupBy = 'day' } = query;
+    const {
+      period = RevenuePeriod.MONTH,
+      startDate,
+      endDate,
+      organizationId,
+      categoryId,
+      groupBy = 'day',
+    } = query;
     const { start, end } = this.getDateRange(period, startDate, endDate);
 
     const where: Prisma.OrderWhereInput = {
@@ -248,7 +283,10 @@ export class AdminRevenueService {
     });
 
     // Group by period
-    const grouped = new Map<string, { totalCents: bigint; feesCents: bigint; count: number }>();
+    const grouped = new Map<
+      string,
+      { totalCents: bigint; feesCents: bigint; count: number }
+    >();
 
     orders.forEach((order) => {
       if (!order.paidAt) return;
@@ -268,7 +306,11 @@ export class AdminRevenueService {
         key = date.toISOString().split('T')[0];
       }
 
-      const existing = grouped.get(key) || { totalCents: BigInt(0), feesCents: BigInt(0), count: 0 };
+      const existing = grouped.get(key) || {
+        totalCents: BigInt(0),
+        feesCents: BigInt(0),
+        count: 0,
+      };
       grouped.set(key, {
         totalCents: existing.totalCents + order.totalCents,
         feesCents: existing.feesCents + order.feesCents,
@@ -383,7 +425,16 @@ export class AdminRevenueService {
     });
 
     // Group by category
-    const grouped = new Map<string, { name: string; slug: string; totalCents: bigint; feesCents: bigint; count: number }>();
+    const grouped = new Map<
+      string,
+      {
+        name: string;
+        slug: string;
+        totalCents: bigint;
+        feesCents: bigint;
+        count: number;
+      }
+    >();
 
     orders.forEach((order) => {
       const categoryId = order.event.categoryId || 'uncategorized';
@@ -395,7 +446,7 @@ export class AdminRevenueService {
         slug: categorySlug,
         totalCents: BigInt(0),
         feesCents: BigInt(0),
-        count: 0
+        count: 0,
       };
 
       grouped.set(categoryId, {
@@ -432,7 +483,8 @@ export class AdminRevenueService {
     const currentRange = this.getDateRange(period, startDate, endDate);
 
     // Calculate previous period for comparison
-    const periodLength = currentRange.end.getTime() - currentRange.start.getTime();
+    const periodLength =
+      currentRange.end.getTime() - currentRange.start.getTime();
     const previousRange = {
       start: new Date(currentRange.start.getTime() - periodLength),
       end: currentRange.start,
@@ -478,17 +530,22 @@ export class AdminRevenueService {
     const currentFees = Number(currentRevenue._sum.feesCents || 0);
     const previousFees = Number(previousRevenue._sum.feesCents || 0);
 
-    const revenueGrowth = previousTotal > 0
-      ? ((currentTotal - previousTotal) / previousTotal) * 100
-      : 0;
+    const revenueGrowth =
+      previousTotal > 0
+        ? ((currentTotal - previousTotal) / previousTotal) * 100
+        : 0;
 
-    const feeGrowth = previousFees > 0
-      ? ((currentFees - previousFees) / previousFees) * 100
-      : 0;
+    const feeGrowth =
+      previousFees > 0
+        ? ((currentFees - previousFees) / previousFees) * 100
+        : 0;
 
-    const orderGrowth = previousRevenue._count.id > 0
-      ? ((currentRevenue._count.id - previousRevenue._count.id) / previousRevenue._count.id) * 100
-      : 0;
+    const orderGrowth =
+      previousRevenue._count.id > 0
+        ? ((currentRevenue._count.id - previousRevenue._count.id) /
+            previousRevenue._count.id) *
+          100
+        : 0;
 
     return {
       current: {

@@ -9,7 +9,7 @@ import { StatCard } from '../stat-card';
 import { EmptyState } from '../empty-state';
 import { OrderItem } from '../order-item';
 import { EventItem } from '../event-item';
-import { formatCurrency } from '@/lib/utils';
+import { CurrencyDisplay } from '@/components/common/currency-display';
 import { Calendar, DollarSign, Ticket, ShoppingCart, AlertCircle, FileText, MapPin } from 'lucide-react';
 import type { DashboardOverviewResponse } from '@/lib/types/organizer';
 
@@ -64,6 +64,7 @@ export function DashboardContent() {
   }
 
   const creatorUrl = '/organizer/events/create';
+  const currency = dashboard?.metrics.currency || 'USD';
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -107,7 +108,13 @@ export function DashboardContent() {
           label="Gross Revenue"
           value={
             dashboard
-              ? formatCurrency(dashboard.metrics.grossRevenueCents, 'USD')
+              ? (
+                <CurrencyDisplay
+                  amountCents={dashboard.metrics.grossRevenueCents}
+                  currency={currency}
+                  showFree={false}
+                />
+              )
               : '$0'
           }
           icon={<DollarSign className="w-5 h-5" />}
@@ -170,7 +177,12 @@ export function DashboardContent() {
                 <h3 className="font-semibold text-blue-900">Pending Payouts</h3>
               </div>
               <p className="text-sm text-blue-700 mb-3">
-                {formatCurrency(dashboard.tasks.unsettledPayouts.amountCents, 'USD')} in {dashboard.tasks.unsettledPayouts.count} payout(s)
+                <CurrencyDisplay
+                  amountCents={dashboard.tasks.unsettledPayouts.amountCents}
+                  currency={currency}
+                  showFree={false}
+                />{' '}
+                in {dashboard.tasks.unsettledPayouts.count} payout(s)
               </p>
               <Link
                 href="/organizer/payouts"
@@ -274,20 +286,33 @@ export function DashboardContent() {
                 <div className="flex justify-between items-center">
                   <span className="text-sm text-muted-foreground">Gross Revenue</span>
                   <span className="font-semibold">
-                    {formatCurrency(dashboard.metrics.grossRevenueCents, 'USD')}
+                    <CurrencyDisplay
+                      amountCents={dashboard.metrics.grossRevenueCents}
+                      currency={currency}
+                      showFree={false}
+                    />
                   </span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-sm text-muted-foreground">Fees</span>
                   <span className="font-semibold text-red-600">
-                    -{formatCurrency(dashboard.metrics.feesCents, 'USD')}
+                    -
+                    <CurrencyDisplay
+                      amountCents={dashboard.metrics.feesCents}
+                      currency={currency}
+                      showFree={false}
+                    />
                   </span>
                 </div>
                 <div className="border-t border-border pt-3">
                   <div className="flex justify-between items-center">
                     <span className="text-sm font-medium">Net Revenue</span>
                     <span className="font-bold text-lg">
-                      {formatCurrency(dashboard.metrics.netRevenueCents, 'USD')}
+                      <CurrencyDisplay
+                        amountCents={dashboard.metrics.netRevenueCents}
+                        currency={currency}
+                        showFree={false}
+                      />
                     </span>
                   </div>
                 </div>

@@ -23,7 +23,10 @@ export class FlagQueryDto {
   @IsString()
   targetKind?: string;
 
-  @ApiPropertyOptional({ description: 'Filter by status', enum: ModerationStatus })
+  @ApiPropertyOptional({
+    description: 'Filter by status',
+    enum: ModerationStatus,
+  })
   @IsOptional()
   @IsEnum(ModerationStatus)
   status?: ModerationStatus;

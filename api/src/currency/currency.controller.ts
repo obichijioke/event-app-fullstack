@@ -80,7 +80,10 @@ export class CurrencyController {
   @Roles(PlatformRole.admin)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Update currency configuration (Admin only)' })
-  @ApiResponse({ status: 200, description: 'Configuration updated successfully' })
+  @ApiResponse({
+    status: 200,
+    description: 'Configuration updated successfully',
+  })
   @ApiResponse({ status: 403, description: 'Forbidden - Admin only' })
   async updateCurrencyConfig(
     @CurrentUser() user: any,
@@ -137,10 +140,7 @@ export class CurrencyController {
   @ApiOperation({ summary: 'Get exchange rate between two currencies' })
   @ApiResponse({ status: 200, description: 'Exchange rate retrieved' })
   @ApiResponse({ status: 404, description: 'Exchange rate not found' })
-  async getExchangeRate(
-    @Query('from') from: string,
-    @Query('to') to: string,
-  ) {
+  async getExchangeRate(@Query('from') from: string, @Query('to') to: string) {
     const rate = await this.currencyService.getExchangeRate(from, to);
     return {
       from,

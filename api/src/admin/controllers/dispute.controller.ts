@@ -49,7 +49,10 @@ export class AdminDisputeController {
 
   @Get('stats')
   @ApiOperation({ summary: 'Get dispute statistics' })
-  @ApiResponse({ status: 200, description: 'Statistics retrieved successfully' })
+  @ApiResponse({
+    status: 200,
+    description: 'Statistics retrieved successfully',
+  })
   async getStats() {
     const stats = await this.disputeService.getStats();
     return {
@@ -71,7 +74,10 @@ export class AdminDisputeController {
 
   @Patch(':id/status')
   @ApiOperation({ summary: 'Update dispute status' })
-  @ApiResponse({ status: 200, description: 'Dispute status updated successfully' })
+  @ApiResponse({
+    status: 200,
+    description: 'Dispute status updated successfully',
+  })
   async updateDisputeStatus(
     @Param('id') id: string,
     @Body() dto: UpdateDisputeStatusDto,
@@ -87,7 +93,10 @@ export class AdminDisputeController {
   @ApiOperation({ summary: 'Respond to dispute' })
   @ApiResponse({ status: 200, description: 'Response submitted successfully' })
   @HttpCode(HttpStatus.OK)
-  async respondToDispute(@Param('id') id: string, @Body() dto: RespondToDisputeDto) {
+  async respondToDispute(
+    @Param('id') id: string,
+    @Body() dto: RespondToDisputeDto,
+  ) {
     const dispute = await this.disputeService.respond(id, dto);
     return {
       success: true,

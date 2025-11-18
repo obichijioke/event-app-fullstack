@@ -65,7 +65,13 @@ export class AdminOrderService {
 
     const orderBy: Prisma.OrderOrderByWithRelationInput = {};
     if (sortBy) {
-      const allowedSortFields = ['id', 'createdAt', 'totalCents', 'status', 'paidAt'] as const;
+      const allowedSortFields = [
+        'id',
+        'createdAt',
+        'totalCents',
+        'status',
+        'paidAt',
+      ] as const;
       if (!allowedSortFields.includes(sortBy as any)) {
         throw new BadRequestException(`Invalid sort field: ${sortBy}`);
       }
@@ -257,17 +263,18 @@ export class AdminOrderService {
   }
 
   async getOrderStats() {
-    const [total, pending, paid, canceled, refunded, totalRevenue] = await Promise.all([
-      this.prisma.order.count(),
-      this.prisma.order.count({ where: { status: OrderStatus.pending } }),
-      this.prisma.order.count({ where: { status: OrderStatus.paid } }),
-      this.prisma.order.count({ where: { status: OrderStatus.canceled } }),
-      this.prisma.order.count({ where: { status: OrderStatus.refunded } }),
-      this.prisma.order.aggregate({
-        where: { status: OrderStatus.paid },
-        _sum: { totalCents: true },
-      }),
-    ]);
+    const [total, pending, paid, canceled, refunded, totalRevenue] =
+      await Promise.all([
+        this.prisma.order.count(),
+        this.prisma.order.count({ where: { status: OrderStatus.pending } }),
+        this.prisma.order.count({ where: { status: OrderStatus.paid } }),
+        this.prisma.order.count({ where: { status: OrderStatus.canceled } }),
+        this.prisma.order.count({ where: { status: OrderStatus.refunded } }),
+        this.prisma.order.aggregate({
+          where: { status: OrderStatus.paid },
+          _sum: { totalCents: true },
+        }),
+      ]);
 
     const recent24h = await this.prisma.order.count({
       where: {
