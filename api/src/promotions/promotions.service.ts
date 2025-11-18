@@ -5,6 +5,7 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { PrismaService } from '../common/prisma/prisma.service';
+import { CurrencyService } from '../currency/currency.service';
 import {
   CreatePromotionDto,
   CreatePromoCodeDto,
@@ -19,7 +20,10 @@ import { checkOrgPermission } from '../common/utils';
 
 @Injectable()
 export class PromotionsService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private currencyService: CurrencyService,
+  ) {}
 
   // ============================================================================
   // PROMOTION METHODS (Campaign Management)
@@ -61,6 +65,10 @@ export class PromotionsService {
       );
     }
 
+    // Get default currency if not provided
+    const finalCurrency =
+      currency || (await this.currencyService.getDefaultCurrency());
+
     // Create promotion in the new promotions table
     const promotion = await this.prisma.promotion.create({
       data: {
@@ -70,7 +78,7 @@ export class PromotionsService {
         type,
         discountType,
         discountValue,
-        currency: currency || 'USD',
+        currency: finalCurrency,
         maxUses: maxUses || 0,
         maxUsesPerUser,
         startsAt: new Date(startsAt),
@@ -326,6 +334,9 @@ export class PromotionsService {
       }
     }
 
+    // Get default currency if not provided
+    const defaultCurrency = await this.currencyService.getDefaultCurrency();
+
     // Create promo code
     const promoCode = await this.prisma.promoCode.create({
       data: {
@@ -345,7 +356,7 @@ export class PromotionsService {
           promotion.discountValue !== undefined
             ? BigInt(promotion.discountValue)
             : null,
-        currency: promotion?.currency || 'USD',
+        currency: promotion?.currency || defaultCurrency,
         maxRedemptions: maxUses,
         perUserLimit: maxUsesPerUser,
         startsAt: startsAt ? new Date(startsAt) : null,

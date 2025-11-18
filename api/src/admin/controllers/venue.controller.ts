@@ -51,7 +51,10 @@ export class AdminVenueController {
   // Venue Catalog Endpoints
   @Get('catalog')
   @ApiOperation({ summary: 'List venue catalog entries' })
-  @ApiResponse({ status: 200, description: 'Catalog entries retrieved successfully' })
+  @ApiResponse({
+    status: 200,
+    description: 'Catalog entries retrieved successfully',
+  })
   async getCatalogVenues(@Query() query: VenueCatalogQueryDto) {
     const result = await this.venueCatalogService.findAll(query);
     return {
@@ -62,7 +65,10 @@ export class AdminVenueController {
 
   @Get('catalog/:id')
   @ApiOperation({ summary: 'Get venue catalog entry by ID' })
-  @ApiResponse({ status: 200, description: 'Catalog entry retrieved successfully' })
+  @ApiResponse({
+    status: 200,
+    description: 'Catalog entry retrieved successfully',
+  })
   async getCatalogVenue(@Param('id') id: string) {
     const venue = await this.venueCatalogService.findOne(id);
     return {
@@ -73,7 +79,10 @@ export class AdminVenueController {
 
   @Post('catalog')
   @ApiOperation({ summary: 'Create venue catalog entry' })
-  @ApiResponse({ status: 201, description: 'Catalog entry created successfully' })
+  @ApiResponse({
+    status: 201,
+    description: 'Catalog entry created successfully',
+  })
   async createCatalogVenue(@Body() dto: CreateVenueCatalogDto) {
     const venue = await this.venueCatalogService.create(dto);
     return {
@@ -84,7 +93,10 @@ export class AdminVenueController {
 
   @Patch('catalog/:id')
   @ApiOperation({ summary: 'Update venue catalog entry' })
-  @ApiResponse({ status: 200, description: 'Catalog entry updated successfully' })
+  @ApiResponse({
+    status: 200,
+    description: 'Catalog entry updated successfully',
+  })
   async updateCatalogVenue(
     @Param('id') id: string,
     @Body() dto: UpdateVenueCatalogDto,
@@ -98,7 +110,10 @@ export class AdminVenueController {
 
   @Delete('catalog/:id')
   @ApiOperation({ summary: 'Delete venue catalog entry' })
-  @ApiResponse({ status: 200, description: 'Catalog entry deleted successfully' })
+  @ApiResponse({
+    status: 200,
+    description: 'Catalog entry deleted successfully',
+  })
   @HttpCode(HttpStatus.OK)
   async deleteCatalogVenue(@Param('id') id: string) {
     const result = await this.venueCatalogService.remove(id);
@@ -167,9 +182,7 @@ export class AdminVenueController {
           cb(null, true);
         } else {
           cb(
-            new BadRequestException(
-              'Only CSV and JSON files are allowed',
-            ),
+            new BadRequestException('Only CSV and JSON files are allowed'),
             false,
           );
         }

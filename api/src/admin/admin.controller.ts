@@ -103,7 +103,10 @@ export class AdminController {
 
   @Patch('events/:id/status')
   @ApiOperation({ summary: 'Update event status (approve/reject/suspend)' })
-  @ApiResponse({ status: 200, description: 'Event status updated successfully' })
+  @ApiResponse({
+    status: 200,
+    description: 'Event status updated successfully',
+  })
   async updateEventStatus(
     @Param('id') id: string,
     @Body() dto: UpdateEventStatusDto,
@@ -163,7 +166,10 @@ export class AdminController {
 
   @Get('categories')
   @ApiOperation({ summary: 'List all event categories' })
-  @ApiResponse({ status: 200, description: 'Categories retrieved successfully' })
+  @ApiResponse({
+    status: 200,
+    description: 'Categories retrieved successfully',
+  })
   async getCategories(@Query() query: CategoryQueryDto) {
     const result = await this.categoryService.findAll(query);
     return {
@@ -197,7 +203,10 @@ export class AdminController {
   @Patch('categories/:id')
   @ApiOperation({ summary: 'Update category' })
   @ApiResponse({ status: 200, description: 'Category updated successfully' })
-  async updateCategory(@Param('id') id: string, @Body() dto: UpdateCategoryDto) {
+  async updateCategory(
+    @Param('id') id: string,
+    @Body() dto: UpdateCategoryDto,
+  ) {
     const category = await this.categoryService.update(id, dto);
     return {
       success: true,
@@ -220,7 +229,10 @@ export class AdminController {
 
   @Get('audit-logs')
   @ApiOperation({ summary: 'List audit logs with filtering' })
-  @ApiResponse({ status: 200, description: 'Audit logs retrieved successfully' })
+  @ApiResponse({
+    status: 200,
+    description: 'Audit logs retrieved successfully',
+  })
   async getAuditLogs(@Query() query: AuditLogQueryDto) {
     const result = await this.auditService.findAll(query);
     return {

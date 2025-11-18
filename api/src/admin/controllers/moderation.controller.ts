@@ -21,7 +21,11 @@ import { Roles } from '../../auth/decorators/roles.decorator';
 import { CurrentUser } from '../../auth/decorators/current-user.decorator';
 import { PlatformRole } from '@prisma/client';
 import { AdminModerationService } from '../services/moderation.service';
-import { FlagQueryDto, ResolveFlagDto, ModerationActionQueryDto } from '../dto/moderation.dto';
+import {
+  FlagQueryDto,
+  ResolveFlagDto,
+  ModerationActionQueryDto,
+} from '../dto/moderation.dto';
 
 @ApiTags('Admin - Moderation & Flags')
 @Controller('admin')
@@ -44,7 +48,10 @@ export class AdminModerationController {
 
   @Get('flags/stats')
   @ApiOperation({ summary: 'Get moderation statistics' })
-  @ApiResponse({ status: 200, description: 'Moderation stats retrieved successfully' })
+  @ApiResponse({
+    status: 200,
+    description: 'Moderation stats retrieved successfully',
+  })
   async getModerationStats() {
     const stats = await this.moderationService.getModerationStats();
     return {
@@ -73,7 +80,11 @@ export class AdminModerationController {
     @Body() dto: ResolveFlagDto,
     @CurrentUser() user: { id?: string },
   ) {
-    const result = await this.moderationService.resolveFlag(id, dto, user?.id || '');
+    const result = await this.moderationService.resolveFlag(
+      id,
+      dto,
+      user?.id || '',
+    );
     return {
       success: true,
       ...result,
@@ -82,7 +93,10 @@ export class AdminModerationController {
 
   @Get('moderation/actions')
   @ApiOperation({ summary: 'Get moderation actions' })
-  @ApiResponse({ status: 200, description: 'Moderation actions retrieved successfully' })
+  @ApiResponse({
+    status: 200,
+    description: 'Moderation actions retrieved successfully',
+  })
   async getModerationActions(@Query() query: ModerationActionQueryDto) {
     const result = await this.moderationService.getModerationActions(query);
     return {

@@ -3,6 +3,7 @@
 import * as React from 'react';
 import { DataTable, FiltersPanel, StatusBadge } from '@/components/admin';
 import { Text, Button } from '@/components/ui';
+import { CurrencyDisplay } from '@/components/common/currency-display';
 import { adminApiService, type AdminOrder } from '@/services/admin-api.service';
 import { useAuth } from '@/components/auth';
 import { cn } from '@/lib/utils';
@@ -93,12 +94,6 @@ export function OrderList({ className }: OrderListProps) {
     }
   };
 
-  const formatCurrency = (cents: number, currency: string): string => {
-    const amount = cents / 100;
-    const symbol = currency === 'NGN' ? '₦' : currency === 'USD' ? '$' : currency;
-    return `${symbol}${amount.toLocaleString()}`;
-  };
-
   const columns = [
     {
       key: 'orderNumber',
@@ -133,7 +128,11 @@ export function OrderList({ className }: OrderListProps) {
       sortable: true,
       render: (value: unknown, order: AdminOrder) => (
         <Text className="font-medium">
-          {formatCurrency(order.amountCents, order.currency)}
+          <CurrencyDisplay
+            amountCents={order.amountCents}
+            currency={order.currency}
+            showFree={false}
+          />
         </Text>
       ),
     },

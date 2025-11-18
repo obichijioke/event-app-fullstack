@@ -3,6 +3,7 @@
 import * as React from 'react';
 import { DataTable, FiltersPanel, StatusBadge } from '@/components/admin';
 import { Text } from '@/components/ui';
+import { CurrencyDisplay } from '@/components/common/currency-display';
 import { adminApiService, type AdminPayout } from '@/services/admin-api.service';
 import { useAuth } from '@/components/auth';
 import { cn } from '@/lib/utils';
@@ -93,12 +94,6 @@ export function PayoutList({ className }: PayoutListProps) {
     }
   };
 
-  const formatCurrency = (cents: number, currency: string): string => {
-    const amount = cents / 100;
-    const symbol = currency === 'NGN' ? '₦' : currency === 'USD' ? '$' : currency;
-    return `${symbol}${amount.toLocaleString()}`;
-  };
-
   const columns = [
     {
       key: 'id',
@@ -122,7 +117,11 @@ export function PayoutList({ className }: PayoutListProps) {
       sortable: true,
       render: (value: unknown, payout: AdminPayout) => (
         <Text className="font-medium">
-          {formatCurrency(payout.amountCents, payout.currency)}
+          <CurrencyDisplay
+            amountCents={payout.amountCents}
+            currency={payout.currency}
+            showFree={false}
+          />
         </Text>
       ),
     },

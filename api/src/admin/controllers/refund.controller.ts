@@ -73,7 +73,10 @@ export class AdminRefundController {
 
   @Patch(':id/status')
   @ApiOperation({ summary: 'Update refund status' })
-  @ApiResponse({ status: 200, description: 'Refund status updated successfully' })
+  @ApiResponse({
+    status: 200,
+    description: 'Refund status updated successfully',
+  })
   async updateRefundStatus(
     @Param('id') id: string,
     @Body() dto: UpdateRefundStatusDto,

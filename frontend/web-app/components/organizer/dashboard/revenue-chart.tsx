@@ -6,6 +6,7 @@ import { Calendar } from 'lucide-react';
 import { organizerApi } from '@/lib/api/organizer-api';
 import { useOrganizerStore } from '@/lib/stores/organizer-store';
 import { useAuth } from '@/components/auth';
+import { useCurrency } from '@/hooks/useCurrency';
 import type { FinancialSummary } from '@/lib/types/organizer';
 
 type Period = '7d' | '30d' | '90d';
@@ -13,6 +14,7 @@ type Period = '7d' | '30d' | '90d';
 export function RevenueChart() {
   const { currentOrganization } = useOrganizerStore();
   const { initialized: authInitialized, accessToken } = useAuth();
+  const { formatAmount } = useCurrency();
   const [summary, setSummary] = useState<FinancialSummary | null>(null);
   const [loading, setLoading] = useState(true);
   const [period, setPeriod] = useState<Period>('30d');
@@ -51,19 +53,13 @@ export function RevenueChart() {
     return Object.entries(summary.ordersByDay)
       .map(([date, revenueCents]) => ({
         date: new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-        revenue: revenueCents / 100,
+        revenueCents,
       }))
       .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
   }, [summary]);
 
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(value);
-  };
+  const currency = summary?.totals.currency || 'USD';
+  const formatCurrency = (value: number) => formatAmount(Math.round(value), currency);
 
   return (
     <div className="bg-card rounded-lg shadow-card border border-border p-6">
@@ -137,7 +133,7 @@ export function RevenueChart() {
             <YAxis
               stroke="#6b7280"
               style={{ fontSize: '12px' }}
-              tickFormatter={formatCurrency}
+              tickFormatter={(value) => formatCurrency(value as number)}
             />
             <Tooltip
               contentStyle={{
@@ -150,7 +146,7 @@ export function RevenueChart() {
             />
             <Line
               type="monotone"
-              dataKey="revenue"
+              dataKey="revenueCents"
               stroke="#1e40af"
               strokeWidth={2}
               dot={{ fill: '#1e40af', r: 4 }}

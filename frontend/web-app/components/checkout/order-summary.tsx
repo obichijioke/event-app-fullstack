@@ -3,6 +3,7 @@
 import Image from 'next/image';
 import { Calendar, MapPin, Shield, Lock, CreditCard, Tag } from 'lucide-react';
 
+import { CurrencyDisplay } from '@/components/common/currency-display';
 import type { Event } from '@/lib/api/events-api';
 import type { TicketType } from '@/lib/api/tickets-api';
 
@@ -30,12 +31,10 @@ interface OrderSummaryProps {
 type SelectedTicket = {
   ticketType: TicketType;
   quantity: number;
-  price: number;
-  fee: number;
-  subtotal: number;
+  priceCents: number;
+  feeCents: number;
+  subtotalCents: number;
 };
-
-const formatCurrency = (value: number) => `$${value.toFixed(2)}`;
 
 const formatDate = (dateString: string) => {
   const date = new Date(dateString);
@@ -69,8 +68,12 @@ export function OrderSummary({
   suggestedPromoCodes = [],
   actionErrorMessage,
 }: OrderSummaryProps) {
-  let subtotal = 0;
-  let fees = 0;
+  let subtotalCents = 0;
+  let feesCents = 0;
+
+  const currency =
+    // @ts-expect-error - currency is returned by API but not typed yet
+    (event as any)?.currency || ticketTypes[0]?.currency || 'NGN';
 
   const selectedTickets: SelectedTicket[] = Array.from(ticketSelections.entries())
     .filter(([, quantity]) => quantity > 0)
@@ -78,27 +81,27 @@ export function OrderSummary({
       const ticketType = ticketTypes.find((tt) => tt.id === ticketTypeId);
       if (!ticketType) return null;
 
-      const price = ticketType.priceCents / 100;
-      const fee = ticketType.feeCents / 100;
+      const priceCents = Number(ticketType.priceCents);
+      const feeCents = Number(ticketType.feeCents);
 
-      const itemSubtotal = price * quantity;
-      const itemFees = fee * quantity;
+      const itemSubtotal = priceCents * quantity;
+      const itemFees = feeCents * quantity;
 
-      subtotal += itemSubtotal;
-      fees += itemFees;
+      subtotalCents += itemSubtotal;
+      feesCents += itemFees;
 
       return {
         ticketType,
         quantity,
-        price,
-        fee,
-        subtotal: itemSubtotal,
+        priceCents,
+        feeCents,
+        subtotalCents: itemSubtotal,
       };
     })
     .filter((item): item is SelectedTicket => item !== null);
 
-  const discount = promoDiscount;
-  const total = Math.max(subtotal + fees - discount, 0);
+  const discountCents = Math.max(Math.round((promoDiscount || 0) * 100), 0);
+  const totalCents = Math.max(subtotalCents + feesCents - discountCents, 0);
   const promoInputValue = promoCode ?? '';
 
   const handlePromoInputChange = (value: string) => {
@@ -175,14 +178,30 @@ export function OrderSummary({
                       {item.ticketType.name}
                     </span>
                     <span className="font-semibold text-foreground">
-                      {formatCurrency(item.subtotal)}
+                      <CurrencyDisplay
+                        amountCents={item.subtotalCents}
+                        currency={item.ticketType.currency || currency}
+                        showFree={false}
+                      />
                     </span>
                   </div>
                   <div className="flex items-center justify-between text-xs text-muted-foreground">
                     <span>
-                      {item.quantity} x {formatCurrency(item.price)}
+                      {item.quantity} x{' '}
+                      <CurrencyDisplay
+                        amountCents={item.priceCents}
+                        currency={item.ticketType.currency || currency}
+                        showFree={false}
+                      />
                     </span>
-                    <span>Fees {formatCurrency(item.fee * item.quantity)}</span>
+                    <span>
+                      Fees{' '}
+                      <CurrencyDisplay
+                        amountCents={item.feeCents * item.quantity}
+                        currency={item.ticketType.currency || currency}
+                        showFree={false}
+                      />
+                    </span>
                   </div>
                 </div>
               ))}
@@ -194,16 +213,23 @@ export function OrderSummary({
         <div className="mb-6 space-y-2 pb-6">
           <div className="flex items-center justify-between text-sm">
             <span>Subtotal</span>
-            <span>{formatCurrency(subtotal)}</span>
+            <CurrencyDisplay amountCents={subtotalCents} currency={currency} showFree={false} />
           </div>
           <div className="flex items-center justify-between text-sm">
             <span>Processing Fee</span>
-            <span>{formatCurrency(fees)}</span>
+            <CurrencyDisplay amountCents={feesCents} currency={currency} showFree={false} />
           </div>
-          {discount > 0 && (
+          {discountCents > 0 && (
             <div className="flex items-center justify-between text-sm text-emerald-600">
               <span>Discount</span>
-              <span>-{formatCurrency(discount)}</span>
+              <span>
+                -
+                <CurrencyDisplay
+                  amountCents={discountCents}
+                  currency={currency}
+                  showFree={false}
+                />
+              </span>
             </div>
           )}
         </div>
@@ -213,7 +239,7 @@ export function OrderSummary({
           <div>
             <p className="text-sm text-muted-foreground">Total</p>
             <p className="text-2xl font-semibold text-foreground">
-              {formatCurrency(total)}
+              <CurrencyDisplay amountCents={totalCents} currency={currency} showFree={false} />
             </p>
           </div>
           <span className="text-xs uppercase tracking-widest text-muted-foreground">
@@ -253,7 +279,12 @@ export function OrderSummary({
                     Code Applied: {appliedPromoCode}
                   </p>
                   <p className="text-xs text-emerald-700/80">
-                    You&apos;re saving {formatCurrency(discount)}
+                    You&apos;re saving{' '}
+                    <CurrencyDisplay
+                      amountCents={discountCents}
+                      currency={currency}
+                      showFree={false}
+                    />
                   </p>
                 </div>
                 <button

@@ -149,7 +149,9 @@ export class UpdateTaxRateDto {
   @Max(1)
   rate?: number;
 
-  @ApiPropertyOptional({ description: 'Tax rate name (e.g., Sales Tax, VAT, GST)' })
+  @ApiPropertyOptional({
+    description: 'Tax rate name (e.g., Sales Tax, VAT, GST)',
+  })
   @IsOptional()
   @IsString()
   name?: string;

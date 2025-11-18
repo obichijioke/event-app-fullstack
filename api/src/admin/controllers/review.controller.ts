@@ -31,7 +31,10 @@ export class AdminReviewController {
 
   @Get('events')
   @ApiOperation({ summary: 'Get event reviews' })
-  @ApiResponse({ status: 200, description: 'Event reviews retrieved successfully' })
+  @ApiResponse({
+    status: 200,
+    description: 'Event reviews retrieved successfully',
+  })
   async getEventReviews(@Query() query: ReviewQueryDto) {
     const result = await this.reviewService.getEventReviews(query);
     return {
@@ -42,7 +45,10 @@ export class AdminReviewController {
 
   @Get('organizers')
   @ApiOperation({ summary: 'Get organizer reviews' })
-  @ApiResponse({ status: 200, description: 'Organizer reviews retrieved successfully' })
+  @ApiResponse({
+    status: 200,
+    description: 'Organizer reviews retrieved successfully',
+  })
   async getOrganizerReviews(@Query() query: ReviewQueryDto) {
     const result = await this.reviewService.getOrganizerReviews(query);
     return {
@@ -53,7 +59,10 @@ export class AdminReviewController {
 
   @Get('stats')
   @ApiOperation({ summary: 'Get review statistics' })
-  @ApiResponse({ status: 200, description: 'Review stats retrieved successfully' })
+  @ApiResponse({
+    status: 200,
+    description: 'Review stats retrieved successfully',
+  })
   async getReviewStats() {
     const stats = await this.reviewService.getReviewStats();
     return {
@@ -64,7 +73,10 @@ export class AdminReviewController {
 
   @Delete('events/:id')
   @ApiOperation({ summary: 'Delete event review' })
-  @ApiResponse({ status: 200, description: 'Event review deleted successfully' })
+  @ApiResponse({
+    status: 200,
+    description: 'Event review deleted successfully',
+  })
   @HttpCode(HttpStatus.OK)
   async deleteEventReview(@Param('id') id: string) {
     const result = await this.reviewService.deleteEventReview(id);
@@ -76,7 +88,10 @@ export class AdminReviewController {
 
   @Delete('organizers/:id')
   @ApiOperation({ summary: 'Delete organizer review' })
-  @ApiResponse({ status: 200, description: 'Organizer review deleted successfully' })
+  @ApiResponse({
+    status: 200,
+    description: 'Organizer review deleted successfully',
+  })
   @HttpCode(HttpStatus.OK)
   async deleteOrganizerReview(@Param('id') id: string) {
     const result = await this.reviewService.deleteOrganizerReview(id);

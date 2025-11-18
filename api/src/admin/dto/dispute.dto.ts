@@ -106,7 +106,9 @@ export class RespondToDisputeDto {
   @IsString()
   response: string;
 
-  @ApiPropertyOptional({ description: 'Evidence document URLs (comma-separated)' })
+  @ApiPropertyOptional({
+    description: 'Evidence document URLs (comma-separated)',
+  })
   @IsOptional()
   @IsString()
   evidenceUrls?: string;
@@ -115,11 +117,22 @@ export class RespondToDisputeDto {
 export class CloseDisputeDto {
   @ApiProperty({
     description: 'Final status',
-    enum: [DisputeStatus.won, DisputeStatus.lost, DisputeStatus.charge_refunded],
+    enum: [
+      DisputeStatus.won,
+      DisputeStatus.lost,
+      DisputeStatus.charge_refunded,
+    ],
   })
   @IsNotEmpty()
-  @IsEnum([DisputeStatus.won, DisputeStatus.lost, DisputeStatus.charge_refunded])
-  status: DisputeStatus.won | DisputeStatus.lost | DisputeStatus.charge_refunded;
+  @IsEnum([
+    DisputeStatus.won,
+    DisputeStatus.lost,
+    DisputeStatus.charge_refunded,
+  ])
+  status:
+    | DisputeStatus.won
+    | DisputeStatus.lost
+    | DisputeStatus.charge_refunded;
 
   @ApiPropertyOptional({ description: 'Closing note' })
   @IsOptional()

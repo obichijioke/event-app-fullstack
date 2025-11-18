@@ -6,7 +6,7 @@ import { cn } from '@/lib/utils';
 
 interface MetricCardProps {
   title: string;
-  value: string | number;
+  value: React.ReactNode | string | number;
   change?: {
     value: number;
     type: 'increase' | 'decrease';

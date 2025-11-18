@@ -19,8 +19,22 @@ export class CurrencyService {
 
   // ISO 4217 Currency Codes
   private readonly VALID_CURRENCIES = [
-    'NGN', 'USD', 'EUR', 'GBP', 'GHS', 'KES', 'ZAR', 'EGP',
-    'JPY', 'CNY', 'AUD', 'CAD', 'CHF', 'SEK', 'NZD', 'INR',
+    'NGN',
+    'USD',
+    'EUR',
+    'GBP',
+    'GHS',
+    'KES',
+    'ZAR',
+    'EGP',
+    'JPY',
+    'CNY',
+    'AUD',
+    'CAD',
+    'CHF',
+    'SEK',
+    'NZD',
+    'INR',
   ];
 
   private readonly CURRENCY_SYMBOLS: Record<string, string> = {
@@ -84,7 +98,15 @@ export class CurrencyService {
       config = await this.prisma.currencyConfiguration.create({
         data: {
           defaultCurrency: 'NGN',
-          supportedCurrencies: ['NGN', 'USD', 'GBP', 'EUR', 'GHS', 'KES', 'ZAR'],
+          supportedCurrencies: [
+            'NGN',
+            'USD',
+            'GBP',
+            'EUR',
+            'GHS',
+            'KES',
+            'ZAR',
+          ],
           currencySymbol: '₦',
           currencyPosition: 'before',
           multiCurrencyEnabled: false,
@@ -120,7 +142,8 @@ export class CurrencyService {
       );
 
       // Ensure default currency is in supported list
-      const defaultCurrency = dto.defaultCurrency || (await this.getDefaultCurrency());
+      const defaultCurrency =
+        dto.defaultCurrency || (await this.getDefaultCurrency());
       if (!dto.supportedCurrencies.includes(defaultCurrency)) {
         dto.supportedCurrencies.push(defaultCurrency);
       }
@@ -132,7 +155,10 @@ export class CurrencyService {
     // Track changes for audit log
     const changes: Record<string, { old: any; new: any }> = {};
 
-    if (dto.defaultCurrency && dto.defaultCurrency !== currentConfig.defaultCurrency) {
+    if (
+      dto.defaultCurrency &&
+      dto.defaultCurrency !== currentConfig.defaultCurrency
+    ) {
       changes.defaultCurrency = {
         old: currentConfig.defaultCurrency,
         new: dto.defaultCurrency,
@@ -232,7 +258,10 @@ export class CurrencyService {
   /**
    * Format amount with currency symbol
    */
-  async formatAmount(amountCents: number | bigint, currency?: string): Promise<string> {
+  async formatAmount(
+    amountCents: number | bigint,
+    currency?: string,
+  ): Promise<string> {
     const config = await this.getCurrencyConfig();
     const currencyCode = currency || config.defaultCurrency;
     const symbol = this.getCurrencySymbol(currencyCode);
@@ -296,7 +325,10 @@ export class CurrencyService {
   /**
    * Add or update exchange rate
    */
-  async addExchangeRate(dto: AddExchangeRateDto, adminId: string): Promise<ExchangeRate> {
+  async addExchangeRate(
+    dto: AddExchangeRateDto,
+    adminId: string,
+  ): Promise<ExchangeRate> {
     // Validate currencies
     this.validateCurrencyCode(dto.fromCurrency);
     this.validateCurrencyCode(dto.toCurrency);
@@ -343,7 +375,10 @@ export class CurrencyService {
   /**
    * Get exchange rate between two currencies
    */
-  async getExchangeRate(fromCurrency: string, toCurrency: string): Promise<number> {
+  async getExchangeRate(
+    fromCurrency: string,
+    toCurrency: string,
+  ): Promise<number> {
     // If same currency, return 1
     if (fromCurrency === toCurrency) {
       return 1;

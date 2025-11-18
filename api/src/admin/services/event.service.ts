@@ -28,7 +28,11 @@ export class AdminEventService {
     return this.getEvent(eventId);
   }
 
-  async updateStatus(eventId: string, data: UpdateEventStatusDto, actorId?: string) {
+  async updateStatus(
+    eventId: string,
+    data: UpdateEventStatusDto,
+    actorId?: string,
+  ) {
     return this.updateEventStatus(eventId, data, actorId);
   }
 

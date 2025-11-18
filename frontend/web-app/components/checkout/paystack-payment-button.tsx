@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import Script from 'next/script';
 import toast from 'react-hot-toast';
+import { CurrencyDisplay } from '@/components/common/currency-display';
 
 interface PaystackPaymentButtonProps {
   email: string;
@@ -105,7 +106,7 @@ export function PaystackPaymentButton({
               <div className="flex items-center justify-between">
                 <span className="text-sm text-muted-foreground">Total Amount</span>
                 <span className="text-lg font-bold text-foreground">
-                  {currency.toUpperCase()} {(amount / 100).toFixed(2)}
+                  <CurrencyDisplay amountCents={amount} currency={currency} showFree={false} />
                 </span>
               </div>
             </div>
@@ -172,7 +173,10 @@ export function PaystackPaymentButton({
           ) : !scriptLoaded ? (
             'Loading Paystack...'
           ) : (
-            `Pay ${currency.toUpperCase()} ${(amount / 100).toFixed(2)}`
+            <span className="flex items-center justify-center gap-2">
+              Pay
+              <CurrencyDisplay amountCents={amount} currency={currency} showFree={false} />
+            </span>
           )}
         </button>
 

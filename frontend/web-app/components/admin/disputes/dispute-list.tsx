@@ -6,6 +6,7 @@ import { useAuth } from '@/components/auth';
 import { Button } from '@/components/ui/button';
 import { Text } from '@/components/ui';
 import { StatusBadge } from '@/components/admin';
+import { CurrencyDisplay } from '@/components/common/currency-display';
 import { cn } from '@/lib/utils';
 
 interface DisputeListProps {
@@ -89,13 +90,6 @@ export function DisputeList({ className }: DisputeListProps) {
     }
   };
 
-  const formatCurrency = (cents: number | undefined, currency: string): string => {
-    if (!cents) return '-';
-    const amount = cents / 100;
-    const symbol = currency === 'NGN' ? '₦' : currency === 'USD' ? '$' : currency;
-    return `${symbol}${amount.toLocaleString()}`;
-  };
-
   const getStatusColor = (status: string): string => {
     const colors: Record<string, string> = {
       needs_response: 'bg-red-100 text-red-800 border-red-200',
@@ -133,7 +127,9 @@ export function DisputeList({ className }: DisputeListProps) {
           </div>
           <div className="bg-card p-4 rounded-lg border">
             <p className="text-sm text-muted-foreground">Total Amount</p>
-            <p className="text-2xl font-bold">{formatCurrency(stats.totalAmountCents, 'USD')}</p>
+            <p className="text-2xl font-bold">
+              <CurrencyDisplay amountCents={stats.totalAmountCents || 0} currency="USD" showFree={false} />
+            </p>
           </div>
         </div>
       )}
@@ -211,7 +207,13 @@ export function DisputeList({ className }: DisputeListProps) {
                       </span>
                     </td>
                     <td className="p-4">
-                      <Text>{formatCurrency(dispute.amountCents, dispute.orderCurrency)}</Text>
+                      <Text>
+                        <CurrencyDisplay
+                          amountCents={dispute.amountCents || 0}
+                          currency={dispute.orderCurrency}
+                          showFree={false}
+                        />
+                      </Text>
                     </td>
                     <td className="p-4">
                       <Text className="capitalize">{dispute.provider}</Text>

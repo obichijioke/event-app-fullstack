@@ -44,7 +44,10 @@ export class AdminOrderController {
 
   @Get('stats')
   @ApiOperation({ summary: 'Get order statistics' })
-  @ApiResponse({ status: 200, description: 'Order stats retrieved successfully' })
+  @ApiResponse({
+    status: 200,
+    description: 'Order stats retrieved successfully',
+  })
   async getOrderStats() {
     const stats = await this.orderService.getOrderStats();
     return {
@@ -66,7 +69,10 @@ export class AdminOrderController {
 
   @Patch(':id/status')
   @ApiOperation({ summary: 'Update order status' })
-  @ApiResponse({ status: 200, description: 'Order status updated successfully' })
+  @ApiResponse({
+    status: 200,
+    description: 'Order status updated successfully',
+  })
   async updateOrderStatus(
     @Param('id') id: string,
     @Body() dto: UpdateOrderStatusDto,

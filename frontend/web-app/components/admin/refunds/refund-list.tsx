@@ -3,8 +3,10 @@
 import * as React from 'react';
 import { DataTable, FiltersPanel, StatusBadge } from '@/components/admin';
 import { Button, Text } from '@/components/ui';
+import { CurrencyDisplay } from '@/components/common/currency-display';
 import { adminApiService, type AdminRefund } from '@/services/admin-api.service';
 import { useAuth } from '@/components/auth';
+import { useCurrency } from '@/hooks/useCurrency';
 import { cn } from '@/lib/utils';
 
 interface RefundListProps {
@@ -13,6 +15,7 @@ interface RefundListProps {
 
 export function RefundList({ className }: RefundListProps) {
   const { accessToken } = useAuth();
+  const { formatAmount } = useCurrency();
   const [refunds, setRefunds] = React.useState<AdminRefund[]>([]);
   const [loading, setLoading] = React.useState(false);
   const [selectedRefund, setSelectedRefund] = React.useState<AdminRefund | null>(null);
@@ -83,7 +86,11 @@ export function RefundList({ className }: RefundListProps) {
   };
 
   const handleApprove = async (refund: AdminRefund) => {
-    if (!accessToken || !confirm(`Approve refund of ${formatCurrency(refund.amountCents, refund.currency)}?`)) return;
+    if (
+      !accessToken ||
+      !confirm(`Approve refund of ${formatAmount(refund.amountCents, refund.currency)}?`)
+    )
+      return;
 
     setActionLoading(true);
     try {
@@ -114,7 +121,13 @@ export function RefundList({ className }: RefundListProps) {
   };
 
   const handleProcess = async (refund: AdminRefund) => {
-    if (!accessToken || !confirm(`Process refund of ${formatCurrency(refund.amountCents, refund.currency)}? This will refund the payment provider.`)) return;
+    if (
+      !accessToken ||
+      !confirm(
+        `Process refund of ${formatAmount(refund.amountCents, refund.currency)}? This will refund the payment provider.`,
+      )
+    )
+      return;
 
     setActionLoading(true);
     try {
@@ -127,12 +140,6 @@ export function RefundList({ className }: RefundListProps) {
     } finally {
       setActionLoading(false);
     }
-  };
-
-  const formatCurrency = (cents: number, currency: string): string => {
-    const amount = cents / 100;
-    const symbol = currency === 'NGN' ? '₦' : currency === 'USD' ? '$' : currency;
-    return `${symbol}${amount.toLocaleString()}`;
   };
 
   const columns = [
@@ -170,10 +177,19 @@ export function RefundList({ className }: RefundListProps) {
       render: (value: unknown, refund: AdminRefund) => (
         <div className="flex flex-col gap-1">
           <Text className="font-medium">
-            {formatCurrency(refund.amountCents, refund.currency)}
+            <CurrencyDisplay
+              amountCents={refund.amountCents}
+              currency={refund.currency}
+              showFree={false}
+            />
           </Text>
           <Text className="text-xs text-muted-foreground">
-            of {formatCurrency(refund.orderTotal, refund.currency)}
+            of{' '}
+            <CurrencyDisplay
+              amountCents={refund.orderTotal}
+              currency={refund.currency}
+              showFree={false}
+            />
           </Text>
         </div>
       ),
@@ -342,10 +358,11 @@ export function RefundList({ className }: RefundListProps) {
           <div className="bg-card border border-border rounded-lg p-4">
             <Text className="text-sm text-muted-foreground">Total Amount</Text>
             <Text className="text-2xl font-bold mt-1">
-              {formatCurrency(
-                refunds.reduce((sum, r) => sum + r.amountCents, 0),
-                refunds[0]?.currency || 'NGN'
-              )}
+              <CurrencyDisplay
+                amountCents={refunds.reduce((sum, r) => sum + r.amountCents, 0)}
+                currency={refunds[0]?.currency || 'NGN'}
+                showFree={false}
+              />
             </Text>
           </div>
         </div>

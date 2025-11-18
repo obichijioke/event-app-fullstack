@@ -110,10 +110,7 @@ export class OrganizerFinancialsController {
   @Get('payout-accounts')
   @ApiOperation({ summary: 'List payout accounts for an organization' })
   @ApiQuery({ name: 'orgId', required: true })
-  getAccounts(
-    @CurrentUser() user: any,
-    @Query('orgId') orgId: string,
-  ) {
+  getAccounts(@CurrentUser() user: any, @Query('orgId') orgId: string) {
     return this.payoutsService.findAllPayoutAccounts(orgId, user.id);
   }
 

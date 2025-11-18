@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { TicketIcon } from '@/components/ui/icons';
 import { Button } from '@/components/ui';
-import { formatCurrency } from '@/lib/utils';
+import { CurrencyDisplay } from '@/components/common/currency-display';
 import type { EventDetailSummary } from '@/lib/events';
 
 interface TicketPricingCardProps {
@@ -19,16 +19,19 @@ export function TicketPricingCard({ eventId, tickets }: TicketPricingCardProps) 
   );
 
   const cheapestTicket = sortedTickets[0];
-  const startingPrice = formatCurrency(
-    Number(cheapestTicket.priceCents),
-    cheapestTicket.currency
-  );
+  const startingPriceCents = Number(cheapestTicket.priceCents);
 
   return (
     <div className="flex items-center justify-between pt-5">
       <div>
         <p className="text-xs text-muted-foreground mb-1">Starting from</p>
-        <p className="text-2xl font-bold text-foreground">{startingPrice}</p>
+        <p className="text-2xl font-bold text-foreground">
+          <CurrencyDisplay
+            amountCents={startingPriceCents}
+            currency={cheapestTicket.currency}
+            showFree
+          />
+        </p>
       </div>
       <Link href={`/events/${eventId}/checkout`}>
         <Button size="lg" className="flex items-center gap-2">

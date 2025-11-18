@@ -17,12 +17,16 @@ export class ReviewQueryDto {
   @Min(1)
   limit?: number = 10;
 
-  @ApiPropertyOptional({ description: 'Filter by event ID (for event reviews)' })
+  @ApiPropertyOptional({
+    description: 'Filter by event ID (for event reviews)',
+  })
   @IsOptional()
   @IsString()
   eventId?: string;
 
-  @ApiPropertyOptional({ description: 'Filter by organization ID (for organizer reviews)' })
+  @ApiPropertyOptional({
+    description: 'Filter by organization ID (for organizer reviews)',
+  })
   @IsOptional()
   @IsString()
   orgId?: string;

@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from 'react';
 import { Minus, Plus, ChevronDown, ChevronUp } from 'lucide-react';
+import { CurrencyDisplay } from '@/components/common/currency-display';
 import { TicketType } from '@/lib/api/tickets-api';
 
 interface TicketSelectorProps {
@@ -19,9 +20,9 @@ export function TicketSelector({
 }: TicketSelectorProps) {
   const [showDetails, setShowDetails] = useState(false);
 
-  const price = ticketType.priceCents / 100;
-  const fee = ticketType.feeCents / 100;
-  const total = price + fee;
+  const priceCents = Number(ticketType.priceCents);
+  const feeCents = Number(ticketType.feeCents);
+  const totalCents = priceCents + feeCents;
 
   const hasCapacity = typeof ticketType.capacity === 'number';
   const rawAvailable = hasCapacity && typeof ticketType.capacity === 'number'
@@ -86,7 +87,7 @@ export function TicketSelector({
     !!ticketType.salesStart ||
     !!ticketType.salesEnd ||
     !!ticketType.perOrderLimit ||
-    fee > 0;
+    feeCents > 0;
 
   const compareAtPriceCents =
     ticketType.priceTiers?.reduce(
@@ -94,9 +95,7 @@ export function TicketSelector({
       0,
     ) ?? 0;
   const compareAtPrice =
-    compareAtPriceCents > ticketType.priceCents
-      ? compareAtPriceCents / 100
-      : undefined;
+    compareAtPriceCents > ticketType.priceCents ? compareAtPriceCents : undefined;
 
   const availabilityText =
     rawAvailable === null
@@ -122,10 +121,20 @@ export function TicketSelector({
           </div>
 
           <div className="mt-2 flex flex-wrap items-baseline gap-3">
-            <span className="text-3xl font-bold text-foreground">${total.toFixed(2)}</span>
+            <span className="text-3xl font-bold text-foreground">
+              <CurrencyDisplay
+                amountCents={totalCents}
+                currency={ticketType.currency}
+                showFree
+              />
+            </span>
             {compareAtPrice && (
               <span className="text-base text-muted-foreground line-through">
-                ${compareAtPrice.toFixed(2)}
+                <CurrencyDisplay
+                  amountCents={compareAtPrice}
+                  currency={ticketType.currency}
+                  showFree={false}
+                />
               </span>
             )}
           </div>
@@ -188,7 +197,13 @@ export function TicketSelector({
             </button>
           </div>
           <p className="mt-1 text-center text-xs text-muted-foreground">
-            Fees ${fee.toFixed(2)} included in total
+            Fees{' '}
+            <CurrencyDisplay
+              amountCents={feeCents}
+              currency={ticketType.currency}
+              showFree={false}
+            />{' '}
+            included in total
           </p>
         </div>
       </div>
@@ -220,7 +235,14 @@ export function TicketSelector({
             </div>
             <div>
               <p className="text-xs uppercase tracking-wide text-muted-foreground">Fees</p>
-              <p className="text-foreground">${fee.toFixed(2)} per ticket</p>
+              <p className="text-foreground">
+                <CurrencyDisplay
+                  amountCents={feeCents}
+                  currency={ticketType.currency}
+                  showFree={false}
+                />{' '}
+                per ticket
+              </p>
             </div>
             <div>
               <p className="text-xs uppercase tracking-wide text-muted-foreground">Type</p>
@@ -239,7 +261,13 @@ export function TicketSelector({
                         : 'From day one')}
                       {tier.endsAt && ` - ${new Date(tier.endsAt).toLocaleDateString()}`}
                     </span>
-                    <span>${(tier.priceCents / 100).toFixed(2)}</span>
+                    <span>
+                      <CurrencyDisplay
+                        amountCents={Number(tier.priceCents)}
+                        currency={ticketType.currency}
+                        showFree={false}
+                      />
+                    </span>
                   </li>
                 ))}
               </ul>

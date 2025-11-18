@@ -2,7 +2,8 @@
 
 import { Promotion, PromoCode } from '@/lib/types/organizer';
 import { X, TrendingUp, Tag, DollarSign, Users, Award, Calendar } from 'lucide-react';
-import { formatDateTime, formatCurrency } from '@/lib/utils/format';
+import { formatDateTime } from '@/lib/utils/format';
+import { CurrencyDisplay } from '@/components/common/currency-display';
 
 interface CampaignAnalyticsModalProps {
   promotion: Promotion;
@@ -120,7 +121,13 @@ export function CampaignAnalyticsModal({ promotion, promoCodes, onClose }: Campa
                 <p className="font-semibold text-primary text-lg">
                   {promotion.discountType === 'percentage'
                     ? `${promotion.discountValue}%`
-                    : formatCurrency(promotion.discountValue)}
+                    : (
+                      <CurrencyDisplay
+                        amountCents={promotion.discountValue}
+                        currency={(promotion as any).currency}
+                        showFree={false}
+                      />
+                    )}
                 </p>
               </div>
               <div>

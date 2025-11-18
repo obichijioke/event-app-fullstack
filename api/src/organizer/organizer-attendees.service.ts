@@ -249,7 +249,9 @@ export class OrganizerAttendeesService {
 
     const pending = Math.max(totalTickets - checkedIn, 0);
     const checkInRate =
-      totalTickets > 0 ? Number(((checkedIn / totalTickets) * 100).toFixed(1)) : 0;
+      totalTickets > 0
+        ? Number(((checkedIn / totalTickets) * 100).toFixed(1))
+        : 0;
 
     return {
       totalTickets,

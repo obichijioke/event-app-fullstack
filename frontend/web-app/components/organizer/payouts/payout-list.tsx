@@ -6,6 +6,7 @@ import { Calendar, DollarSign, Search, Filter, Plus, AlertCircle, CheckCircle, C
 import { organizerApi } from '@/lib/api/organizer-api';
 import { useOrganizerStore } from '@/lib/stores/organizer-store';
 import { useAuth } from '@/components/auth';
+import { CurrencyDisplay } from '@/components/common/currency-display';
 import { RequestPayoutModal } from './request-payout-modal';
 import toast from 'react-hot-toast';
 import type { Payout, PayoutStatus } from '@/lib/types/organizer';
@@ -56,13 +57,6 @@ export function PayoutList() {
     } finally {
       setLoading(false);
     }
-  };
-
-  const formatCurrency = (cents: number, currency: string = 'USD') => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency,
-    }).format(cents / 100);
   };
 
   const formatDate = (dateString: string) => {
@@ -177,7 +171,9 @@ export function PayoutList() {
                 {/* Left Section */}
                 <div className="flex-1">
                   <div className="flex items-center gap-3 mb-2">
-                    <h3 className="text-lg font-semibold">{formatCurrency(payout.amountCents, payout.currency)}</h3>
+                    <h3 className="text-lg font-semibold">
+                      <CurrencyDisplay amountCents={payout.amountCents} currency={payout.currency} showFree={false} />
+                    </h3>
                     <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium border ${STATUS_COLORS[payout.status]}`}>
                       {STATUS_ICONS[payout.status]}
                       {payout.status.replace('_', ' ').toUpperCase()}

@@ -43,7 +43,11 @@ export class AdminUserService {
     return this.grantPlatformRole(targetUserId, role, actorId);
   }
 
-  async revokeRole(targetUserId: string, fallback?: PlatformRole, actorId?: string) {
+  async revokeRole(
+    targetUserId: string,
+    fallback?: PlatformRole,
+    actorId?: string,
+  ) {
     return this.revokePlatformRole(targetUserId, actorId, fallback);
   }
 

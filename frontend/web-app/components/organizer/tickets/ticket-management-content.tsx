@@ -8,7 +8,8 @@ import { TicketTypeCard } from './ticket-type-card';
 import { TicketTypeForm } from './ticket-type-form';
 import { Loader2, Plus, Package } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { formatCurrency, formatNumber } from '@/lib/utils/format';
+import { CurrencyDisplay } from '@/components/common/currency-display';
+import { formatNumber } from '@/lib/utils/format';
 
 interface TicketManagementContentProps {
   eventId: string;
@@ -140,7 +141,11 @@ export function TicketManagementContent({ eventId }: TicketManagementContentProp
               <p className="text-sm text-muted-foreground">Gross Revenue</p>
             </div>
             <p className="text-2xl font-bold">
-              {formatCurrency(inventory.totals.grossRevenueCents, inventory.ticketTypes[0]?.currency || 'USD')}
+              <CurrencyDisplay
+                amountCents={inventory.totals.grossRevenueCents}
+                currency={inventory.ticketTypes[0]?.currency || 'USD'}
+                showFree={false}
+              />
             </p>
           </div>
 
@@ -150,7 +155,11 @@ export function TicketManagementContent({ eventId }: TicketManagementContentProp
               <p className="text-sm text-muted-foreground">Fee Revenue</p>
             </div>
             <p className="text-2xl font-bold">
-              {formatCurrency(inventory.totals.feeRevenueCents, inventory.ticketTypes[0]?.currency || 'USD')}
+              <CurrencyDisplay
+                amountCents={inventory.totals.feeRevenueCents}
+                currency={inventory.ticketTypes[0]?.currency || 'USD'}
+                showFree={false}
+              />
             </p>
           </div>
         </div>

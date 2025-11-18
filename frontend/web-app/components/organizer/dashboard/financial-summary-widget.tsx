@@ -7,6 +7,7 @@ import { useOrganizerStore } from '@/lib/stores/organizer-store';
 import { useAuth } from '@/components/auth';
 import { ExportOrdersButton } from '@/components/organizer/financials/export-orders-button';
 import Link from 'next/link';
+import { CurrencyDisplay } from '@/components/common/currency-display';
 import type { FinancialSummary } from '@/lib/types/organizer';
 
 interface FinancialMetricCardProps {
@@ -79,13 +80,6 @@ export function FinancialSummaryWidget() {
     }
   };
 
-  const formatCurrency = (cents: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-    }).format(cents / 100);
-  };
-
   if (error) {
     return (
       <div className="bg-card rounded-lg shadow-card border border-border p-8 text-center">
@@ -125,25 +119,65 @@ export function FinancialSummaryWidget() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <FinancialMetricCard
           label="Gross Revenue"
-          value={loading ? '...' : formatCurrency(summary?.totals.grossRevenueCents || 0)}
+          value={
+            loading ? (
+              '...'
+            ) : (
+              <CurrencyDisplay
+                amountCents={summary?.totals.grossRevenueCents || 0}
+                currency={summary?.totals.currency || 'USD'}
+                showFree={false}
+              />
+            )
+          }
           icon={<DollarSign className="w-5 h-5" />}
           loading={loading}
         />
         <FinancialMetricCard
           label="Net Revenue"
-          value={loading ? '...' : formatCurrency(summary?.totals.netRevenueCents || 0)}
+          value={
+            loading ? (
+              '...'
+            ) : (
+              <CurrencyDisplay
+                amountCents={summary?.totals.netRevenueCents || 0}
+                currency={summary?.totals.currency || 'USD'}
+                showFree={false}
+              />
+            )
+          }
           icon={<TrendingUp className="w-5 h-5" />}
           loading={loading}
         />
         <FinancialMetricCard
           label="Platform Fees"
-          value={loading ? '...' : formatCurrency(summary?.totals.feeCents || 0)}
+          value={
+            loading ? (
+              '...'
+            ) : (
+              <CurrencyDisplay
+                amountCents={summary?.totals.feeCents || 0}
+                currency={summary?.totals.currency || 'USD'}
+                showFree={false}
+              />
+            )
+          }
           icon={<CreditCard className="w-5 h-5" />}
           loading={loading}
         />
         <FinancialMetricCard
           label="Total Payouts"
-          value={loading ? '...' : formatCurrency(summary?.totals.payoutsCents || 0)}
+          value={
+            loading ? (
+              '...'
+            ) : (
+              <CurrencyDisplay
+                amountCents={summary?.totals.payoutsCents || 0}
+                currency={summary?.totals.currency || 'USD'}
+                showFree={false}
+              />
+            )
+          }
           icon={<Receipt className="w-5 h-5" />}
           loading={loading}
         />
@@ -185,7 +219,11 @@ export function FinancialSummaryWidget() {
             {loading ? (
               <div className="w-16 h-8 bg-secondary rounded animate-pulse" />
             ) : (
-              formatCurrency(summary?.totals.refundCents || 0)
+              <CurrencyDisplay
+                amountCents={summary?.totals.refundCents || 0}
+                currency={summary?.totals.currency || 'USD'}
+                showFree={false}
+              />
             )}
           </div>
         </div>

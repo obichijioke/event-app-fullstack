@@ -31,7 +31,10 @@ export class AdminPromotionController {
 
   @Get('promotions')
   @ApiOperation({ summary: 'Get all promotions with pagination and filters' })
-  @ApiResponse({ status: 200, description: 'Promotions retrieved successfully' })
+  @ApiResponse({
+    status: 200,
+    description: 'Promotions retrieved successfully',
+  })
   async getPromotions(@Query() query: PromotionQueryDto) {
     const result = await this.promotionService.getPromotions(query);
     return {
@@ -42,7 +45,10 @@ export class AdminPromotionController {
 
   @Get('promotions/stats')
   @ApiOperation({ summary: 'Get promotion statistics' })
-  @ApiResponse({ status: 200, description: 'Promotion stats retrieved successfully' })
+  @ApiResponse({
+    status: 200,
+    description: 'Promotion stats retrieved successfully',
+  })
   async getPromotionStats() {
     const stats = await this.promotionService.getPromotionStats();
     return {
@@ -64,7 +70,10 @@ export class AdminPromotionController {
 
   @Post('promotions/:id/deactivate')
   @ApiOperation({ summary: 'Deactivate promotion' })
-  @ApiResponse({ status: 200, description: 'Promotion deactivated successfully' })
+  @ApiResponse({
+    status: 200,
+    description: 'Promotion deactivated successfully',
+  })
   @HttpCode(HttpStatus.OK)
   async deactivatePromotion(@Param('id') id: string) {
     const result = await this.promotionService.deactivatePromotion(id);
@@ -76,7 +85,10 @@ export class AdminPromotionController {
 
   @Get('promo-codes')
   @ApiOperation({ summary: 'Get all promo codes with pagination and filters' })
-  @ApiResponse({ status: 200, description: 'Promo codes retrieved successfully' })
+  @ApiResponse({
+    status: 200,
+    description: 'Promo codes retrieved successfully',
+  })
   async getPromoCodes(@Query() query: PromoCodeQueryDto) {
     const result = await this.promotionService.getPromoCodes(query);
     return {

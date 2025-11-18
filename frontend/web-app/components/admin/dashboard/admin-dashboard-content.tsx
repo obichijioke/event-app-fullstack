@@ -7,6 +7,7 @@ import { UsersIcon, CalendarIcon, CurrencyIcon, TrendingUpIcon } from '@/compone
 import { useAuth } from '@/components/auth';
 import { adminApiService, type AdminMetrics, type AdminActivityLog } from '@/services/admin-api.service';
 import { Text } from '@/components/ui';
+import { CurrencyDisplay } from '@/components/common/currency-display';
 
 interface RevenueDataPoint {
   date: string;
@@ -126,12 +127,6 @@ export function AdminDashboardContent() {
     return `${actor} ${action}d ${target}`;
   };
 
-  const formatCurrency = (cents: number, currency: string = 'NGN'): string => {
-    const amount = cents / 100;
-    const symbol = currency === 'NGN' ? '₦' : currency === 'USD' ? '$' : currency;
-    return `${symbol}${amount.toLocaleString()}`;
-  };
-
   const metricsCards = React.useMemo(() => {
     if (!metrics) return [];
 
@@ -158,7 +153,13 @@ export function AdminDashboardContent() {
       },
       {
         title: 'Total Revenue',
-        value: formatCurrency(metrics.totalRevenue),
+        value: (
+          <CurrencyDisplay
+            amountCents={metrics.totalRevenue || 0}
+            currency={(metrics as any)?.currency || 'NGN'}
+            showFree={false}
+          />
+        ),
         change: metrics.revenueGrowth !== 0 ? {
           value: Math.abs(metrics.revenueGrowth),
           type: metrics.revenueGrowth >= 0 ? 'increase' as const : 'decrease' as const,

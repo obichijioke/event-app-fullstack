@@ -22,7 +22,9 @@ export class SessionQueryDto {
   @IsString()
   search?: string;
 
-  @ApiPropertyOptional({ description: 'Filter active sessions (true) or expired sessions (false)' })
+  @ApiPropertyOptional({
+    description: 'Filter active sessions (true) or expired sessions (false)',
+  })
   @IsOptional()
   @Type(() => Boolean)
   active?: boolean;
@@ -32,7 +34,10 @@ export class SessionQueryDto {
   @IsString()
   userId?: string;
 
-  @ApiPropertyOptional({ description: 'Filter active/expired sessions', enum: ['active', 'expired', 'revoked'] })
+  @ApiPropertyOptional({
+    description: 'Filter active/expired sessions',
+    enum: ['active', 'expired', 'revoked'],
+  })
   @IsOptional()
   @IsString()
   status?: string;

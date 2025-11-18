@@ -4,7 +4,11 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { PrismaService } from '../../common/prisma/prisma.service';
-import { FlagQueryDto, ResolveFlagDto, ModerationActionQueryDto } from '../dto/moderation.dto';
+import {
+  FlagQueryDto,
+  ResolveFlagDto,
+  ModerationActionQueryDto,
+} from '../dto/moderation.dto';
 import { Prisma, ModerationStatus } from '@prisma/client';
 
 @Injectable()
@@ -34,7 +38,13 @@ export class AdminModerationService {
 
     const orderBy: Prisma.FlagOrderByWithRelationInput = {};
     if (sortBy) {
-      const allowedSortFields = ['id', 'targetKind', 'status', 'createdAt', 'resolvedAt'] as const;
+      const allowedSortFields = [
+        'id',
+        'targetKind',
+        'status',
+        'createdAt',
+        'resolvedAt',
+      ] as const;
       if (!allowedSortFields.includes(sortBy as any)) {
         throw new BadRequestException(`Invalid sort field: ${sortBy}`);
       }
@@ -182,7 +192,12 @@ export class AdminModerationService {
 
     const orderBy: Prisma.ModerationActionOrderByWithRelationInput = {};
     if (sortBy) {
-      const allowedSortFields = ['id', 'targetKind', 'action', 'createdAt'] as const;
+      const allowedSortFields = [
+        'id',
+        'targetKind',
+        'action',
+        'createdAt',
+      ] as const;
       if (!allowedSortFields.includes(sortBy as any)) {
         throw new BadRequestException(`Invalid sort field: ${sortBy}`);
       }
@@ -241,13 +256,20 @@ export class AdminModerationService {
   }
 
   async getModerationStats() {
-    const [totalFlags, openFlags, resolvedFlags, approvedFlags, rejectedFlags] = await Promise.all([
-      this.prisma.flag.count(),
-      this.prisma.flag.count({ where: { status: ModerationStatus.open } }),
-      this.prisma.flag.count({ where: { status: ModerationStatus.resolved } }),
-      this.prisma.flag.count({ where: { status: ModerationStatus.approved } }),
-      this.prisma.flag.count({ where: { status: ModerationStatus.rejected } }),
-    ]);
+    const [totalFlags, openFlags, resolvedFlags, approvedFlags, rejectedFlags] =
+      await Promise.all([
+        this.prisma.flag.count(),
+        this.prisma.flag.count({ where: { status: ModerationStatus.open } }),
+        this.prisma.flag.count({
+          where: { status: ModerationStatus.resolved },
+        }),
+        this.prisma.flag.count({
+          where: { status: ModerationStatus.approved },
+        }),
+        this.prisma.flag.count({
+          where: { status: ModerationStatus.rejected },
+        }),
+      ]);
 
     const flagsByTargetKind = await this.prisma.flag.groupBy({
       by: ['targetKind'],

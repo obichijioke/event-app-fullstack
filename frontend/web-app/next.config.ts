@@ -1,7 +1,11 @@
 import type { NextConfig } from "next";
 
+const allowLocalUploads = process.env.NODE_ENV !== "production";
+
 const nextConfig: NextConfig = {
   images: {
+    // Allow loading images from the local backend during development
+    dangerouslyAllowLocalIP: allowLocalUploads,
     remotePatterns: [
       {
         protocol: "https",

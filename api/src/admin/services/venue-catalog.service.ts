@@ -214,12 +214,9 @@ export class AdminVenueCatalogService {
           }
           // Handle numeric fields
           else if (
-            [
-              'capacityMin',
-              'capacityMax',
-              'latitude',
-              'longitude',
-            ].includes(header)
+            ['capacityMin', 'capacityMax', 'latitude', 'longitude'].includes(
+              header,
+            )
           ) {
             const num = parseFloat(value);
             if (!isNaN(num)) {

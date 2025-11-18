@@ -16,12 +16,16 @@ export class RevenueQueryDto {
   @IsEnum(RevenuePeriod)
   period?: RevenuePeriod = RevenuePeriod.MONTH;
 
-  @ApiPropertyOptional({ description: 'Start date for custom period (ISO string)' })
+  @ApiPropertyOptional({
+    description: 'Start date for custom period (ISO string)',
+  })
   @IsOptional()
   @IsString()
   startDate?: string;
 
-  @ApiPropertyOptional({ description: 'End date for custom period (ISO string)' })
+  @ApiPropertyOptional({
+    description: 'End date for custom period (ISO string)',
+  })
   @IsOptional()
   @IsString()
   endDate?: string;
@@ -36,7 +40,10 @@ export class RevenueQueryDto {
   @IsString()
   categoryId?: string;
 
-  @ApiPropertyOptional({ description: 'Group by field', enum: ['day', 'week', 'month'] })
+  @ApiPropertyOptional({
+    description: 'Group by field',
+    enum: ['day', 'week', 'month'],
+  })
   @IsOptional()
   @IsString()
   groupBy?: string;

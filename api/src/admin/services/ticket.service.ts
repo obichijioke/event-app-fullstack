@@ -4,7 +4,11 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { PrismaService } from '../../common/prisma/prisma.service';
-import { TicketAdminQueryDto, TransferQueryDto, CheckinQueryDto } from '../dto/ticket.dto';
+import {
+  TicketAdminQueryDto,
+  TransferQueryDto,
+  CheckinQueryDto,
+} from '../dto/ticket.dto';
 import { Prisma, TicketStatus } from '@prisma/client';
 
 @Injectable()
@@ -52,7 +56,10 @@ export class AdminTicketService {
     }
 
     const orderBy: Prisma.TicketOrderByWithRelationInput = {};
-    const allowedSortFields: Record<string, keyof Prisma.TicketOrderByWithRelationInput> = {
+    const allowedSortFields: Record<
+      string,
+      keyof Prisma.TicketOrderByWithRelationInput
+    > = {
       id: 'id',
       issuedAt: 'issuedAt',
       status: 'status',
@@ -258,7 +265,12 @@ export class AdminTicketService {
 
     const orderBy: Prisma.TransferOrderByWithRelationInput = {};
     if (sortBy) {
-      const allowedSortFields = ['id', 'initiatedAt', 'acceptedAt', 'canceledAt'] as const;
+      const allowedSortFields = [
+        'id',
+        'initiatedAt',
+        'acceptedAt',
+        'canceledAt',
+      ] as const;
       if (!allowedSortFields.includes(sortBy as any)) {
         throw new BadRequestException(`Invalid sort field: ${sortBy}`);
       }
@@ -447,14 +459,19 @@ export class AdminTicketService {
   }
 
   async getTicketStats() {
-    const [total, issued, transferred, refunded, checkedIn, voided] = await Promise.all([
-      this.prisma.ticket.count(),
-      this.prisma.ticket.count({ where: { status: TicketStatus.issued } }),
-      this.prisma.ticket.count({ where: { status: TicketStatus.transferred } }),
-      this.prisma.ticket.count({ where: { status: TicketStatus.refunded } }),
-      this.prisma.ticket.count({ where: { status: TicketStatus.checked_in } }),
-      this.prisma.ticket.count({ where: { status: TicketStatus.void } }),
-    ]);
+    const [total, issued, transferred, refunded, checkedIn, voided] =
+      await Promise.all([
+        this.prisma.ticket.count(),
+        this.prisma.ticket.count({ where: { status: TicketStatus.issued } }),
+        this.prisma.ticket.count({
+          where: { status: TicketStatus.transferred },
+        }),
+        this.prisma.ticket.count({ where: { status: TicketStatus.refunded } }),
+        this.prisma.ticket.count({
+          where: { status: TicketStatus.checked_in },
+        }),
+        this.prisma.ticket.count({ where: { status: TicketStatus.void } }),
+      ]);
 
     const recent24h = await this.prisma.ticket.count({
       where: {

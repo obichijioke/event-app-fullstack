@@ -42,7 +42,10 @@ export class AdminWebhookController {
 
   @Get('webhooks/stats')
   @ApiOperation({ summary: 'Get webhook statistics' })
-  @ApiResponse({ status: 200, description: 'Webhook stats retrieved successfully' })
+  @ApiResponse({
+    status: 200,
+    description: 'Webhook stats retrieved successfully',
+  })
   async getWebhookStats() {
     const stats = await this.webhookService.getWebhookStats();
     return {
@@ -64,7 +67,10 @@ export class AdminWebhookController {
 
   @Get('webhook-events')
   @ApiOperation({ summary: 'Get webhook events/deliveries' })
-  @ApiResponse({ status: 200, description: 'Webhook events retrieved successfully' })
+  @ApiResponse({
+    status: 200,
+    description: 'Webhook events retrieved successfully',
+  })
   async getWebhookEvents(@Query() query: WebhookEventQueryDto) {
     const result = await this.webhookService.getWebhookEvents(query);
     return {
@@ -75,7 +81,10 @@ export class AdminWebhookController {
 
   @Post('webhook-events/:id/retry')
   @ApiOperation({ summary: 'Retry failed webhook event' })
-  @ApiResponse({ status: 200, description: 'Webhook retry queued successfully' })
+  @ApiResponse({
+    status: 200,
+    description: 'Webhook retry queued successfully',
+  })
   @HttpCode(HttpStatus.OK)
   async retryWebhookEvent(@Param('id') id: string) {
     const result = await this.webhookService.retryWebhookEvent(id);

@@ -6,6 +6,7 @@ import { ArrowLeft, Calendar, DollarSign, Clock, CheckCircle, XCircle, AlertCirc
 import { organizerApi } from '@/lib/api/organizer-api';
 import { useOrganizerStore } from '@/lib/stores/organizer-store';
 import { useAuth } from '@/components/auth';
+import { CurrencyDisplay } from '@/components/common/currency-display';
 import toast from 'react-hot-toast';
 import Link from 'next/link';
 import type { Payout, PayoutStatus } from '@/lib/types/organizer';
@@ -74,13 +75,6 @@ export function PayoutDetail({ payoutId }: PayoutDetailProps) {
     }
   };
 
-  const formatCurrency = (cents: number, currency: string = 'USD') => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency,
-    }).format(cents / 100);
-  };
-
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
       year: 'numeric',
@@ -142,7 +136,7 @@ export function PayoutDetail({ payoutId }: PayoutDetailProps) {
         <div className="flex items-start justify-between mb-4">
           <div>
             <h2 className="text-3xl font-bold mb-2">
-              {formatCurrency(payout.amountCents, payout.currency)}
+              <CurrencyDisplay amountCents={payout.amountCents} currency={payout.currency} showFree={false} />
             </h2>
             <p className="text-muted-foreground">Payout ID: {payout.id}</p>
           </div>
@@ -202,7 +196,9 @@ export function PayoutDetail({ payoutId }: PayoutDetailProps) {
             <DollarSign className="w-5 h-5 text-muted-foreground mt-0.5" />
             <div>
               <p className="text-sm text-muted-foreground">Amount</p>
-              <p className="font-medium">{formatCurrency(payout.amountCents, payout.currency)}</p>
+              <p className="font-medium">
+                <CurrencyDisplay amountCents={payout.amountCents} currency={payout.currency} showFree={false} />
+              </p>
             </div>
           </div>
 

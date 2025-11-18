@@ -5,6 +5,7 @@ import { adminApiService, type AdminFeeSchedule, type AdminFeeScheduleStats } fr
 import { useAuth } from '@/components/auth';
 import { Button } from '@/components/ui/button';
 import { Text } from '@/components/ui';
+import { CurrencyDisplay } from '@/components/common/currency-display';
 import { cn } from '@/lib/utils';
 
 interface FeeScheduleManagerProps {
@@ -156,12 +157,6 @@ export function FeeScheduleManager({ className }: FeeScheduleManagerProps) {
     setShowEditDialog(true);
   };
 
-  const formatCurrency = (cents: number, currency: string): string => {
-    const amount = cents / 100;
-    const symbol = currency === 'NGN' ? '₦' : currency === 'USD' ? '$' : currency;
-    return `${symbol}${amount.toFixed(2)}`;
-  };
-
   return (
     <div className={cn('space-y-6', className)}>
       {/* Header */}
@@ -267,7 +262,13 @@ export function FeeScheduleManager({ className }: FeeScheduleManagerProps) {
                       <Text>{schedule.percent}%</Text>
                     </td>
                     <td className="p-4">
-                      <Text>{formatCurrency(schedule.fixedCents, schedule.currency || 'USD')}</Text>
+                      <Text>
+                        <CurrencyDisplay
+                          amountCents={schedule.fixedCents}
+                          currency={schedule.currency || 'USD'}
+                          showFree={false}
+                        />
+                      </Text>
                     </td>
                     <td className="p-4">
                       <Text>{schedule.currency || 'USD'}</Text>
