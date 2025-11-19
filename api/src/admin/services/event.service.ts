@@ -9,6 +9,7 @@ import { EventQueryDto } from '../dto/query-params.dto';
 import { UpdateEventStatusDto } from '../dto/update-event-status.dto';
 import { Prisma, EventStatus } from '@prisma/client';
 import { QueuesService, QueueName } from '../../queues/queues.service';
+import { UpdateEventDto } from '../dto/update-event.dto';
 
 @Injectable()
 export class AdminEventService {
@@ -230,6 +231,43 @@ export class AdminEventService {
       createdAt: event.createdAt,
       updatedAt: event.updatedAt,
     };
+  }
+
+  async updateEvent(eventId: string, dto: UpdateEventDto) {
+    const event = await this.prisma.event.findFirst({
+      where: { id: eventId, deletedAt: null },
+    });
+
+    if (!event) {
+      throw new NotFoundException('Event not found');
+    }
+
+    const updateData: Prisma.EventUpdateInput = {};
+
+    if (dto.title !== undefined) updateData.title = dto.title;
+    if (dto.visibility !== undefined) updateData.visibility = dto.visibility;
+    if (dto.description !== undefined)
+      updateData.descriptionMd = dto.description;
+    if (dto.startAt !== undefined) updateData.startAt = new Date(dto.startAt);
+    if (dto.endAt !== undefined) updateData.endAt = new Date(dto.endAt);
+    if (dto.categoryId !== undefined) {
+      updateData.category = dto.categoryId
+        ? { connect: { id: dto.categoryId } }
+        : { disconnect: true };
+    }
+
+    if (dto.venueId !== undefined) {
+      updateData.venue = dto.venueId
+        ? { connect: { id: dto.venueId } }
+        : { disconnect: true };
+    }
+
+    await this.prisma.event.update({
+      where: { id: eventId },
+      data: updateData,
+    });
+
+    return this.getEvent(eventId);
   }
 
   async updateEventStatus(
