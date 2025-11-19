@@ -1,6 +1,6 @@
 'use client';
 
-import { use, useCallback, useEffect, useState } from 'react';
+import { use, useCallback, useEffect, useMemo, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -87,6 +87,26 @@ export default function CheckoutPage({ params }: Props) {
     loadEventData();
   }, [loadEventData]);
 
+  const orderAmounts = useMemo(() => {
+    let subtotalCents = 0;
+    let feesCents = 0;
+
+    ticketSelections.forEach((quantity, ticketTypeId) => {
+      if (quantity <= 0) return;
+      const ticketType = ticketTypes.find((tt) => tt.id === ticketTypeId);
+      if (!ticketType) return;
+
+      subtotalCents += Number(ticketType.priceCents) * quantity;
+      feesCents += Number(ticketType.feeCents) * quantity;
+    });
+
+    return {
+      subtotalCents,
+      feesCents,
+      totalBeforeDiscountCents: subtotalCents + feesCents,
+    };
+  }, [ticketSelections, ticketTypes]);
+
   const handleQuantityChange = (ticketTypeId: string, quantity: number) => {
     setTicketSelections((prev) => {
       const newSelections = new Map(prev);
@@ -111,6 +131,11 @@ export default function CheckoutPage({ params }: Props) {
       return;
     }
 
+    if (orderAmounts.totalBeforeDiscountCents <= 0) {
+      toast.error('Please select tickets before applying a promo code');
+      return;
+    }
+
     try {
       setIsValidatingPromo(true);
       const ticketTypeIds = Array.from(ticketSelections.keys());
@@ -119,10 +144,15 @@ export default function CheckoutPage({ params }: Props) {
         code: promoCode.trim().toUpperCase(),
         eventId,
         ticketTypeIds,
+        orderAmount: orderAmounts.totalBeforeDiscountCents,
       });
 
-      if (result.valid && result.discountAmount) {
-        setPromoDiscount(result.discountAmount / 100);
+      const isValid = result.valid ?? result.isValid ?? false;
+      const discountAmountCents =
+        typeof result.discountAmount === 'number' ? result.discountAmount : 0;
+
+      if (isValid && discountAmountCents > 0) {
+        setPromoDiscount(discountAmountCents / 100);
         setAppliedPromoCode(promoCode.trim().toUpperCase());
         toast.success(`Promo code "${promoCode.toUpperCase()}" applied!`);
       } else {
