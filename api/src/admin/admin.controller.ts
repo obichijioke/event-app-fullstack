@@ -43,6 +43,7 @@ import {
   UpdateCategoryDto,
   CategoryQueryDto,
 } from './dto/category.dto';
+import { UpdateEventDto } from './dto/update-event.dto';
 
 @ApiTags('Admin')
 @Controller('admin')
@@ -112,6 +113,23 @@ export class AdminController {
     @Body() dto: UpdateEventStatusDto,
   ) {
     const event = await this.eventService.updateStatus(id, dto);
+    return {
+      success: true,
+      data: event,
+    };
+  }
+
+  @Patch('events/:id')
+  @ApiOperation({ summary: 'Update event details (title, visibility, timing)' })
+  @ApiResponse({
+    status: 200,
+    description: 'Event updated successfully',
+  })
+  async updateEvent(
+    @Param('id') id: string,
+    @Body() dto: UpdateEventDto,
+  ) {
+    const event = await this.eventService.updateEvent(id, dto);
     return {
       success: true,
       data: event,

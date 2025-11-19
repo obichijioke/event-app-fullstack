@@ -104,12 +104,21 @@ interface RefundResponse {
 
 interface Attendee {
   id: string;
-  name: string;
-  email: string;
-  ticketType: string;
   status: string;
-  checkinTime?: string;
-  orderId: string;
+  ownerId: string;
+  owner: {
+    id: string;
+    name: string;
+    email: string;
+  };
+  ticketType: {
+    id: string;
+    name: string;
+    kind: string;
+  };
+  checkedInAt?: string;
+  gate?: string;
+  orderId?: string;
 }
 
 interface TransferResponse {
@@ -127,6 +136,14 @@ interface CheckinResponse {
   success: boolean;
   message: string;
   checkinId?: string;
+  ticket?: {
+    id?: string;
+    owner?: {
+      id?: string;
+      name?: string;
+      email?: string;
+    };
+  };
 }
 
 interface BulkSeatAssignmentResponse {

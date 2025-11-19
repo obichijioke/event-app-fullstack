@@ -292,7 +292,7 @@ export default function VenueManagement() {
 
         if (errors.length > 0) {
           message += `. ${errors.length} errors occurred.`;
-          toast.warning(message);
+          toast(message, { icon: '⚠️' });
 
           // Log errors to console for debugging
           console.error('Bulk upload errors:', errors);

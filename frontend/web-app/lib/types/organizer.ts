@@ -20,6 +20,7 @@ export interface DashboardMetrics {
   feesCents: number;
   ordersCount: number;
   ticketsSold: number;
+  currency?: string;
   unsettledPayouts: {
     count: number;
     amountCents: number;
@@ -709,8 +710,10 @@ export interface FinancialSummary {
     ordersCount: number;
     ticketsSold: number;
     payoutsCents: number;
+    currency?: string;
   };
   ordersByDay: { [date: string]: number };
+  currency?: string;
 }
 
 export interface Payout {

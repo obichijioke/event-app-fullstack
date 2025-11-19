@@ -1,25 +1,6 @@
 import { apiClient } from './client';
+import { PublicEvent as Event } from '@/lib/events'
 
-export interface Event {
-  id: string;
-  title: string;
-  description?: string;
-  startTime: string;
-  endTime?: string;
-  timezone: string;
-  status: 'draft' | 'pending' | 'approved' | 'live' | 'paused' | 'ended' | 'canceled';
-  visibility: 'public' | 'unlisted' | 'private';
-  categoryId?: string;
-  organizationId: string;
-  venueId?: string;
-  venue?: Venue;
-  organization?: Organization;
-  bannerImageUrl?: string;
-  thumbnailUrl?: string;
-  capacity?: number;
-  createdAt: string;
-  updatedAt: string;
-}
 
 export interface Venue {
   id: string;

@@ -4,7 +4,8 @@ import { use, useCallback, useEffect, useState } from 'react';
 import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { StepIndicator } from '@/components/checkout/step-indicator';
-import { eventsApi, type Event } from '@/lib/api/events-api';
+import { PublicEvent as Event } from '@/lib/events';
+import { eventsApi } from '@/lib/api/events-api';
 import { ordersApi, type Order } from '@/lib/api/orders-api';
 import { CheckCircle2, Download, Mail, Calendar, MapPin, Ticket } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -204,10 +205,10 @@ export default function ConfirmationPage({ params }: Props) {
 
           <div className="rounded-3xl border border-border/70 bg-card p-6 shadow-sm">
             <div className="mb-6 flex gap-4">
-              {event.bannerImageUrl && (
+              {event.coverImageUrl && (
                 <div className="relative h-32 w-32 flex-shrink-0 overflow-hidden rounded-2xl">
                   <Image
-                    src={event.bannerImageUrl}
+                    src={event.coverImageUrl}
                     alt={event.title}
                     fill
                     className="object-cover"
@@ -219,7 +220,7 @@ export default function ConfirmationPage({ params }: Props) {
                 <div className="space-y-2 text-sm text-muted-foreground">
                   <div className="flex items-start gap-2">
                     <Calendar className="h-4 w-4 flex-shrink-0" />
-                    <span>{formatDate(event.startTime)}</span>
+                    <span>{formatDate(event.startAt)}</span>
                   </div>
                   {event.venue && (
                     <div className="flex items-start gap-2">

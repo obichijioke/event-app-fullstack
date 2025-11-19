@@ -79,8 +79,9 @@ export function TicketsSection() {
 
   const debouncedSave = useMemo(
     () =>
-      debounce(async (values: TicketsValues) => {
-        await updateSection(
+      debounce((...args: unknown[]) => {
+        const values = args[0] as TicketsValues;
+        void updateSection(
           'tickets',
           {
             autosave: true,

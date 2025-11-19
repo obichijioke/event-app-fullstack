@@ -12,7 +12,7 @@ import type { FinancialSummary } from '@/lib/types/organizer';
 
 interface FinancialMetricCardProps {
   label: string;
-  value: string;
+  value: React.ReactNode;
   icon: React.ReactNode;
   trend?: { value: string; isPositive: boolean };
   loading?: boolean;

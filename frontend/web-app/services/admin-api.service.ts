@@ -813,6 +813,30 @@ export class AdminApiService {
     );
   }
 
+  async updateEvent(
+    token: string,
+    eventId: string,
+    data: Partial<{
+      title: string;
+      description: string;
+      status: AdminEvent["status"];
+      visibility: AdminEvent["visibility"];
+      startAt: string;
+      endAt: string;
+      categoryId: string;
+      venueId?: string | null;
+    }>
+  ): Promise<AdminApiResponse<AdminEvent>> {
+    if (!eventId) {
+      throw new ApiError("Invalid eventId provided to updateEvent", 400, null);
+    }
+    return apiClient.patch<AdminApiResponse<AdminEvent>>(
+      `${this.baseUrl}/events/${eventId}`,
+      data,
+      token
+    );
+  }
+
   async updateEventStatus(
     token: string,
     eventId: string,

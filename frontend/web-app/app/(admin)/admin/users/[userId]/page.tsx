@@ -276,7 +276,7 @@ export default function UserDetailsPage({ params }: Props) {
             {user.status !== 'suspended' && user.role !== 'admin' && (
               <Button
                 onClick={handleSuspend}
-                variant="warning"
+                variant="destructive"
                 className="w-full justify-start"
               >
                 <Ban className="w-4 h-4 mr-2" />
@@ -287,7 +287,7 @@ export default function UserDetailsPage({ params }: Props) {
             {user.status === 'suspended' && (
               <Button
                 onClick={handleActivate}
-                variant="success"
+                variant="outline"
                 className="w-full justify-start"
               >
                 <CheckCircle className="w-4 h-4 mr-2" />

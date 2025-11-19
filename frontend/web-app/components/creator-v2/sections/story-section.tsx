@@ -94,8 +94,9 @@ export function StorySection() {
 
   const debouncedSave = useMemo(
     () =>
-      debounce(async (values: StoryValues) => {
-        await updateSection(
+      debounce((...args: unknown[]) => {
+        const values = args[0] as StoryValues;
+        void updateSection(
           'story',
           {
             autosave: true,

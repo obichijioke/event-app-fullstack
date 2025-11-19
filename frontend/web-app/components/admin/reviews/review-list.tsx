@@ -232,31 +232,59 @@ export function ReviewList({ className }: ReviewListProps) {
         </div>
       </div>
 
-      <DataTable
-        data={reviewType === 'event' ? eventReviews : organizerReviews}
-        columns={reviewType === 'event' ? eventColumns : organizerColumns}
-        loading={loading}
-        pagination={{
-          ...pagination,
-          onPageChange: (page) => setPagination(prev => ({ ...prev, page })),
-        }}
-        sorting={{
-          ...sorting,
-          onSort: (field) => {
-            setSorting(prev => ({
-              field,
-              direction: prev.field === field && prev.direction === 'asc' ? 'desc' : 'asc',
-            }));
-          },
-        }}
-        actions={[
-          {
-            label: 'Delete',
-            variant: 'destructive' as const,
-            onClick: reviewType === 'event' ? handleDeleteEventReview : handleDeleteOrganizerReview,
-          },
-        ]}
-      />
+      {reviewType === 'event' ? (
+        <DataTable<AdminEventReview>
+          data={eventReviews}
+          columns={eventColumns}
+          loading={loading}
+          pagination={{
+            ...pagination,
+            onPageChange: (page) => setPagination(prev => ({ ...prev, page })),
+          }}
+          sorting={{
+            ...sorting,
+            onSort: (field) => {
+              setSorting(prev => ({
+                field,
+                direction: prev.field === field && prev.direction === 'asc' ? 'desc' : 'asc',
+              }));
+            },
+          }}
+          actions={[
+            {
+              label: 'Delete',
+              variant: 'destructive' as const,
+              onClick: handleDeleteEventReview,
+            },
+          ]}
+        />
+      ) : (
+        <DataTable<AdminOrganizerReview>
+          data={organizerReviews}
+          columns={organizerColumns}
+          loading={loading}
+          pagination={{
+            ...pagination,
+            onPageChange: (page) => setPagination(prev => ({ ...prev, page })),
+          }}
+          sorting={{
+            ...sorting,
+            onSort: (field) => {
+              setSorting(prev => ({
+                field,
+                direction: prev.field === field && prev.direction === 'asc' ? 'desc' : 'asc',
+              }));
+            },
+          }}
+          actions={[
+            {
+              label: 'Delete',
+              variant: 'destructive' as const,
+              onClick: handleDeleteOrganizerReview,
+            },
+          ]}
+        />
+      )}
     </div>
   );
 }

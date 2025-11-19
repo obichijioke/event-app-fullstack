@@ -76,12 +76,7 @@ export function DashboardContent() {
             Welcome back to {currentOrganization.name}
           </p>
         </div>
-        <Link
-          href={creatorUrl}
-          className="px-6 py-3 bg-primary text-primary-foreground rounded-lg hover:opacity-90 transition font-medium"
-        >
-          Create Event
-        </Link>
+        
       </div>
 
       {/* Metrics Grid */}

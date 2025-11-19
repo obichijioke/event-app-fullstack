@@ -108,8 +108,9 @@ export function ScheduleSection() {
 
   const debouncedSave = useMemo(
     () =>
-      debounce(async (values: ScheduleValues) => {
-        await updateSection(
+      debounce((...args: unknown[]) => {
+        const values = args[0] as ScheduleValues;
+        void updateSection(
           'schedule',
           {
             autosave: true,

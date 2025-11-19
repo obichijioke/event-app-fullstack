@@ -13,7 +13,8 @@ import {
   PaymentProviderSelector,
   PaymentProviderType,
 } from '@/components/checkout/payment-provider-selector';
-import { eventsApi, Event } from '@/lib/api/events-api';
+import { PublicEvent as Event } from '@/lib/events'
+import { eventsApi } from '@/lib/api/events-api';
 import { ticketsApi, TicketType } from '@/lib/api/tickets-api';
 import { ordersApi, Order } from '@/lib/api/orders-api';
 import { getErrorMessage } from '@/lib/utils/error-message';

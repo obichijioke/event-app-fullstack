@@ -264,7 +264,7 @@ export function EventList({ className }: EventListProps) {
         window.location.href = `/admin/events/${event.id}`;
       },
       icon: Eye,
-      variant: "outline" as const,
+      variant: "secondary" as const,
       ariaLabel: (event: AdminEvent) => `View details for event ${event.title}`,
     },
     {
