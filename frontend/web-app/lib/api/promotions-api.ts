@@ -9,6 +9,7 @@ export interface ValidatePromoCodeDto {
 
 export interface ValidatePromoCodeResponse {
   valid: boolean;
+  isValid?: boolean;
   promotion?: {
     id: string;
     name: string;

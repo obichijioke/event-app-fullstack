@@ -571,16 +571,41 @@ export class PromotionsService {
     }
 
     // Calculate discount
+    const orderAmountCents = Math.max(Math.round(orderAmount || 0), 0);
     let discountAmount = BigInt(0);
+
     if (promoCode.percentOff !== null && promoCode.percentOff !== undefined) {
+      if (!orderAmountCents) {
+        throw new BadRequestException(
+          'Order amount is required to apply a percentage discount',
+        );
+      }
+
       discountAmount =
-        (BigInt(orderAmount || 0) * BigInt(Number(promoCode.percentOff))) /
+        (BigInt(orderAmountCents) * BigInt(Number(promoCode.percentOff))) /
         BigInt(100);
     } else if (promoCode.amountOffCents) {
       discountAmount = promoCode.amountOffCents;
     }
 
+    const normalizedDiscount = Number(discountAmount);
+
     return {
+      valid: true,
+      discountAmount: normalizedDiscount,
+      promotion: promoCode.promotion
+        ? {
+            id: promoCode.promotion.id,
+            name: promoCode.promotion.name,
+            discountType:
+              promoCode.percentOff !== null &&
+              promoCode.percentOff !== undefined
+                ? 'percentage'
+                : 'fixed',
+            discountValue:
+              promoCode.percentOff ?? Number(promoCode.amountOffCents ?? 0),
+          }
+        : undefined,
       promoCode: {
         id: promoCode.id,
         code: promoCode.code,
@@ -588,8 +613,7 @@ export class PromotionsService {
         percentOff: promoCode.percentOff,
         amountOffCents: promoCode.amountOffCents,
       },
-      discountAmount,
-      isValid: true,
+      message: 'Promo code is valid',
     };
   }
 
