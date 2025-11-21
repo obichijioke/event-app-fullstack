@@ -8,6 +8,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { Input } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
+import { CurrencyInput } from '@/components/ui/currency-input';
 import { debounce } from '@/lib/utils/debounce';
 import { useEventCreatorDraft } from '@/components/creator-v2/event-creator-provider';
 import type { EventCreatorDraftSection } from '@/lib/types/event-creator-v2';
@@ -153,8 +154,12 @@ export function TicketsSection() {
                     <p className="text-xs text-muted-foreground">Hidden and hold types stay off the public listing.</p>
                   </div>
                   <div className="space-y-2">
-                    <label className="text-xs font-medium">Price (cents)</label>
-                    <Input type="number" placeholder="1200" {...form.register(`tickets.${index}.priceCents` as const, { valueAsNumber: true })} />
+                    <label className="text-xs font-medium">Price</label>
+                    <CurrencyInput
+                      value={form.watch(`tickets.${index}.priceCents` as const) || 0}
+                      onChange={(cents) => form.setValue(`tickets.${index}.priceCents` as const, cents)}
+                      placeholder="12.00"
+                    />
                     <p className="text-xs text-muted-foreground">Leave blank for free tickets.</p>
                   </div>
                   <div className="space-y-2">
@@ -228,8 +233,12 @@ export function TicketsSection() {
                     <Input type="number" placeholder="10" value={p.percentOff as any} onChange={(e) => { const arr = [...form.getValues('promos')]; arr[i].percentOff = Number(e.target.value); form.setValue('promos', arr); }} />
                   </div>
                   <div className="space-y-2">
-                    <label className="text-xs font-medium">Amount off (cents)</label>
-                    <Input type="number" placeholder="500" value={p.amountOffCents as any} onChange={(e) => { const arr = [...form.getValues('promos')]; arr[i].amountOffCents = Number(e.target.value); form.setValue('promos', arr); }} />
+                    <label className="text-xs font-medium">Amount off</label>
+                    <CurrencyInput
+                      value={p.amountOffCents || 0}
+                      onChange={(cents) => { const arr = [...form.getValues('promos')]; arr[i].amountOffCents = cents; form.setValue('promos', arr); }}
+                      placeholder="5.00"
+                    />
                   </div>
                   <div className="space-y-2">
                     <label className="text-xs font-medium">Usage limit</label>

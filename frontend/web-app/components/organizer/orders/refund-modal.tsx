@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { OrderDetail, RefundDto } from '@/lib/types/organizer';
 import { CurrencyDisplay } from '@/components/common/currency-display';
+import { CurrencyInput } from '@/components/ui/currency-input';
 import { X, AlertTriangle } from 'lucide-react';
 
 interface RefundModalProps {
@@ -72,24 +73,22 @@ export function RefundModal({ order, onSubmit, onCancel }: RefundModalProps) {
 
           <div>
             <label className="block text-sm font-medium mb-2">
-              Refund Amount (cents) <span className="text-red-500">*</span>
+              Refund Amount <span className="text-red-500">*</span>
             </label>
-            <input
-              type="number"
+            <CurrencyInput
               value={formData.amountCents}
-              onChange={(e) =>
+              onChange={(cents) =>
                 setFormData((prev) => ({
                   ...prev,
-                  amountCents: Number(e.target.value),
+                  amountCents: Math.min(cents, order.totalCents), // Ensure it doesn't exceed order total
                 }))
               }
+              currency={order.currency}
               required
-              min="0"
-              max={order.totalCents}
-              className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+              placeholder="0.00"
             />
             <p className="text-xs text-muted-foreground mt-1">
-              <CurrencyDisplay amountCents={formData.amountCents} currency={order.currency} showFree={false} /> • Maximum:{' '}
+              Maximum refund:{' '}
               <CurrencyDisplay amountCents={order.totalCents} currency={order.currency} showFree={false} />
             </p>
           </div>

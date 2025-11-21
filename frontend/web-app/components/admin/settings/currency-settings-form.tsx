@@ -6,7 +6,7 @@ import { currencyApi, CurrencyConfig, CurrencyInfo, ExchangeRate } from '@/lib/a
 import toast from 'react-hot-toast';
 
 export default function CurrencySettingsForm() {
-  const { accessToken } = useAuth();
+  const { accessToken, user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [config, setConfig] = useState<CurrencyConfig | null>(null);
@@ -35,15 +35,25 @@ export default function CurrencySettingsForm() {
   const loadCurrencyData = async () => {
     try {
       setLoading(true);
-      const [configData, currenciesData, ratesData] = await Promise.all([
+
+      // Load config and currencies - these should always work
+      const [configData, currenciesData] = await Promise.all([
         currencyApi.getCurrencyConfig(),
         currencyApi.getAllCurrencies(),
-        currencyApi.getExchangeRates(),
       ]);
 
       setConfig(configData);
       setAllCurrencies(currenciesData.currencies);
-      setExchangeRates(ratesData.rates);
+
+      // Try to load exchange rates, but don't fail if it errors (database drift issue)
+      try {
+        const ratesData = await currencyApi.getExchangeRates();
+        setExchangeRates(ratesData.rates);
+      } catch (ratesError) {
+        console.warn('Exchange rates not available (database schema issue):', ratesError);
+        setExchangeRates([]);
+        // Don't show error to user - exchange rates are optional
+      }
 
       // Set form values from config
       setDefaultCurrency(configData.defaultCurrency);
@@ -62,6 +72,10 @@ export default function CurrencySettingsForm() {
   };
 
   const handleSave = async () => {
+    if (user?.role !== 'admin') {
+      toast.error('You need admin access to update currency settings.');
+      return;
+    }
     if (!accessToken) {
       toast.error('You must be logged in');
       return;
@@ -82,13 +96,17 @@ export default function CurrencySettingsForm() {
       await loadCurrencyData();
     } catch (error: any) {
       console.error('Failed to update currency settings:', error);
-      toast.error(error.response?.data?.message || 'Failed to update currency settings');
+      toast.error(error?.message || 'Failed to update currency settings');
     } finally {
       setSaving(false);
     }
   };
 
   const handleToggleMultiCurrency = async () => {
+    if (user?.role !== 'admin') {
+      toast.error('You need admin access to update currency settings.');
+      return;
+    }
     if (!accessToken) {
       toast.error('You must be logged in');
       return;
@@ -102,11 +120,15 @@ export default function CurrencySettingsForm() {
       await loadCurrencyData();
     } catch (error: any) {
       console.error('Failed to toggle multi-currency:', error);
-      toast.error(error.response?.data?.message || 'Failed to toggle multi-currency mode');
+      toast.error(error?.message || 'Failed to toggle multi-currency mode');
     }
   };
 
   const handleAddExchangeRate = async () => {
+    if (user?.role !== 'admin') {
+      toast.error('You need admin access to update currency settings.');
+      return;
+    }
     if (!accessToken) {
       toast.error('You must be logged in');
       return;
@@ -130,7 +152,7 @@ export default function CurrencySettingsForm() {
       await loadCurrencyData();
     } catch (error: any) {
       console.error('Failed to add exchange rate:', error);
-      toast.error(error.response?.data?.message || 'Failed to add exchange rate');
+      toast.error(error?.message || 'Failed to add exchange rate');
     }
   };
 
@@ -156,6 +178,14 @@ export default function CurrencySettingsForm() {
           <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-4 border-primary border-t-transparent" />
           <p className="text-muted-foreground">Loading currency settings...</p>
         </div>
+      </div>
+    );
+  }
+
+  if (user?.role !== 'admin') {
+    return (
+      <div className="rounded-lg border border-border bg-card p-6 text-sm text-muted-foreground">
+        You need admin access to view or update currency settings.
       </div>
     );
   }

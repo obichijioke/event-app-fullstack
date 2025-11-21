@@ -33,6 +33,8 @@ export type { SwitchProps } from './switch';
 export { Select } from './select';
 export type { SelectProps } from './select';
 
+export { CurrencyInput } from './currency-input';
+
 // Typography Components
 export { Heading, headingVariants } from './heading';
 export type { HeadingProps } from './heading';

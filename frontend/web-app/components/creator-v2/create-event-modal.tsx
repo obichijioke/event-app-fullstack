@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -73,6 +74,7 @@ export function CreateEventModal({
   onClose,
   onDraftCreated,
 }: CreateEventModalProps) {
+  const router = useRouter();
   const { organizations, currentOrganization } = useOrganizerStore();
   const defaultOrgId =
     currentOrganization?.id ?? organizations.at(0)?.id ?? '';
@@ -262,8 +264,8 @@ export function CreateEventModal({
           <p className="text-muted-foreground">
             You need an organizer profile before creating events.
           </p>
-          <Button asChild>
-            <a href="/organizer/onboarding">Set up organizer profile</a>
+          <Button onClick={() => router.push('/organizer/onboarding')}>
+            Set up organizer profile
           </Button>
         </div>
       ) : (

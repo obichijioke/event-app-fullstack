@@ -2,6 +2,7 @@
 
 import { TicketType, CreateTicketTypeDto } from '@/lib/types/organizer';
 import { Modal } from '@/components/ui';
+import { CurrencyInput } from '@/components/ui/currency-input';
 import { useFormState } from '@/lib/hooks';
 import { toDateTimeInput, toDollarString } from '@/lib/utils';
 
@@ -79,38 +80,32 @@ export function TicketTypeForm({ ticketType, onSubmit, onCancel }: TicketTypeFor
           <div className="grid grid-cols-3 gap-4">
             <div>
               <label className="block text-sm font-medium mb-1">
-                Price (cents) <span className="text-red-500">*</span>
+                Price <span className="text-red-500">*</span>
               </label>
-              <input
-                type="number"
-                name="priceCents"
+              <CurrencyInput
                 value={formData.priceCents}
-                onChange={handleChange}
+                onChange={(cents) => handleChange({ target: { name: 'priceCents', value: cents } } as any)}
+                placeholder="50.00"
+                currency={formData.currency}
                 required
-                min="0"
-                className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
-                placeholder="5000"
               />
               <p className="text-xs text-muted-foreground mt-1">
-                ${toDollarString(formData.priceCents || 0)}
+                Ticket price in selected currency
               </p>
             </div>
 
             <div>
               <label className="block text-sm font-medium mb-1">
-                Fee (cents)
+                Fee
               </label>
-              <input
-                type="number"
-                name="feeCents"
+              <CurrencyInput
                 value={formData.feeCents}
-                onChange={handleChange}
-                min="0"
-                className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
-                placeholder="250"
+                onChange={(cents) => handleChange({ target: { name: 'feeCents', value: cents } } as any)}
+                placeholder="2.50"
+                currency={formData.currency}
               />
               <p className="text-xs text-muted-foreground mt-1">
-                ${toDollarString(formData.feeCents || 0)}
+                Additional fee per ticket
               </p>
             </div>
 

@@ -135,10 +135,10 @@ export function OrganizationProvider({ children }: { children: React.ReactNode }
             action={
               <div className="flex gap-3 justify-center">
                 <Link
-                  href="/organizations/create"
+                  href="/organizer/onboarding"
                   className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:opacity-90 transition"
                 >
-                  Create Organization
+                  Create Organizer Profile
                 </Link>
                 <Link
                   href="/"
