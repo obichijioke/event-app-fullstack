@@ -429,6 +429,7 @@ export interface InventorySnapshot {
     holds: number;
     grossRevenueCents: number;
     feeRevenueCents: number;
+    orders: number;
   };
   ticketTypes: InventoryTicketType[];
 }

@@ -11,6 +11,8 @@ export interface User {
   email: string;
   name?: string | null;
   phone?: string | null;
+  bio?: string | null;
+  avatarUrl?: string | null;
   role: PlatformRole;
   status: string;
   createdAt?: string;

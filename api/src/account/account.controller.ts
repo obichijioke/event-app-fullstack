@@ -2,18 +2,26 @@ import {
   Controller,
   Get,
   Post,
+  Delete,
   Query,
   UseGuards,
   DefaultValuePipe,
   ParseIntPipe,
   Body,
+  UseInterceptors,
+  UploadedFile,
+  BadRequestException,
 } from '@nestjs/common';
 import {
   ApiBearerAuth,
   ApiOperation,
   ApiQuery,
   ApiTags,
+  ApiConsumes,
+  ApiBody,
+  ApiResponse,
 } from '@nestjs/swagger';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { AccountService } from './account.service';
@@ -97,5 +105,81 @@ export class AccountController {
     @Body() dto: RequestRefundDto,
   ) {
     return this.accountService.requestRefund(user.id, dto);
+  }
+
+  @Get('profile')
+  @ApiOperation({ summary: 'Get current user profile including avatar' })
+  @ApiResponse({ status: 200, description: 'User profile retrieved successfully' })
+  async getProfile(@CurrentUser() user: any) {
+    return this.accountService.getProfile(user.id);
+  }
+
+  @Get('avatar')
+  @ApiOperation({ summary: 'Get current user avatar URL (refreshed signed URL for S3)' })
+  @ApiResponse({ status: 200, description: 'Avatar URL retrieved successfully' })
+  async getAvatar(@CurrentUser() user: any) {
+    const avatarUrl = await this.accountService.getAvatarUrl(user.id);
+    return { avatarUrl };
+  }
+
+  @Post('avatar')
+  @UseInterceptors(
+    FileInterceptor('file', {
+      limits: {
+        fileSize: 5 * 1024 * 1024, // 5MB
+      },
+      fileFilter: (req, file, cb) => {
+        const allowedMimeTypes = [
+          'image/jpeg',
+          'image/png',
+          'image/gif',
+          'image/webp',
+        ];
+        if (allowedMimeTypes.includes(file.mimetype)) {
+          cb(null, true);
+        } else {
+          cb(
+            new BadRequestException(
+              `Invalid file type. Allowed types: ${allowedMimeTypes.join(', ')}`,
+            ),
+            false,
+          );
+        }
+      },
+    }),
+  )
+  @ApiOperation({ summary: 'Upload or update user avatar' })
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        file: {
+          type: 'string',
+          format: 'binary',
+          description: 'Avatar image file (JPEG, PNG, GIF, or WebP, max 5MB)',
+        },
+      },
+      required: ['file'],
+    },
+  })
+  @ApiResponse({ status: 200, description: 'Avatar uploaded successfully' })
+  @ApiResponse({ status: 400, description: 'Invalid file type or size' })
+  async uploadAvatar(
+    @CurrentUser() user: any,
+    @UploadedFile() file: { buffer: Buffer; originalname: string; mimetype: string; size: number },
+  ) {
+    if (!file) {
+      throw new BadRequestException('File is required');
+    }
+    return this.accountService.uploadAvatar(user.id, file);
+  }
+
+  @Delete('avatar')
+  @ApiOperation({ summary: 'Delete user avatar' })
+  @ApiResponse({ status: 200, description: 'Avatar deleted successfully' })
+  @ApiResponse({ status: 400, description: 'No avatar to delete' })
+  async deleteAvatar(@CurrentUser() user: any) {
+    return this.accountService.deleteAvatar(user.id);
   }
 }

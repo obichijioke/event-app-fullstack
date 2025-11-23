@@ -21,16 +21,17 @@ export function VenueCatalogSearch({
   onClearSelection,
   onSkipToPrivate,
 }: VenueCatalogSearchProps) {
-  const { ensureOrganization } = useRequireOrganization();
+  const { currentOrganization } = useRequireOrganization();
   const [searchQuery, setSearchQuery] = useState('');
   const [results, setResults] = useState<VenueCatalogEntry[]>([]);
   const [loading, setLoading] = useState(false);
-  const [hasFetched, setHasFetched] = useState(false);
 
   const loadCatalog = useCallback(
     async (search: string) => {
-      const org = ensureOrganization();
-      if (!org) return;
+      const orgId = currentOrganization?.id;
+      if (!orgId) {
+        return;
+      }
 
       setLoading(true);
       try {
@@ -39,7 +40,6 @@ export function VenueCatalogSearch({
           limit: 6,
         });
         setResults(response.data);
-        setHasFetched(true);
       } catch (error) {
         const message = handleApiError(error, 'Failed to load shared venues');
         toast.error(message);
@@ -47,22 +47,16 @@ export function VenueCatalogSearch({
         setLoading(false);
       }
     },
-    [ensureOrganization],
+    [currentOrganization?.id],
   );
 
   useEffect(() => {
     const handler = setTimeout(() => {
       void loadCatalog(searchQuery);
-    }, 350);
+    }, 300);
 
     return () => clearTimeout(handler);
   }, [searchQuery, loadCatalog]);
-
-  useEffect(() => {
-    if (!hasFetched) {
-      void loadCatalog('');
-    }
-  }, [hasFetched, loadCatalog]);
 
   return (
     <div className="space-y-4 rounded-lg border border-border bg-card p-6">
@@ -129,11 +123,11 @@ export function VenueCatalogSearch({
         {loading && (
           <div className="flex items-center justify-center py-8 text-muted-foreground">
             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            Loading venues…
+            Loading venues...
           </div>
         )}
 
-        {!loading && results.length === 0 && hasFetched && (
+        {!loading && results.length === 0 && (
           <div className="flex flex-col items-center justify-center rounded-md border border-dashed border-border py-10 text-center">
             <Building2 className="mb-3 h-10 w-10 text-muted-foreground" />
             <p className="font-medium">No shared venues match your search</p>

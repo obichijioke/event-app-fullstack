@@ -6,6 +6,7 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from 'react';
@@ -17,6 +18,7 @@ import {
   type User,
 } from '@/services/auth.service';
 import { setAccessToken as setTokenStoreToken } from '@/lib/auth/token-store';
+import { useOrganizerStore } from '@/lib/stores/organizer-store';
 
 interface AuthContextValue {
   user: User | null;
@@ -34,6 +36,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [accessToken, setAccessToken] = useState<string | null>(null);
   const [initialized, setInitialized] = useState(false);
+  const clearOrganizerState = useOrganizerStore((state) => state.clearState);
+  const prevUserIdRef = useRef<string | null>(null);
 
   // Sync accessToken state with token-store whenever it changes
   useEffect(() => {
@@ -64,6 +68,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           authService.clearSession();
           setUser(null);
           setAccessToken(null);
+          clearOrganizerState();
         }
       } finally {
         if (active) {
@@ -81,10 +86,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = useCallback(async (credentials: LoginRequest) => {
     const response = await authService.login(credentials);
+    clearOrganizerState();
     setUser(response.user);
     setAccessToken(response.accessToken);
     return response;
-  }, []);
+  }, [clearOrganizerState]);
 
   const registerAndLogin = useCallback(async (data: RegisterRequest) => {
     await authService.register(data);
@@ -95,7 +101,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await authService.logout(accessToken ?? undefined);
     setUser(null);
     setAccessToken(null);
-  }, [accessToken]);
+    clearOrganizerState();
+  }, [accessToken, clearOrganizerState]);
 
   const refreshProfile = useCallback(async () => {
     let token = accessToken;
@@ -107,6 +114,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       } catch {
         authService.clearSession();
         setUser(null);
+        clearOrganizerState();
         return null;
       }
     }
@@ -129,6 +137,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }),
     [accessToken, initialized, login, logout, registerAndLogin, refreshProfile, user],
   );
+
+  useEffect(() => {
+    const current = user?.id ?? null;
+    const previous = prevUserIdRef.current;
+    if (previous && current && previous !== current) {
+      clearOrganizerState();
+    }
+    prevUserIdRef.current = current;
+  }, [clearOrganizerState, user]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { useEffect, useMemo, useState } from 'react';
-import { useForm, useFieldArray } from 'react-hook-form';
+import { useForm, useFieldArray, Controller } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Input } from '@/components/ui/input';
@@ -13,6 +13,7 @@ import { Switch } from '@/components/ui';
 import { debounce } from '@/lib/utils/debounce';
 import { useEventCreatorDraft } from '@/components/creator-v2/event-creator-provider';
 import type { EventCreatorDraftSection } from '@/lib/types/event-creator-v2';
+import { RichTextEditor } from '@/components/ui/rich-text-editor';
 
 const speakerSchema = z.object({
   name: z.string().min(1, 'Name required'),
@@ -101,6 +102,7 @@ export function StorySection() {
           {
             autosave: true,
             payload: values,
+            status: 'valid',
           },
           { showToast: false }
         );
@@ -118,17 +120,6 @@ export function StorySection() {
     return () => subscription.unsubscribe();
   }, [form, debouncedSave]);
 
-  const onSubmit = form.handleSubmit(async (values) => {
-    await updateSection(
-      'story',
-      {
-        payload: values,
-        status: 'valid',
-      },
-      { showToast: true }
-    );
-  });
-
   return (
     <div className="space-y-8">
       <div>
@@ -138,10 +129,24 @@ export function StorySection() {
         </p>
       </div>
 
-      <form className="space-y-8" onSubmit={onSubmit}>
+      <form className="space-y-8" onSubmit={(e) => e.preventDefault()}>
         <div className="space-y-3">
           <label className="text-sm font-medium">Long description</label>
-          <Textarea rows={8} placeholder="Use headings, lists, and links" {...form.register('description')} />
+          <Controller
+            control={form.control}
+            name="description"
+            render={({ field }) => (
+              <RichTextEditor
+                value={field.value}
+                onChange={(value) => {
+                  field.onChange(value);
+                  // Trigger debounced save manually since we're not using register's onChange
+                  debouncedSave({ ...form.getValues(), description: value });
+                }}
+                placeholder="Tell attendees what to expect..."
+              />
+            )}
+          />
           {form.formState.errors.description && (
             <p className="text-xs text-error">{form.formState.errors.description.message}</p>
           )}

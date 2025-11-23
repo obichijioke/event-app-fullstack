@@ -6,6 +6,7 @@ import { usePathname } from 'next/navigation';
 import { Button, IconButton, Avatar } from '@/components/ui';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/components/auth';
+import { useOrganizerStore } from '@/lib/stores/organizer-store';
 import type { User as AuthUser } from '@/services/auth.service';
 
 interface HeaderProps {
@@ -257,15 +258,56 @@ function UserMenu({
   onLogout: () => Promise<void> | void;
   loggingOut: boolean;
 }) {
+  const menuRef = React.useRef<HTMLDivElement>(null);
+  const organizations = useOrganizerStore((state) => state.organizations);
+  const hasOrganizations = organizations.length > 0;
+
+  // Close menu when clicking outside
+  React.useEffect(() => {
+    if (!userMenuOpen) return;
+
+    const handleClickOutside = (event: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setUserMenuOpen(false);
+      }
+    };
+
+    // Use mousedown for immediate response
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [userMenuOpen, setUserMenuOpen]);
+
+  // Close menu on escape key
+  React.useEffect(() => {
+    if (!userMenuOpen) return;
+
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setUserMenuOpen(false);
+      }
+    };
+
+    document.addEventListener('keydown', handleEscape);
+    return () => {
+      document.removeEventListener('keydown', handleEscape);
+    };
+  }, [userMenuOpen, setUserMenuOpen]);
+
   return (
-    <div className="relative">
+    <div className="relative" ref={menuRef}>
       <button
         onClick={() => setUserMenuOpen(!userMenuOpen)}
         className="flex items-center gap-2 rounded-md border border-border bg-background px-3 py-2 transition-colors hover:bg-muted"
         aria-expanded={userMenuOpen}
         aria-haspopup="true"
       >
-        <Avatar name={user.name ?? user.email} size="sm" />
+        <Avatar
+          src={user.avatarUrl ?? undefined}
+          name={user.name ?? user.email}
+          size="sm"
+        />
         <span className="hidden text-sm font-medium text-foreground md:inline">
           {user.name ?? user.email}
         </span>
@@ -276,21 +318,34 @@ function UserMenu({
       {userMenuOpen && (
         <div className="absolute right-0 mt-2 w-56 rounded-lg border border-border bg-card shadow-lg">
           <div className="border-b border-border p-4">
-            <p className="text-sm font-semibold text-foreground">
-              {user.name ?? user.email}
-            </p>
-            <p className="text-xs text-muted-foreground">{user.email}</p>
+            <div className="flex items-center gap-3">
+              <Avatar
+                src={user.avatarUrl ?? undefined}
+                name={user.name ?? user.email}
+                size="md"
+              />
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold text-foreground truncate">
+                  {user.name ?? user.email}
+                </p>
+                <p className="text-xs text-muted-foreground truncate">{user.email}</p>
+              </div>
+            </div>
           </div>
           <div className="p-2">
-            <UserMenuItem href="/account">My Account</UserMenuItem>
-            <UserMenuItem href="/account/orders">My Orders</UserMenuItem>
-            <UserMenuItem href="/account/tickets">My Tickets</UserMenuItem>
-            <UserMenuItem href="/account/following">Following</UserMenuItem>
+            <UserMenuItem href="/account" onClick={() => setUserMenuOpen(false)}>My Account</UserMenuItem>
+            <UserMenuItem href="/account/orders" onClick={() => setUserMenuOpen(false)}>My Orders</UserMenuItem>
+            <UserMenuItem href="/account/tickets" onClick={() => setUserMenuOpen(false)}>My Tickets</UserMenuItem>
+            <UserMenuItem href="/account/following" onClick={() => setUserMenuOpen(false)}>Following</UserMenuItem>
+            {hasOrganizations && (
+              <>
+                <div className="my-2 border-t border-border" />
+                <UserMenuItem href="/organizer" onClick={() => setUserMenuOpen(false)}>Organizer Dashboard</UserMenuItem>
+              </>
+            )}
             <div className="my-2 border-t border-border" />
-            <UserMenuItem href="/organizer">Organizer Dashboard</UserMenuItem>
-            <div className="my-2 border-t border-border" />
-            <UserMenuItem href="/help">Help Center</UserMenuItem>
-            <UserMenuItem href="/account/settings">Settings</UserMenuItem>
+            <UserMenuItem href="/help" onClick={() => setUserMenuOpen(false)}>Help Center</UserMenuItem>
+            <UserMenuItem href="/account/settings" onClick={() => setUserMenuOpen(false)}>Settings</UserMenuItem>
             <div className="my-2 border-t border-border" />
             <button
               onClick={onLogout}
@@ -307,10 +362,19 @@ function UserMenu({
 }
 
 // Helper component for user menu items
-function UserMenuItem({ href, children }: { href: string; children: React.ReactNode }) {
+function UserMenuItem({
+  href,
+  children,
+  onClick,
+}: {
+  href: string;
+  children: React.ReactNode;
+  onClick?: () => void;
+}) {
   return (
     <Link
       href={href}
+      onClick={onClick}
       className="block rounded-md px-3 py-2 text-sm font-medium text-foreground transition-colors hover:bg-muted"
     >
       {children}

@@ -20,6 +20,9 @@ export function CreatorFooter() {
   const nextSection = EVENT_CREATOR_SECTION_ORDER[currentIndex + 1];
   const canPublish = draft.completionPercent === 100;
 
+  const currentSectionData = draft.sections.find((s) => s.section === activeSection);
+  const isCurrentSectionValid = currentSectionData?.status === 'valid';
+
   const handlePublish = async () => {
     setIsPublishing(true);
     try {
@@ -54,7 +57,7 @@ export function CreatorFooter() {
           <Button
             variant="outline"
             onClick={() => setActiveSection(nextSection ?? activeSection)}
-            disabled={!nextSection}
+            disabled={!nextSection || !isCurrentSectionValid}
           >
             Continue
           </Button>

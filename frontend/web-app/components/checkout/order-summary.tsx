@@ -27,6 +27,9 @@ interface OrderSummaryProps {
   onRemovePromoCode?: () => void;
   suggestedPromoCodes?: string[];
   actionErrorMessage?: string;
+  isLoading?: boolean;
+  overrideFeesCents?: number;
+  overrideDiscountCents?: number;
 }
 
 type SelectedTicket = {
@@ -38,7 +41,6 @@ type SelectedTicket = {
 };
 
 const formatDate = (dateString: string) => {
-  console.log(dateString);
   const date = new Date(dateString);
   return date.toLocaleDateString('en-US', {
     weekday: 'short',
@@ -58,6 +60,7 @@ export function OrderSummary({
   onContinue,
   buttonText = 'Continue to Payment',
   buttonDisabled = false,
+  isLoading = false,
   showSecurityBadges = true,
   stepLabel = 'Step 1 of 3',
   showPromoSection = false,
@@ -69,9 +72,11 @@ export function OrderSummary({
   onRemovePromoCode,
   suggestedPromoCodes = [],
   actionErrorMessage,
+  overrideFeesCents,
+  overrideDiscountCents,
 }: OrderSummaryProps) {
   let subtotalCents = 0;
-  let feesCents = 0;
+  let calculatedFeesCents = 0;
 
   const currency = ticketTypes[0]?.currency || 'NGN';
 
@@ -88,7 +93,7 @@ export function OrderSummary({
       const itemFees = feeCents * quantity;
 
       subtotalCents += itemSubtotal;
-      feesCents += itemFees;
+      calculatedFeesCents += itemFees;
 
       return {
         ticketType,
@@ -100,8 +105,15 @@ export function OrderSummary({
     })
     .filter((item): item is SelectedTicket => item !== null);
 
-  const discountCents = Math.max(Math.round((promoDiscount || 0) * 100), 0);
-  const totalCents = Math.max(subtotalCents + feesCents - discountCents, 0);
+  const feesCents = overrideFeesCents !== undefined ? overrideFeesCents : calculatedFeesCents;
+  const discountCents = overrideDiscountCents !== undefined 
+    ? overrideDiscountCents 
+    : Math.max(Math.round((promoDiscount || 0) * 100), 0);
+    
+  // Calculate tax on discounted subtotal: Tax = (Subtotal - Discount) × Tax Rate
+  const taxableAmount = Math.max(subtotalCents - discountCents, 0);
+  const taxCents = Math.round(taxableAmount * 0.07);
+  const totalCents = Math.max(subtotalCents + feesCents + taxCents - discountCents, 0);
   const promoInputValue = promoCode ?? '';
 
   const handlePromoInputChange = (value: string) => {
@@ -232,6 +244,10 @@ export function OrderSummary({
               </span>
             </div>
           )}
+          <div className="flex items-center justify-between text-sm">
+            <span>Sales Tax (7%)</span>
+            <CurrencyDisplay amountCents={Math.round(subtotalCents * 0.07)} currency={currency} showFree={false} />
+          </div>
         </div>
 
         {/* Total */}
@@ -348,9 +364,12 @@ export function OrderSummary({
           <button
             type="button"
             onClick={onContinue}
-            disabled={buttonDisabled || selectedTickets.length === 0}
-            className="w-full rounded-xl bg-primary py-3 text-base font-semibold text-primary-foreground transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+            disabled={buttonDisabled || selectedTickets.length === 0 || isLoading}
+            className="w-full rounded-xl bg-primary py-3 text-base font-semibold text-primary-foreground transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50 flex items-center justify-center gap-2"
           >
+            {isLoading && (
+              <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+            )}
             {buttonText}
           </button>
         )}

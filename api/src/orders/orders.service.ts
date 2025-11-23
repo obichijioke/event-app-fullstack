@@ -9,16 +9,18 @@ import { CreateOrderDto } from './dto/create-order.dto';
 import { UpdateOrderDto } from './dto/update-order.dto';
 import { OrderStatus } from '@prisma/client';
 import { PaymentService } from './services/payment.service';
+import { PromotionsService } from '../promotions/promotions.service';
 
 @Injectable()
 export class OrdersService {
   constructor(
     private prisma: PrismaService,
     private paymentService: PaymentService,
+    private promotionsService: PromotionsService,
   ) {}
 
   async createOrder(userId: string, createOrderDto: CreateOrderDto) {
-    const { eventId, occurrenceId, items } = createOrderDto;
+    const { eventId, occurrenceId, items, promoCode } = createOrderDto;
 
     // Get event details
     const event = await this.prisma.event.findUnique({
@@ -158,10 +160,42 @@ export class OrdersService {
       });
     }
 
-    // Calculate tax (simplified - could be more complex based on location)
+    // Calculate discount first
+    let discountCents = BigInt(0);
+    let promoCodeId: string | undefined;
+
+    if (promoCode) {
+      const validation = await this.promotionsService.validatePromoCode(
+        {
+          code: promoCode,
+          eventId,
+          orderAmount: Number(subtotalCents),
+        },
+        userId,
+      );
+
+      if (validation.valid && validation.discountAmount) {
+        discountCents = BigInt(validation.discountAmount);
+        promoCodeId = validation.promoCode?.id;
+      }
+    }
+
+    // Calculate tax on discounted subtotal: Tax = (Subtotal - Discount) × Tax Rate
     // Tax rate is 7%, so multiply by 7 and divide by 100
-    const taxCents = (subtotalCents * BigInt(7)) / BigInt(100); // 7% tax rate
-    const totalCents = subtotalCents + feesCents + taxCents;
+    const taxableAmount = subtotalCents - discountCents;
+    const taxCents = (taxableAmount * BigInt(7)) / BigInt(100); // 7% tax rate
+
+    // Calculate fees
+    const { totalFeeCents, feeLines } = await this.calculateFees(
+      event.orgId,
+      subtotalCents,
+      items.reduce((acc, item) => acc + item.quantity, 0),
+    );
+
+    // Add ticket-specific fees
+    feesCents += totalFeeCents;
+
+    const totalCents = subtotalCents + feesCents + taxCents - discountCents;
 
     // Create order
     const order = await this.prisma.order.create({
@@ -174,7 +208,7 @@ export class OrdersService {
         subtotalCents,
         feesCents,
         taxCents,
-        totalCents,
+        totalCents: totalCents > 0 ? totalCents : BigInt(0),
         currency: orderItems[0]?.currency || 'USD',
       },
       include: {
@@ -218,18 +252,125 @@ export class OrdersService {
       },
     });
 
-    await this.prisma.orderFeeLine.createMany({
-      data: [
-        {
+    // Create fee lines
+    if (feeLines.length > 0) {
+      await this.prisma.orderFeeLine.createMany({
+        data: feeLines.map((line) => ({
           orderId: order.id,
-          name: 'Platform Fee',
-          amountCents: feesCents,
-          beneficiary: 'platform',
-        },
-      ],
+          name: line.name,
+          amountCents: line.amountCents,
+          beneficiary: line.beneficiary,
+        })),
+      });
+    }
+
+    // Record promo usage if applicable
+    if (promoCodeId) {
+      await this.promotionsService.usePromoCode(promoCodeId, userId, order.id);
+    }
+
+    return {
+      ...order,
+      discountCents,
+    };
+  }
+
+  private async calculateFees(
+    orgId: string,
+    subtotalCents: bigint,
+    totalTickets: number,
+  ): Promise<{
+    totalFeeCents: bigint;
+    feeLines: { name: string; amountCents: bigint; beneficiary: string }[];
+  }> {
+    // 1. Fetch active FeeSchedules (platform and processing)
+    const feeSchedules = await this.prisma.feeSchedule.findMany({
+      where: { active: true },
+      orderBy: { createdAt: 'desc' },
     });
 
-    return order;
+    // 2. Fetch active OrgFeeOverride for this org
+    const now = new Date();
+    const overrides = await this.prisma.orgFeeOverride.findMany({
+      where: {
+        orgId,
+        OR: [{ endsAt: null }, { endsAt: { gte: now } }],
+        startsAt: { lte: now },
+      },
+      include: { feeSchedule: true },
+    });
+
+    // 3. Determine applicable schedules
+    let platformSchedule = feeSchedules.find((fs) => fs.kind === 'platform');
+    let processingSchedule = feeSchedules.find(
+      (fs) => fs.kind === 'processing',
+    );
+
+    // Apply overrides
+    for (const override of overrides) {
+      if (override.feeSchedule.kind === 'platform') {
+        platformSchedule = override.feeSchedule;
+      } else if (override.feeSchedule.kind === 'processing') {
+        processingSchedule = override.feeSchedule;
+      }
+    }
+
+    let totalFeeCents = BigInt(0);
+    const feeLines: {
+      name: string;
+      amountCents: bigint;
+      beneficiary: string;
+    }[] = [];
+
+    // 4. Calculate Platform Fee
+    if (platformSchedule) {
+      let platformFee = BigInt(0);
+      if (platformSchedule.percent) {
+        platformFee +=
+          (subtotalCents *
+            BigInt(Math.round(Number(platformSchedule.percent) * 100))) /
+          BigInt(10000); // percent is decimal, so *100 for integer math, then /10000 (100*100)
+      }
+      if (platformSchedule.fixedCents) {
+        platformFee +=
+          BigInt(platformSchedule.fixedCents) * BigInt(totalTickets);
+      }
+
+      if (platformFee > 0) {
+        totalFeeCents += platformFee;
+        feeLines.push({
+          name: platformSchedule.name,
+          amountCents: platformFee,
+          beneficiary: 'platform',
+        });
+      }
+    }
+
+    // 5. Calculate Processing Fee
+    if (processingSchedule) {
+      let processingFee = BigInt(0);
+      if (processingSchedule.percent) {
+        processingFee +=
+          (subtotalCents *
+            BigInt(Math.round(Number(processingSchedule.percent) * 100))) /
+          BigInt(10000);
+      }
+      if (processingSchedule.fixedCents) {
+        processingFee +=
+          BigInt(processingSchedule.fixedCents) * BigInt(totalTickets);
+      }
+
+      if (processingFee > 0) {
+        totalFeeCents += processingFee;
+        feeLines.push({
+          name: processingSchedule.name,
+          amountCents: processingFee,
+          beneficiary: 'platform', // Usually platform collects this to pay provider
+        });
+      }
+    }
+
+    return { totalFeeCents, feeLines };
   }
 
   async findAll(
@@ -329,7 +470,19 @@ export class OrdersService {
       this.prisma.order.count({ where: whereClause }),
     ]);
 
-    return { items: orders, total, page, limit };
+    const itemsWithDiscount = orders.map((order) => {
+      const discountCents =
+        order.subtotalCents +
+        order.feesCents +
+        order.taxCents -
+        order.totalCents;
+      return {
+        ...order,
+        discountCents: discountCents > 0 ? discountCents : BigInt(0),
+      };
+    });
+
+    return { items: itemsWithDiscount, total, page, limit };
   }
 
   async findOne(id: string, userId: string) {
@@ -420,7 +573,13 @@ export class OrdersService {
       );
     }
 
-    return order;
+    const discountCents =
+      order.subtotalCents + order.feesCents + order.taxCents - order.totalCents;
+
+    return {
+      ...order,
+      discountCents: discountCents > 0 ? discountCents : BigInt(0),
+    };
   }
 
   async update(id: string, userId: string, updateOrderDto: UpdateOrderDto) {
@@ -595,12 +754,26 @@ export class OrdersService {
             seat: true,
           },
         },
+        tickets: true, // Include existing tickets to check count
       },
     });
 
     if (!order) {
       throw new NotFoundException('Order not found');
     }
+
+    // Idempotency check: Calculate total expected tickets
+    const totalExpectedTickets = order.items.reduce(
+      (acc, item) => acc + item.quantity,
+      0,
+    );
+
+    // If we already have all tickets, we're done
+    if (order.tickets && order.tickets.length === totalExpectedTickets) {
+      return;
+    }
+
+    const existingQRCodes = new Set(order.tickets?.map((t) => t.qrCode) || []);
 
     // Create tickets for each order item
     for (const item of order.items) {
@@ -609,11 +782,18 @@ export class OrdersService {
           order.id,
           item.ticketTypeId,
           item.seatId || undefined,
+          i, // Pass index for uniqueness
         );
+        // Skip if this specific ticket already exists
+        if (existingQRCodes.has(qrCode)) {
+          continue;
+        }
+
         const barcode = this.generateBarcode(
           order.id,
           item.ticketTypeId,
           item.seatId || undefined,
+          i, // Pass index for uniqueness
         );
 
         await this.prisma.ticket.create({
@@ -638,9 +818,11 @@ export class OrdersService {
     orderId: string,
     ticketTypeId: string,
     seatId?: string,
+    index: number = 0,
   ): string {
     // Generate a unique QR code
-    const data = `${orderId}-${ticketTypeId}${seatId ? `-${seatId}` : ''}`;
+    // Include index to ensure uniqueness for multiple tickets of same type
+    const data = `${orderId}-${ticketTypeId}${seatId ? `-${seatId}` : ''}-${index}`;
     return Buffer.from(data).toString('base64');
   }
 
@@ -648,9 +830,10 @@ export class OrdersService {
     orderId: string,
     ticketTypeId: string,
     seatId?: string,
+    index: number = 0,
   ): string {
     // Generate a unique barcode
-    const data = `${orderId}-${ticketTypeId}${seatId ? `-${seatId}` : ''}`;
+    const data = `${orderId}-${ticketTypeId}${seatId ? `-${seatId}` : ''}-${index}`;
     return data;
   }
 

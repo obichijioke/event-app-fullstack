@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { toast } from 'react-hot-toast';
 import { Button } from '@/components/ui';
 import { useAuth } from '@/components/auth';
 import { ApiError } from '@/services/auth.service';
@@ -69,7 +70,8 @@ export default function RegisterForm() {
         phone: formData.phone.trim() || undefined,
       });
 
-      router.push('/account');
+      toast.success('Account created! Let’s set up your organizer profile.');
+      router.push('/organizer/onboarding');
     } catch (error) {
       if (error instanceof ApiError) {
         const details = (error.details as { message?: string | string[] })?.message;

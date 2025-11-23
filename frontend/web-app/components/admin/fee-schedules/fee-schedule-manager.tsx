@@ -6,6 +6,7 @@ import { useAuth } from '@/components/auth';
 import { Button } from '@/components/ui/button';
 import { Text } from '@/components/ui';
 import { CurrencyDisplay } from '@/components/common/currency-display';
+import { CurrencyInput } from '@/components/ui/currency-input';
 import { cn } from '@/lib/utils';
 
 interface FeeScheduleManagerProps {
@@ -336,16 +337,16 @@ export function FeeScheduleManager({ className }: FeeScheduleManagerProps) {
                   step="0.01"
                   className="w-full px-3 py-2 border rounded-lg"
                   value={formData.percent}
-                  onChange={(e) => setFormData({ ...formData, percent: parseFloat(e.target.value) })}
+                  onChange={(e) => setFormData({ ...formData, percent: parseFloat(e.target.value) || 0 })}
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium mb-1">Fixed Fee (cents)</label>
-                <input
-                  type="number"
-                  className="w-full px-3 py-2 border rounded-lg"
+                <label className="block text-sm font-medium mb-1">Fixed Fee</label>
+                <CurrencyInput
                   value={formData.fixedCents}
-                  onChange={(e) => setFormData({ ...formData, fixedCents: parseInt(e.target.value) })}
+                  onChange={(cents) => setFormData({ ...formData, fixedCents: cents })}
+                  placeholder="0.00"
+                  currency={formData.currency}
                 />
               </div>
               <div>
@@ -403,16 +404,16 @@ export function FeeScheduleManager({ className }: FeeScheduleManagerProps) {
                   step="0.01"
                   className="w-full px-3 py-2 border rounded-lg"
                   value={formData.percent}
-                  onChange={(e) => setFormData({ ...formData, percent: parseFloat(e.target.value) })}
+                  onChange={(e) => setFormData({ ...formData, percent: parseFloat(e.target.value) || 0 })}
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium mb-1">Fixed Fee (cents)</label>
-                <input
-                  type="number"
-                  className="w-full px-3 py-2 border rounded-lg"
+                <label className="block text-sm font-medium mb-1">Fixed Fee</label>
+                <CurrencyInput
                   value={formData.fixedCents}
-                  onChange={(e) => setFormData({ ...formData, fixedCents: parseInt(e.target.value) })}
+                  onChange={(cents) => setFormData({ ...formData, fixedCents: cents })}
+                  placeholder="0.00"
+                  currency={formData.currency}
                 />
               </div>
               <div className="flex gap-2 justify-end">

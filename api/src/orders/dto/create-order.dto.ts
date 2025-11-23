@@ -8,6 +8,10 @@ export class CreateOrderDto {
   @IsOptional()
   occurrenceId?: string;
 
+  @IsString()
+  @IsOptional()
+  promoCode?: string;
+
   @IsArray()
   items: CreateOrderItemDto[];
 }

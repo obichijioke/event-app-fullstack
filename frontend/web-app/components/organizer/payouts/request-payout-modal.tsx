@@ -5,6 +5,7 @@ import { X, DollarSign, Calendar, AlertTriangle, CheckCircle } from 'lucide-reac
 import { organizerApi } from '@/lib/api/organizer-api';
 import { useOrganizerStore } from '@/lib/stores/organizer-store';
 import { CurrencyDisplay } from '@/components/common/currency-display';
+import { CurrencyInput } from '@/components/ui/currency-input';
 import toast from 'react-hot-toast';
 import type { CreatePayoutDto, FinancialSummary } from '@/lib/types/organizer';
 
@@ -197,25 +198,19 @@ export function RequestPayoutModal({ onSuccess, onCancel }: RequestPayoutModalPr
               <label className="block text-sm font-medium mb-2">
                 Payout Amount <span className="text-red-500">*</span>
               </label>
-              <div className="relative">
-                <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                <input
-                  type="number"
-                  value={formData.amountCents / 100}
-                  onChange={(e) => {
-                    const dollars = parseFloat(e.target.value) || 0;
-                    setFormData((prev) => ({
-                      ...prev,
-                      amountCents: Math.round(dollars * 100),
-                    }));
-                  }}
-                  required
-                  min="0"
-                  step="0.01"
-                  disabled={existingPayouts > 0 || (summary.totals.netRevenueCents - summary.totals.payoutsCents) <= 0}
-                  className="w-full pl-10 pr-4 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50 disabled:cursor-not-allowed"
-                />
-              </div>
+              <CurrencyInput
+                value={formData.amountCents}
+                onChange={(cents) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    amountCents: cents,
+                  }))
+                }
+                currency={formData.currency}
+                required
+                placeholder="0.00"
+                disabled={existingPayouts > 0 || (summary.totals.netRevenueCents - summary.totals.payoutsCents) <= 0}
+              />
               <p className="text-xs text-muted-foreground mt-1">
                 <CurrencyDisplay
                   amountCents={formData.amountCents}

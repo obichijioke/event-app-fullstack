@@ -1,6 +1,6 @@
 import { Metadata } from 'next';
 import Link from 'next/link';
-import { VenueForm } from '@/components/organizer/venues/venue-form';
+import { ArrowLeft } from 'lucide-react';
 import { VenueCreateExperience } from '@/components/organizer/venues/venue-create-experience';
 
 export const metadata: Metadata = {
@@ -18,9 +18,10 @@ export default function CreateVenuePage() {
         </div>
         <Link
           href="/organizer/venues"
-          className="px-4 py-2 bg-secondary text-secondary-foreground rounded-md hover:opacity-90 transition text-sm"
+          className="inline-flex items-center gap-2 px-4 py-2 bg-secondary text-secondary-foreground rounded-md hover:opacity-90 transition text-sm"
         >
-          ← Back to Venues
+          <ArrowLeft className="w-4 h-4" />
+          Back to Venues
         </Link>
       </div>
 

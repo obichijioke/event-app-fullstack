@@ -85,7 +85,7 @@ export function ReviewPublish() {
         <div className="flex flex-wrap items-center gap-3">
           <input
             type="datetime-local"
-            className="rounded-md border border-border bg-input px-3 py-2 text-sm"
+            className="rounded-md border border-border bg-input px-3 py-2 text-sm dark:bg-none"
             value={scheduleAt}
             onChange={(e) => setScheduleAt(e.target.value)}
           />

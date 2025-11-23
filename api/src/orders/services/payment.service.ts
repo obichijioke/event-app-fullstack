@@ -67,9 +67,27 @@ export class PaymentService {
       throw new NotFoundException('Order not found');
     }
 
-    const payment = await this.prisma.payment.findFirst({
-      where: { orderId },
-    });
+    let payment;
+
+    if (processPaymentDto.paymentIntentId) {
+      // If specific intent ID provided, find that specific payment record
+      // This handles retry scenarios where multiple payment records exist for one order
+      payment = await this.prisma.payment.findFirst({
+        where: {
+          orderId,
+          OR: [
+            { providerIntent: processPaymentDto.paymentIntentId },
+            { providerCharge: processPaymentDto.paymentIntentId },
+          ],
+        },
+      });
+    } else {
+      // Fallback to latest payment record (legacy behavior)
+      payment = await this.prisma.payment.findFirst({
+        where: { orderId },
+        orderBy: { createdAt: 'desc' },
+      });
+    }
 
     if (!payment) {
       throw new NotFoundException('Payment not found');

@@ -70,5 +70,5 @@ export const ordersApi = {
   processPayment: (data: {
     orderId: string;
     paymentIntentId: string;
-  }) => apiClient.post<{ success: boolean }>('/orders/process-payment', data),
+  }) => apiClient.post<{ success: boolean }>(`/orders/${data.orderId}/payment/process`, data),
 };

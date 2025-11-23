@@ -7,6 +7,7 @@ import { useFormState } from '@/lib/hooks';
 import { organizerApi } from '@/lib/api/organizer-api';
 import { toDollarString } from '@/lib/utils';
 import { Modal } from '@/components/ui';
+import { CurrencyInput } from '@/components/ui/currency-input';
 import { Loader2 } from 'lucide-react';
 
 interface PromotionFormProps {
@@ -125,23 +126,32 @@ export function PromotionForm({ eventId, onSubmit, onCancel }: PromotionFormProp
 
             <div>
               <label className="block text-sm font-medium mb-2">
-                {formData.discountType === 'percentage' ? 'Percentage' : 'Amount (cents)'}{' '}
+                {formData.discountType === 'percentage' ? 'Percentage' : 'Discount Amount'}{' '}
                 <span className="text-red-500">*</span>
               </label>
-              <input
-                type="number"
-                name="discountValue"
-                value={formData.discountValue}
-                onChange={handleChange}
-                required
-                min="0"
-                max={formData.discountType === 'percentage' ? 100 : undefined}
-                className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
-                placeholder={formData.discountType === 'percentage' ? '15' : '1000'}
-              />
-              {formData.discountType === 'fixed' && (
+              {formData.discountType === 'percentage' ? (
+                <input
+                  type="number"
+                  name="discountValue"
+                  value={formData.discountValue}
+                  onChange={handleChange}
+                  required
+                  min="0"
+                  max="100"
+                  className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+                  placeholder="15"
+                />
+              ) : (
+                <CurrencyInput
+                  value={formData.discountValue}
+                  onChange={(cents) => handleChange({ target: { name: 'discountValue', value: cents } } as any)}
+                  placeholder="10.00"
+                  required
+                />
+              )}
+              {formData.discountType === 'percentage' && (
                 <p className="text-xs text-muted-foreground mt-1">
-                  ${toDollarString(formData.discountValue || 0)}
+                  Enter percentage (0-100)
                 </p>
               )}
             </div>

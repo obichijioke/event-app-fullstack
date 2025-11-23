@@ -98,7 +98,16 @@ class CurrencyApiService {
       headers: this.getHeaders(token),
       body: JSON.stringify(dto),
     });
-    if (!response.ok) throw new Error('Failed to update currency config');
+    if (!response.ok) {
+      let message = 'Failed to update currency config';
+      try {
+        const data = await response.json();
+        if (data?.message) message = data.message;
+      } catch {
+        // ignore parse errors
+      }
+      throw new Error(message);
+    }
     return response.json();
   }
 
@@ -108,7 +117,16 @@ class CurrencyApiService {
       headers: this.getHeaders(token),
       body: JSON.stringify({ enabled }),
     });
-    if (!response.ok) throw new Error('Failed to toggle multi-currency mode');
+    if (!response.ok) {
+      let message = 'Failed to toggle multi-currency mode';
+      try {
+        const data = await response.json();
+        if (data?.message) message = data.message;
+      } catch {
+        // ignore parse errors
+      }
+      throw new Error(message);
+    }
     return response.json();
   }
 
@@ -134,7 +152,16 @@ class CurrencyApiService {
       headers: this.getHeaders(token),
       body: JSON.stringify(dto),
     });
-    if (!response.ok) throw new Error('Failed to add exchange rate');
+    if (!response.ok) {
+      let message = 'Failed to add exchange rate';
+      try {
+        const data = await response.json();
+        if (data?.message) message = data.message;
+      } catch {
+        // ignore parse errors
+      }
+      throw new Error(message);
+    }
     return response.json();
   }
 

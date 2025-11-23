@@ -529,7 +529,9 @@ export class EventsService {
         }
       }
 
-      return serializeResponse(event);
+      const fees = await this.getApplicableFees(event.orgId);
+      
+      return serializeResponse({ ...event, fees });
     } catch (error) {
       this.logger.error('findOne error', error);
       throw error;
@@ -1128,6 +1130,55 @@ export class EventsService {
         limit,
         totalPages,
       },
+    };
+  }
+
+  async getApplicableFees(orgId: string) {
+    // 1. Fetch active FeeSchedules (platform and processing)
+    const feeSchedules = await this.prisma.feeSchedule.findMany({
+      where: { active: true },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    // 2. Fetch active OrgFeeOverride for this org
+    const now = new Date();
+    const overrides = await this.prisma.orgFeeOverride.findMany({
+      where: {
+        orgId,
+        OR: [{ endsAt: null }, { endsAt: { gte: now } }],
+        startsAt: { lte: now },
+      },
+      include: { feeSchedule: true },
+    });
+
+    // 3. Determine applicable schedules
+    let platformSchedule = feeSchedules.find((fs) => fs.kind === 'platform');
+    let processingSchedule = feeSchedules.find(
+      (fs) => fs.kind === 'processing',
+    );
+
+    // Apply overrides
+    for (const override of overrides) {
+      if (override.feeSchedule.kind === 'platform') {
+        platformSchedule = override.feeSchedule;
+      } else if (override.feeSchedule.kind === 'processing') {
+        processingSchedule = override.feeSchedule;
+      }
+    }
+
+    return {
+      platform: platformSchedule
+        ? {
+            percent: Number(platformSchedule.percent),
+            fixedCents: Number(platformSchedule.fixedCents),
+          }
+        : null,
+      processing: processingSchedule
+        ? {
+            percent: Number(processingSchedule.percent),
+            fixedCents: Number(processingSchedule.fixedCents),
+          }
+        : null,
     };
   }
 }

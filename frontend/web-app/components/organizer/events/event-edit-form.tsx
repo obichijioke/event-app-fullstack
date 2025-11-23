@@ -18,6 +18,7 @@ export function EventEditForm({ eventId }: EventEditFormProps) {
   const { currentOrganization } = useOrganizerStore();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [venues, setVenues] = useState<any[]>([]);
   const [formData, setFormData] = useState<any>({
     title: '',
     descriptionMd: '',
@@ -37,19 +38,24 @@ export function EventEditForm({ eventId }: EventEditFormProps) {
 
       try {
         setLoading(true);
-        const data = await organizerApi.events.get(eventId, currentOrganization.id);
+        const [eventData, venuesData] = await Promise.all([
+          organizerApi.events.get(eventId, currentOrganization.id),
+          organizerApi.venues.list(currentOrganization.id).catch(() => []),
+        ]);
+        
         setFormData({
-          title: data.title || '',
-          descriptionMd: data.descriptionMd || '',
-          visibility: data.visibility || 'public',
-          startAt: data.startAt ? new Date(data.startAt).toISOString().slice(0, 16) : '',
-          endAt: data.endAt ? new Date(data.endAt).toISOString().slice(0, 16) : '',
-          doorTime: data.doorTime ? new Date(data.doorTime).toISOString().slice(0, 16) : '',
-          categoryId: data.categoryId || '',
-          venueId: data.venueId || '',
-          seatmapId: data.seatmapId || '',
-          coverImageUrl: data.coverImageUrl || '',
+          title: eventData.title || '',
+          descriptionMd: eventData.descriptionMd || '',
+          visibility: eventData.visibility || 'public',
+          startAt: eventData.startAt ? new Date(eventData.startAt).toISOString().slice(0, 16) : '',
+          endAt: eventData.endAt ? new Date(eventData.endAt).toISOString().slice(0, 16) : '',
+          doorTime: eventData.doorTime ? new Date(eventData.doorTime).toISOString().slice(0, 16) : '',
+          categoryId: eventData.categoryId || '',
+          venueId: eventData.venueId || '',
+          seatmapId: eventData.seatmapId || '',
+          coverImageUrl: eventData.coverImageUrl || '',
         });
+        setVenues(venuesData);
       } catch (error) {
         console.error('Failed to load event:', error);
         toast.error('Failed to load event details');
@@ -252,6 +258,33 @@ export function EventEditForm({ eventId }: EventEditFormProps) {
                   className="w-full px-4 py-2 border border-border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
                 />
               </div>
+            </div>
+          </div>
+
+          {/* Venue */}
+          <div className="border-t border-border pt-6">
+            <h2 className="text-xl font-semibold mb-4">Venue</h2>
+
+            <div>
+              <label className="block text-sm font-medium text-foreground mb-2">
+                Select Venue
+              </label>
+              <select
+                name="venueId"
+                value={formData.venueId}
+                onChange={handleChange}
+                className="w-full px-4 py-2 border border-border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+              >
+                <option value="">No venue selected</option>
+                {venues.map((venue) => (
+                  <option key={venue.id} value={venue.id}>
+                    {venue.name}
+                  </option>
+                ))}
+              </select>
+              <p className="text-xs text-muted-foreground mt-2">
+                Select a venue for your event. You can manage venues in the Venues section.
+              </p>
             </div>
           </div>
 

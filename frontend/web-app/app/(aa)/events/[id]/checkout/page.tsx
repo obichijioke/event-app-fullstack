@@ -17,6 +17,7 @@ import { promotionsApi } from '@/lib/api/promotions-api';
 import { getErrorMessage } from '@/lib/utils/error-message';
 import { Calendar, MapPin, Eye } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { ApiError } from '@/lib/api/client';
 
 const STEPS = [
   { id: 1, title: 'Select Tickets', subtitle: 'Choose your tickets' },
@@ -90,6 +91,7 @@ export default function CheckoutPage({ params }: Props) {
   const orderAmounts = useMemo(() => {
     let subtotalCents = 0;
     let feesCents = 0;
+    let totalTickets = 0;
 
     ticketSelections.forEach((quantity, ticketTypeId) => {
       if (quantity <= 0) return;
@@ -98,14 +100,32 @@ export default function CheckoutPage({ params }: Props) {
 
       subtotalCents += Number(ticketType.priceCents) * quantity;
       feesCents += Number(ticketType.feeCents) * quantity;
+      totalTickets += quantity;
     });
+
+    // Calculate Platform & Processing Fees
+    if (event?.fees) {
+      if (event.fees.platform) {
+        const { percent, fixedCents } = event.fees.platform;
+        // Match backend formula: (subtotal * percent * 100) / 10000
+        feesCents += Math.round((subtotalCents * percent * 100) / 10000);
+        feesCents += fixedCents * totalTickets;
+      }
+      if (event.fees.processing) {
+        const { percent, fixedCents } = event.fees.processing;
+        // Match backend formula: (subtotal * percent * 100) / 10000
+        feesCents += Math.round((subtotalCents * percent * 100) / 10000);
+        feesCents += fixedCents * totalTickets;
+      }
+    }
+
 
     return {
       subtotalCents,
       feesCents,
       totalBeforeDiscountCents: subtotalCents + feesCents,
     };
-  }, [ticketSelections, ticketTypes]);
+  }, [ticketSelections, ticketTypes, event]);
 
   const handleQuantityChange = (ticketTypeId: string, quantity: number) => {
     setTicketSelections((prev) => {
@@ -131,7 +151,7 @@ export default function CheckoutPage({ params }: Props) {
       return;
     }
 
-    if (orderAmounts.totalBeforeDiscountCents <= 0) {
+    if (orderAmounts.subtotalCents <= 0) {
       toast.error('Please select tickets before applying a promo code');
       return;
     }
@@ -144,7 +164,7 @@ export default function CheckoutPage({ params }: Props) {
         code: promoCode.trim().toUpperCase(),
         eventId,
         ticketTypeIds,
-        orderAmount: orderAmounts.totalBeforeDiscountCents,
+        orderAmount: orderAmounts.subtotalCents,
       });
 
       const isValid = result.valid ?? result.isValid ?? false;
@@ -158,11 +178,17 @@ export default function CheckoutPage({ params }: Props) {
       } else {
         toast.error(result.message || 'Invalid promo code');
       }
-    } catch (error) {
-      console.error('Failed to validate promo code:', error);
-      const message =
-        error instanceof Error ? error.message : 'Failed to validate promo code';
-      toast.error(message);
+    } catch (error: unknown) {
+      if (error instanceof ApiError && error.status === 400) {
+        // Validation error (e.g. invalid code, expired, etc)
+        // Don't log to console as error, just show toast
+        toast.error(error.message);
+      } else {
+        console.error('Failed to validate promo code:', error);
+        const message =
+          error instanceof Error ? error.message : 'Failed to validate promo code';
+        toast.error(message);
+      }
     } finally {
       setIsValidatingPromo(false);
     }
@@ -196,6 +222,7 @@ export default function CheckoutPage({ params }: Props) {
       const order = await ordersApi.createOrder({
         eventId,
         items: selectedItems,
+        promoCode: appliedPromoCode,
       });
       router.push(`/events/${eventId}/checkout/payment?orderId=${order.id}`);
     } catch (error) {
@@ -392,6 +419,9 @@ export default function CheckoutPage({ params }: Props) {
               appliedPromoCode={appliedPromoCode}
               onRemovePromoCode={handleRemovePromoCode}
               suggestedPromoCodes={suggestedCodes}
+              isLoading={creatingOrder}
+              actionErrorMessage={actionError || undefined}
+              overrideFeesCents={orderAmounts.feesCents}
             />
           </div>
         </div>
