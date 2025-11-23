@@ -227,6 +227,83 @@ export class ApiClient {
       method: 'DELETE',
     });
   }
+
+  async upload<T>(endpoint: string, file: File, fieldName = 'file'): Promise<T> {
+    const url = `${this.baseUrl}${endpoint}`;
+    const token = await this.getAuthToken();
+
+    const formData = new FormData();
+    formData.append(fieldName, file);
+
+    const headers: Record<string, string> = {};
+    if (token) {
+      headers.Authorization = `Bearer ${token}`;
+    }
+    // Note: Don't set Content-Type header - browser will set it with boundary for multipart/form-data
+
+    try {
+      const response = await fetch(url, {
+        method: 'POST',
+        headers,
+        body: formData,
+        credentials: 'include',
+      });
+
+      if (response.status === 401) {
+        await this.refreshAccessToken();
+        const newToken = await this.getAuthToken();
+        if (newToken) {
+          headers.Authorization = `Bearer ${newToken}`;
+        }
+        const retryResponse = await fetch(url, {
+          method: 'POST',
+          headers,
+          body: formData,
+          credentials: 'include',
+        });
+
+        if (!retryResponse.ok) {
+          let errorData: Record<string, unknown> | undefined;
+          try {
+            errorData = await retryResponse.json();
+          } catch {
+            errorData = { message: retryResponse.statusText };
+          }
+          throw new ApiError(
+            retryResponse.status,
+            (errorData?.message as string) || `HTTP ${retryResponse.status}`,
+            errorData
+          );
+        }
+
+        return retryResponse.json();
+      }
+
+      if (!response.ok) {
+        let errorData: Record<string, unknown> | undefined;
+        try {
+          errorData = await response.json();
+        } catch {
+          errorData = { message: response.statusText };
+        }
+        throw new ApiError(
+          response.status,
+          (errorData?.message as string) || `HTTP ${response.status}`,
+          errorData
+        );
+      }
+
+      return response.json();
+    } catch (error) {
+      if (error instanceof ApiError) {
+        throw error;
+      }
+      throw new ApiError(
+        0,
+        error instanceof Error ? error.message : 'Network error occurred'
+      );
+    }
+  }
 }
 
 export const apiClient = new ApiClient();

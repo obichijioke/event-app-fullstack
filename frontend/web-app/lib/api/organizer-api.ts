@@ -578,7 +578,7 @@ export const organizerApi = {
     },
 
     create: (orgId: string, data: CreateVenueDto) => {
-      return apiClient.post<Venue>(`/organizer/venues?orgId=${orgId}`, data);
+      return apiClient.post<Venue>('/organizer/venues', { ...data, orgId });
     },
 
     update: (venueId: string, data: UpdateVenueDto, orgId: string) => {

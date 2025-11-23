@@ -117,4 +117,14 @@ export const authApi = {
 
   getFollowing: () =>
     apiClient.get<FollowingOrganization[]>('/auth/me/following'),
+
+  // Avatar management
+  uploadAvatar: (file: File) =>
+    apiClient.upload<{ message: string; avatarUrl: string }>('/account/avatar', file),
+
+  deleteAvatar: () =>
+    apiClient.delete<{ message: string }>('/account/avatar'),
+
+  getAvatarUrl: () =>
+    apiClient.get<{ avatarUrl: string | null }>('/account/avatar'),
 };

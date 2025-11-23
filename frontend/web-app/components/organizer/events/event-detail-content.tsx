@@ -8,8 +8,8 @@ import {
   Users,
   DollarSign,
   Ticket,
+  ArrowLeft,
   Edit,
-  BarChart3,
   ShoppingCart,
   UserCheck,
   Settings,
@@ -23,7 +23,7 @@ import { StatCard } from '../stat-card';
 import { EmptyState } from '../empty-state';
 import { EventStatusActions } from './event-status-actions';
 import { CurrencyDisplay } from '@/components/common/currency-display';
-import type { DashboardEvent } from '@/lib/types/organizer';
+import type { DashboardEvent, EventAnalytics, InventorySnapshot } from '@/lib/types/organizer';
 
 interface EventDetailContentProps {
   eventId: string;
@@ -31,7 +31,9 @@ interface EventDetailContentProps {
 
 export function EventDetailContent({ eventId }: EventDetailContentProps) {
   const { currentOrganization } = useOrganizerStore();
-  const [event, setEvent] = useState<any>(null);
+  const [event, setEvent] = useState<DashboardEvent & { venue?: any; category?: any } | null>(null);
+  const [analytics, setAnalytics] = useState<EventAnalytics | null>(null);
+  const [inventory, setInventory] = useState<InventorySnapshot | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -41,8 +43,24 @@ export function EventDetailContent({ eventId }: EventDetailContentProps) {
     try {
       setLoading(true);
       setError(null);
-      const data = await organizerApi.events.get(eventId, currentOrganization.id);
-      setEvent(data);
+      const [eventData, inventoryData, analyticsData] = await Promise.all([
+        organizerApi.events.get(eventId, currentOrganization.id),
+        organizerApi.inventory
+          .getSnapshot(eventId, currentOrganization.id)
+          .catch((err) => {
+            console.warn('Failed to load inventory snapshot:', err);
+            return null;
+          }),
+        organizerApi.analytics
+          .getEventAnalytics(eventId, currentOrganization.id)
+          .catch((err) => {
+            console.warn('Failed to load event analytics:', err);
+            return null;
+          }),
+      ]);
+      setEvent(eventData);
+      setInventory(inventoryData);
+      setAnalytics(analyticsData);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load event');
       console.error('Event error:', err);
@@ -96,6 +114,7 @@ export function EventDetailContent({ eventId }: EventDetailContentProps) {
 
   const quickLinks = [
     { href: `/organizer/events/${eventId}/edit`, icon: Edit, label: 'Edit Event' },
+    { href: `/organizer/events/${eventId}/venue`, icon: MapPin, label: 'Venue' },
     { href: `/organizer/events/${eventId}/tickets`, icon: Ticket, label: 'Manage Tickets' },
     { href: `/organizer/events/${eventId}/orders`, icon: ShoppingCart, label: 'View Orders' },
     { href: `/organizer/events/${eventId}/attendees`, icon: Users, label: 'Attendees' },
@@ -106,8 +125,15 @@ export function EventDetailContent({ eventId }: EventDetailContentProps) {
       icon: Calendar,
       label: 'Occurrences',
     },
-    { href: `/organizer/events/${eventId}/seatmap`, icon: MapPin, label: 'Seatmap' },
+    { href: `/organizer/events/${eventId}/seatmap`, icon: Settings, label: 'Seatmap' },
   ];
+
+  const ticketsSold = inventory?.totals.sold ?? analytics?.tickets.issued ?? 0;
+  const revenueCents = inventory?.totals.grossRevenueCents ?? 0;
+  const ordersCount = analytics?.tickets.issued ?? ticketsSold;
+  const checkedIn = inventory?.totals.checkedIn ?? analytics?.tickets.checked_in ?? 0;
+  const currency =
+    (event as any)?.currency || inventory?.ticketTypes?.[0]?.currency || 'USD';
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -151,7 +177,10 @@ export function EventDetailContent({ eventId }: EventDetailContentProps) {
             href="/organizer/events"
             className="px-4 py-2 border border-border rounded-lg hover:bg-muted transition"
           >
-            ← Back to Events
+            <div className="flex items-center gap-2">
+              <ArrowLeft className="w-4 h-4" />
+              Back to Events
+            </div>
           </Link>
         </div>
 
@@ -167,15 +196,15 @@ export function EventDetailContent({ eventId }: EventDetailContentProps) {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
         <MetricCard
           label="Tickets Sold"
-          value={event.ticketsSold || 0}
+          value={ticketsSold}
           icon={<Ticket className="w-5 h-5" />}
         />
         <MetricCard
           label="Revenue"
           value={
             <CurrencyDisplay
-              amountCents={event.revenue || 0}
-              currency={event.currency || 'USD'}
+              amountCents={revenueCents}
+              currency={currency}
               showFree={false}
             />
           }
@@ -183,12 +212,12 @@ export function EventDetailContent({ eventId }: EventDetailContentProps) {
         />
         <MetricCard
           label="Orders"
-          value={event.ordersCount || 0}
+          value={ordersCount}
           icon={<ShoppingCart className="w-5 h-5" />}
         />
         <MetricCard
           label="Checked In"
-          value={event.checkedIn || 0}
+          value={checkedIn}
           icon={<UserCheck className="w-5 h-5" />}
         />
       </div>
@@ -196,6 +225,13 @@ export function EventDetailContent({ eventId }: EventDetailContentProps) {
       {/* Quick Links */}
       <StatCard title="Quick Actions" className="mb-8">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <Link
+            href={`/organizer/events/${eventId}/venue`}
+            className="flex flex-col items-center gap-2 p-4 border border-border rounded-lg hover:bg-muted transition"
+          >
+            <MapPin className="w-6 h-6 text-primary" />
+            <span className="text-sm font-medium text-center">Manage Venue</span>
+          </Link>
           {quickLinks.map((link) => {
             const Icon = link.icon;
             return (
@@ -261,7 +297,41 @@ export function EventDetailContent({ eventId }: EventDetailContentProps) {
           </StatCard>
         </div>
 
-        <div className="lg:col-span-1">
+        <div className="lg:col-span-1 space-y-4">
+          <StatCard title="Venue">
+            {event.venue ? (
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 text-foreground font-medium">
+                  <MapPin className="w-4 h-4 text-primary" />
+                  <span>{event.venue.name}</span>
+                </div>
+                {event.venue.address && (
+                  <p className="text-sm text-muted-foreground">
+                    {event.venue.address.line1}
+                    {event.venue.address.city ? `, ${event.venue.address.city}` : ''}
+                  </p>
+                )}
+                <Link
+                  href={`/organizer/events/${eventId}/venue`}
+                  className="inline-flex items-center gap-2 text-sm text-primary hover:underline"
+                >
+                  <Edit className="w-4 h-4" />
+                  Manage venue
+                </Link>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                <p className="text-sm text-muted-foreground">No venue selected yet.</p>
+                <Link
+                  href={`/organizer/events/${eventId}/venue`}
+                  className="inline-flex items-center gap-2 text-sm text-primary hover:underline"
+                >
+                  <Edit className="w-4 h-4" />
+                  Add a venue
+                </Link>
+              </div>
+            )}
+          </StatCard>
           <StatCard title="Event Links">
             <div className="space-y-2">
               <a

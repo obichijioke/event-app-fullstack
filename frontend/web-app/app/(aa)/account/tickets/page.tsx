@@ -4,6 +4,8 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { ticketsApi, type Ticket } from '@/lib/api/tickets-api';
 import { Loader2 } from 'lucide-react';
+import { QRCode } from '@/components/common/qr-code';
+import toast from 'react-hot-toast';
 
 export default function TicketsPage() {
   const [activeTab, setActiveTab] = useState<'upcoming' | 'past'>('upcoming');
@@ -28,6 +30,7 @@ export default function TicketsPage() {
       setTickets(data);
     } catch (err: any) {
       setError(err?.message || 'Failed to load tickets');
+      toast.error('Failed to load tickets');
     } finally {
       setLoading(false);
     }
@@ -35,7 +38,7 @@ export default function TicketsPage() {
 
   const handleTransfer = async (ticketId: string) => {
     if (!transferEmail.trim()) {
-      alert('Please enter a recipient email');
+      toast.error('Please enter a recipient email');
       return;
     }
 
@@ -45,12 +48,12 @@ export default function TicketsPage() {
         ticketId,
         recipientEmail: transferEmail,
       });
-      alert('Transfer initiated successfully! The recipient will receive an email.');
+      toast.success('Transfer initiated! The recipient will receive an email.');
       setSelectedTicket(null);
       setTransferEmail('');
       fetchTickets();
     } catch (err: any) {
-      alert(err?.message || 'Failed to initiate transfer');
+      toast.error(err?.message || 'Failed to initiate transfer');
     } finally {
       setTransferring(false);
     }
@@ -159,9 +162,8 @@ export default function TicketsPage() {
                         </span>
                       </p>
                     </div>
-                    <div className="w-24 h-24 bg-muted rounded flex items-center justify-center flex-shrink-0 ml-4">
-                      {/* QR Code Placeholder */}
-                      <span className="text-xs text-muted-foreground">QR</span>
+                    <div className="flex-shrink-0 ml-4">
+                      <QRCode value={ticket.qrCode} size={80} className="p-2" />
                     </div>
                   </div>
 
@@ -197,7 +199,7 @@ export default function TicketsPage() {
                   ) : (
                     <div className="flex gap-3 pt-4 border-t border-border">
                       <Link
-                        href={`/tickets/${ticket.id}`}
+                        href={`/account/tickets/${ticket.id}`}
                         className="flex-1 text-center px-4 py-2 bg-primary text-primary-foreground rounded-md hover:opacity-90 transition text-sm"
                       >
                         View Ticket

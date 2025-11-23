@@ -1,5 +1,6 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
+import { Injectable, BadRequestException, Logger } from '@nestjs/common';
 import { PrismaService } from '../common/prisma/prisma.service';
+import { StorageService } from '../common/storage.service';
 import { OrderStatus, TicketStatus, RefundStatus } from '@prisma/client';
 import { RequestRefundDto } from './dto/request-refund.dto';
 
@@ -13,9 +14,17 @@ interface TransferQuery {
   limit?: number;
 }
 
+const ALLOWED_AVATAR_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+const MAX_AVATAR_SIZE = 5 * 1024 * 1024; // 5MB
+
 @Injectable()
 export class AccountService {
-  constructor(private readonly prisma: PrismaService) {}
+  private readonly logger = new Logger(AccountService.name);
+
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly storageService: StorageService,
+  ) {}
 
   async getStats(userId: string) {
     const [orderAggregate, activeTickets, followingCount] = await Promise.all([
@@ -252,5 +261,167 @@ export class AccountService {
     });
 
     return refund;
+  }
+
+  /**
+   * Get user profile including avatar
+   */
+  async getProfile(userId: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        phone: true,
+        role: true,
+        avatarUrl: true,
+        emailVerifiedAt: true,
+        twofaEnabled: true,
+        createdAt: true,
+      },
+    });
+
+    if (!user) {
+      throw new BadRequestException('User not found');
+    }
+
+    return user;
+  }
+
+  /**
+   * Upload or update user avatar
+   */
+  async uploadAvatar(
+    userId: string,
+    file: { buffer: Buffer; originalname: string; mimetype: string; size: number },
+  ) {
+    // Validate file type
+    if (!ALLOWED_AVATAR_TYPES.includes(file.mimetype)) {
+      throw new BadRequestException(
+        `Invalid file type. Allowed types: ${ALLOWED_AVATAR_TYPES.join(', ')}`,
+      );
+    }
+
+    // Validate file size
+    if (file.size > MAX_AVATAR_SIZE) {
+      throw new BadRequestException(
+        `File too large. Maximum size: ${MAX_AVATAR_SIZE / 1024 / 1024}MB`,
+      );
+    }
+
+    // Get current user to check for existing avatar
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { avatarKey: true },
+    });
+
+    if (!user) {
+      throw new BadRequestException('User not found');
+    }
+
+    // Delete old avatar if exists
+    if (user.avatarKey) {
+      try {
+        await this.storageService.deleteFile(user.avatarKey);
+        this.logger.log(`Deleted old avatar for user ${userId}`);
+      } catch (error) {
+        this.logger.warn(`Failed to delete old avatar: ${user.avatarKey}`, error);
+      }
+    }
+
+    // Upload new avatar
+    const result = await this.storageService.uploadFile(
+      file.buffer,
+      file.originalname,
+      file.mimetype,
+      'avatars',
+    );
+
+    // Update user with new avatar
+    const updatedUser = await this.prisma.user.update({
+      where: { id: userId },
+      data: {
+        avatarUrl: result.url,
+        avatarKey: result.key,
+      },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        avatarUrl: true,
+      },
+    });
+
+    this.logger.log(`Avatar uploaded for user ${userId}: ${result.key}`);
+
+    return {
+      message: 'Avatar uploaded successfully',
+      avatarUrl: updatedUser.avatarUrl,
+    };
+  }
+
+  /**
+   * Delete user avatar
+   */
+  async deleteAvatar(userId: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { avatarKey: true },
+    });
+
+    if (!user) {
+      throw new BadRequestException('User not found');
+    }
+
+    if (!user.avatarKey) {
+      throw new BadRequestException('No avatar to delete');
+    }
+
+    // Delete from storage
+    try {
+      await this.storageService.deleteFile(user.avatarKey);
+    } catch (error) {
+      this.logger.warn(`Failed to delete avatar file: ${user.avatarKey}`, error);
+    }
+
+    // Update user
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: {
+        avatarUrl: null,
+        avatarKey: null,
+      },
+    });
+
+    this.logger.log(`Avatar deleted for user ${userId}`);
+
+    return { message: 'Avatar deleted successfully' };
+  }
+
+  /**
+   * Get fresh avatar URL (useful for S3 signed URLs that expire)
+   */
+  async getAvatarUrl(userId: string): Promise<string | null> {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { avatarKey: true, avatarUrl: true },
+    });
+
+    if (!user) {
+      throw new BadRequestException('User not found');
+    }
+
+    if (!user.avatarKey) {
+      return null;
+    }
+
+    // Get a fresh signed URL if using S3
+    try {
+      const url = await this.storageService.getSignedUrl(user.avatarKey);
+      return url;
+    } catch {
+      return user.avatarUrl;
+    }
   }
 }

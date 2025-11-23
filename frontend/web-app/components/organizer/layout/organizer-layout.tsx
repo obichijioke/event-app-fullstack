@@ -23,7 +23,8 @@ export function OrganizerLayout({ children }: OrganizerLayoutProps) {
         <OrganizerHeader />
         <div className="flex">
           <OrganizerSidebar />
-          <main className="flex-1 overflow-x-hidden">
+          {/* Add left margin to account for fixed sidebar width (w-64 = 16rem) */}
+          <main className="flex-1 ml-64 overflow-x-hidden">
             {children}
           </main>
         </div>
