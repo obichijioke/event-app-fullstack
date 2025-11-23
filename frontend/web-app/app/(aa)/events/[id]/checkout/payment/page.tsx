@@ -153,7 +153,22 @@ export default function PaymentPage({ params }: Props) {
     initializePayment();
   }, [selectedProvider, order, eventId]);
 
-  const handlePaymentSuccess = () => {
+  const handlePaymentSuccess = async (paymentIntentId?: string) => {
+    if (paymentIntentId && order) {
+      try {
+        // Explicitly notify backend of success to ensure immediate status update
+        // This acts as a fallback/redundancy to webhooks
+        await ordersApi.processPayment({
+          orderId: order.id,
+          paymentIntentId,
+        });
+      } catch (error) {
+        console.error('Manual payment confirmation failed:', error);
+        // We continue anyway as the webhook might have succeeded
+        // or polling will catch it eventually
+      }
+    }
+    
     toast.success('Payment successful!');
     router.push(`/events/${eventId}/checkout/confirmation?orderId=${order?.id}`);
   };
@@ -164,21 +179,8 @@ export default function PaymentPage({ params }: Props) {
   };
 
   const handlePaystackSuccess = async (reference: string) => {
-    try {
-      // Backend webhook should have already processed the payment
-      // Just verify and redirect
-      await ordersApi.processPayment({
-        orderId: order!.id,
-        paymentIntentId: reference,
-      });
-      handlePaymentSuccess();
-    } catch (error) {
-      const message = getErrorMessage(
-        error,
-        'Payment verification failed. Please contact support.',
-      );
-      handlePaymentError(message);
-    }
+    // Use the unified success handler which now performs explicit verification
+    await handlePaymentSuccess(reference);
   };
 
   const handlePaystackClose = () => {
@@ -330,6 +332,8 @@ export default function PaymentPage({ params }: Props) {
               ticketTypes={ticketTypes}
               showSecurityBadges
               stepLabel="Step 2 of 3"
+              overrideFeesCents={Number(order.feesCents)}
+              overrideDiscountCents={Number(order.discountCents)}
             />
           </div>
         </div>

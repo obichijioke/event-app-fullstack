@@ -8,8 +8,10 @@ import { StripePaymentProvider } from './providers/stripe/stripe.service';
 import { PAYMENT_PROVIDERS } from './tokens';
 import { TestPaymentProvider } from './providers/test/test-payment.provider';
 
+import { PromotionsModule } from '../promotions/promotions.module';
+
 @Module({
-  imports: [CommonModule],
+  imports: [CommonModule, PromotionsModule],
   providers: [
     OrdersService,
     PaymentService,

@@ -31,12 +31,11 @@ const promoSchema = z.object({
   usageLimit: z.number().int().nonnegative().optional(),
 });
 
-const feeSchema = z.object({ region: z.string().optional(), taxType: z.string().optional(), rate: z.number().min(0).max(1).optional(), absorbFees: z.boolean() });
+
 
 const ticketsFormSchema = z.object({
   tickets: z.array(ticketSchema),
   promos: z.array(promoSchema),
-  fees: feeSchema.optional(),
 });
 
 type TicketsValues = z.infer<typeof ticketsFormSchema>;
@@ -48,28 +47,27 @@ export function TicketsSection() {
   );
 
   const defaultTickets: TicketsValues = {
-  tickets: Array.isArray(tickets?.payload?.ticketTypes)
-    ? (tickets?.payload?.ticketTypes as any[]).map((t) => ({
-        name: t.name ?? '',
-        kind: (t.kind as any) ?? 'paid',
-        priceCents: t.priceCents != null ? Number(t.priceCents) : undefined,
-        quantity: t.quantity != null ? Number(t.quantity) : undefined,
-        visibility: (t.visibility as any) ?? 'public',
-        salesStart: t.salesStart ?? '',
-        salesEnd: t.salesEnd ?? '',
-      }))
-    : [],
-  promos: Array.isArray(tickets?.payload?.promoCodes)
-    ? (tickets?.payload?.promoCodes as any[]).map((p) => ({
-        code: p.code ?? '',
-        discountType: (p.discountType as any) ?? 'percent',
-        amountOffCents: p.amountOffCents != null ? Number(p.amountOffCents) : undefined,
-        percentOff: p.percentOff != null ? Number(p.percentOff) : undefined,
-        usageLimit: p.usageLimit != null ? Number(p.usageLimit) : undefined,
-      }))
-    : [],
-  fees: (tickets?.payload?.fees as any) ?? { absorbFees: false },
-};
+    tickets: Array.isArray(tickets?.payload?.ticketTypes)
+      ? (tickets?.payload?.ticketTypes as any[]).map((t) => ({
+          name: t.name ?? '',
+          kind: (t.kind as any) ?? 'paid',
+          priceCents: t.priceCents != null ? Number(t.priceCents) : undefined,
+          quantity: t.quantity != null ? Number(t.quantity) : undefined,
+          visibility: (t.visibility as any) ?? 'public',
+          salesStart: t.salesStart ?? '',
+          salesEnd: t.salesEnd ?? '',
+        }))
+      : [],
+    promos: Array.isArray(tickets?.payload?.promoCodes)
+      ? (tickets?.payload?.promoCodes as any[]).map((p) => ({
+          code: p.code ?? '',
+          discountType: (p.discountType as any) ?? 'percent',
+          amountOffCents: p.amountOffCents != null ? Number(p.amountOffCents) : undefined,
+          percentOff: p.percentOff != null ? Number(p.percentOff) : undefined,
+          usageLimit: p.usageLimit != null ? Number(p.usageLimit) : undefined,
+        }))
+      : [],
+  };
 
   const form = useForm<TicketsValues>({
     resolver: zodResolver(ticketsFormSchema),
@@ -86,7 +84,8 @@ export function TicketsSection() {
           'tickets',
           {
             autosave: true,
-            payload: { ticketTypes: values.tickets, promoCodes: values.promos, fees: values.fees },
+            payload: { ticketTypes: values.tickets, promoCodes: values.promos },
+            status: 'valid',
           },
           { showToast: false }
         );
@@ -101,17 +100,6 @@ export function TicketsSection() {
     }
   });
 
-  const onSubmit = form.handleSubmit(async (values) => {
-    await updateSection(
-      'tickets',
-      {
-        payload: { ticketTypes: values.tickets, promoCodes: values.promos, fees: values.fees },
-        status: 'valid',
-      },
-      { showToast: true }
-    );
-  });
-
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -124,7 +112,7 @@ export function TicketsSection() {
         </Button>
       </div>
 
-      <form className="space-y-4" onSubmit={onSubmit}>
+      <form className="space-y-4" onSubmit={(e) => e.preventDefault()}>
         {fields.length === 0 ? (
           <div className="rounded-xl border border-dashed border-border p-6 text-center text-muted-foreground">
             No tickets yet. Add your first ticket.
@@ -199,11 +187,7 @@ export function TicketsSection() {
           </div>
         )}
 
-        <div className="flex items-center gap-3">
-          <Button type="submit" disabled={isSaving}>{isSaving ? 'SavingÃ¢â‚¬Â¦' : 'Save tickets'}</Button>
-          <span className="text-xs text-muted-foreground">Autosaves; this marks the section complete.</span>
-        </div>
-              <div className="space-y-6">
+        <div className="space-y-6">
           <div className="flex items-center justify-between">
             <h3 className="text-lg font-semibold">Promo codes</h3>
             <Button type="button" variant="outline" onClick={() => form.setValue('promos', [...form.getValues('promos'), { code: '', discountType: 'percent', percentOff: 10 }])}>
@@ -253,36 +237,7 @@ export function TicketsSection() {
             </div>
           )}
         </div>
-
-        <div className="space-y-3">
-          <h3 className="text-lg font-semibold">Taxes & fees</h3>
-          <div className="grid gap-3 md:grid-cols-4">
-            <div className="space-y-2">
-              <label className="text-xs font-medium">Region</label>
-              <Input placeholder="e.g., US-CA" value={(form.watch('fees') as any)?.region || ''} onChange={(e) => form.setValue('fees', { ...(form.getValues('fees') as any), region: e.target.value })} />
-            </div>
-            <div className="space-y-2">
-              <label className="text-xs font-medium">Tax type</label>
-              <Input placeholder="VAT, GST, etc." value={(form.watch('fees') as any)?.taxType || ''} onChange={(e) => form.setValue('fees', { ...(form.getValues('fees') as any), taxType: e.target.value })} />
-            </div>
-            <div className="space-y-2">
-              <label className="text-xs font-medium">Rate</label>
-              <Input type="number" step="0.0001" placeholder="0.075" value={(form.watch('fees') as any)?.rate as any} onChange={(e) => form.setValue('fees', { ...(form.getValues('fees') as any), rate: Number(e.target.value) })} />
-              <p className="text-xs text-muted-foreground">Use decimal form (0.075 = 7.5%).</p>
-            </div>
-            <div className="space-y-2">
-              <label className="text-xs font-medium">Fees</label>
-              <Select value={String((form.watch('fees') as any)?.absorbFees ?? false)} onChange={(e) => form.setValue('fees', { ...(form.getValues('fees') as any), absorbFees: e.target.value === 'true' })}>
-                <option value="false">Pass fees on</option>
-                <option value="true">Absorb fees</option>
-              </Select>
-              <p className="text-xs text-muted-foreground">Choose whether attendees or you cover platform fees.</p>
-            </div>
-          </div>
-        </div>
-
       </form>
-
     </div>
   );
 }

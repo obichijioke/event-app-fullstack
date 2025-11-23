@@ -95,6 +95,16 @@ export interface PublicEvent {
     orders?: number;
     tickets?: number;
   };
+  fees?: {
+    platform: {
+      percent: number;
+      fixedCents: number;
+    } | null;
+    processing: {
+      percent: number;
+      fixedCents: number;
+    } | null;
+  };
 }
 
 export async function fetchEvents(

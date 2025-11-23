@@ -12,7 +12,7 @@ import toast from 'react-hot-toast';
 interface StripePaymentFormProps {
   amount: number;
   currency: string;
-  onSuccess: () => void;
+  onSuccess: (paymentIntentId?: string) => void;
   onError: (error: string) => void;
   returnUrl: string;
 }
@@ -44,8 +44,9 @@ export function StripePaymentForm({
     setErrorMessage(null);
 
     try {
-      const { error } = await stripe.confirmPayment({
+      const { error, paymentIntent } = await stripe.confirmPayment({
         elements,
+        redirect: 'if_required',
         confirmParams: {
           return_url: returnUrl,
         },
@@ -63,9 +64,13 @@ export function StripePaymentForm({
         setErrorMessage(message || 'Payment failed');
         onError(message || 'Payment failed');
         toast.error(message || 'Payment failed');
-      } else {
+      } else if (paymentIntent && paymentIntent.status === 'succeeded') {
         // Payment succeeded - webhook will handle backend updates
-        onSuccess();
+        // But we also notify parent to manually confirm if needed
+        onSuccess(paymentIntent.id);
+      } else {
+         // Fallback for redirect flow or other statuses
+         onSuccess();
       }
     } catch (err) {
       const message = 'An unexpected error occurred.';

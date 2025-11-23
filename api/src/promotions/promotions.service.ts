@@ -525,7 +525,7 @@ export class PromotionsService {
     });
 
     if (!promoCode) {
-      throw new NotFoundException('Invalid promo code');
+      throw new BadRequestException('Invalid promo code');
     }
 
     // Check if promo code is active

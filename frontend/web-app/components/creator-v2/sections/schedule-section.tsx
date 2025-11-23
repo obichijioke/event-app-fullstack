@@ -17,6 +17,8 @@ import { RecurrenceBuilder, type RecurrenceConfig } from '@/components/creator-v
 import { venuesApi, type Venue } from '@/lib/api/venues-api';
 import { useOrganizerStore } from '@/lib/stores/organizer-store';
 
+import { CreateVenueModal } from '@/components/creator-v2/modals/create-venue-modal';
+
 const occurrenceSchema = z.object({
   startsAt: z.string().min(1, 'Start time required'),
   endsAt: z.string().optional(),
@@ -34,6 +36,7 @@ const overrideSchema = z.object({
 const scheduleSchema = z.object({
   mode: z.enum(['single', 'multi_day', 'recurring']),
   timezone: z.string().min(1, 'Timezone required'),
+  venueId: z.string().optional(),
   occurrences: z.array(occurrenceSchema).min(1, 'Add at least one occurrence'),
   notes: z.string().optional(),
   rrule: z.string().optional(),
@@ -52,6 +55,7 @@ export function ScheduleSection() {
   const defaultValues: ScheduleValues = {
     mode: ((schedule?.payload?.mode as any) ?? 'single') as any,
     timezone: (schedule?.payload?.timezone as string) || draft?.timezone || 'UTC',
+    venueId: (schedule?.payload?.venueId as string) || '',
     occurrences: Array.isArray(schedule?.payload?.occurrences) && (schedule?.payload?.occurrences as any[]).length > 0
       ? ((schedule?.payload?.occurrences as any[]).map((o) => ({
           startsAt: o.startsAt ?? '',
@@ -75,25 +79,36 @@ export function ScheduleSection() {
   const { currentOrganization } = useOrganizerStore();
   const [venues, setVenues] = React.useState<Venue[]>([]);
   const [venuesLoading, setVenuesLoading] = React.useState(false);
-  useEffect(() => {
-    (async () => {
-      try {
-        setVenuesLoading(true);
-        const data = await venuesApi.getVenues();
-        // If API returns all venues, filter by org if available (support orgId or organizationId)
-        const filtered = currentOrganization
-          ? data.filter((v: any) => (v.organizationId || v.orgId) === currentOrganization.id)
-          : data;
-        setVenues(filtered);
-      } catch {
-        setVenues([]);
-      } finally {
-        setVenuesLoading(false);
-      }
-    })();
+  const [isCreateVenueOpen, setIsCreateVenueOpen] = React.useState(false);
+  const [venueSearchQuery, setVenueSearchQuery] = React.useState('');
+
+  const loadVenues = React.useCallback(async () => {
+    try {
+      setVenuesLoading(true);
+      const data = await venuesApi.getVenues();
+      const filtered = currentOrganization
+        ? data.filter((v: any) => (v.organizationId || v.orgId) === currentOrganization.id)
+        : data;
+      setVenues(filtered);
+    } catch {
+      setVenues([]);
+    } finally {
+      setVenuesLoading(false);
+    }
   }, [currentOrganization]);
 
-  // Helpers for datetime-local
+  useEffect(() => {
+    loadVenues();
+  }, [loadVenues]);
+
+  const filteredVenues = useMemo(() => {
+    if (!venueSearchQuery) return venues;
+    return venues.filter((v) => 
+      v.name.toLowerCase().includes(venueSearchQuery.toLowerCase()) ||
+      v.address?.city?.toLowerCase().includes(venueSearchQuery.toLowerCase())
+    );
+  }, [venues, venueSearchQuery]);
+
   const toLocalInput = (iso?: string) => {
     if (!iso) return '';
     const d = new Date(iso);
@@ -115,6 +130,7 @@ export function ScheduleSection() {
           {
             autosave: true,
             payload: values,
+            status: 'valid',
           },
           { showToast: false }
         );
@@ -132,17 +148,6 @@ export function ScheduleSection() {
     return () => subscription.unsubscribe();
   }, [form, debouncedSave]);
 
-  const onSubmit = form.handleSubmit(async (values) => {
-    await updateSection(
-      'schedule',
-      {
-        payload: values,
-        status: 'valid',
-      },
-      { showToast: true }
-    );
-  });
-
   return (
     <div className="space-y-8">
       <div>
@@ -150,7 +155,7 @@ export function ScheduleSection() {
         <p className="text-sm text-muted-foreground">Set date, time, and timezone. Add more occurrences as needed.</p>
       </div>
 
-      <form className="space-y-6" onSubmit={onSubmit}>
+      <form className="space-y-6" onSubmit={(e) => e.preventDefault()}>
         <div className="grid gap-5 md:grid-cols-3">
           <div className="space-y-3">
             <label className="text-sm font-medium">Mode</label>
@@ -185,6 +190,38 @@ export function ScheduleSection() {
               <p className="text-xs text-error">{form.formState.errors.timezone.message}</p>
             )}
           </div>
+        </div>
+
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <label className="text-sm font-medium">Venue</label>
+            <Button type="button" variant="ghost" size="sm" onClick={() => setIsCreateVenueOpen(true)}>
+              + Create new venue
+            </Button>
+          </div>
+          
+          <Input 
+            placeholder="Filter venues..." 
+            value={venueSearchQuery}
+            onChange={(e) => setVenueSearchQuery(e.target.value)}
+            className="mb-2"
+          />
+
+          <Select
+            value={form.watch('venueId') || ''}
+            onChange={(e) => form.setValue('venueId', e.target.value)}
+            disabled={venuesLoading}
+          >
+            <option value="">Select a venue...</option>
+            {filteredVenues.map((v) => (
+              <option key={v.id} value={v.id}>
+                {v.name} {v.address?.city ? `(${v.address.city})` : ''}
+              </option>
+            ))}
+          </Select>
+          <p className="text-xs text-muted-foreground">
+            The default venue for this event. You can override this for specific occurrences below.
+          </p>
         </div>
 
         {form.watch('mode') === 'recurring' && (
@@ -280,7 +317,7 @@ export function ScheduleSection() {
                     }}
                     disabled={venuesLoading || isCanceled}
                   >
-                    <option value="">{venuesLoading ? 'Loading venuesâ€¦' : 'Select venue (override)'}</option>
+                    <option value="">{venuesLoading ? 'Loading venues...' : 'Select venue (override)'}</option>
                     {venues.map((v) => (
                       <option key={v.id} value={v.id}>
                         {v.name}
@@ -314,12 +351,16 @@ export function ScheduleSection() {
           <label className="text-sm font-medium">Notes (optional)</label>
           <Textarea rows={3} placeholder="Door time, check-in instructions, etc." {...form.register('notes')} />
         </div>
-
-        <div className="flex items-center gap-3">
-          <Button type="submit" disabled={isSaving}>{isSaving ? 'Savingâ€¦' : 'Save schedule'}</Button>
-          <span className="text-xs text-muted-foreground">Autosaves; this marks the section complete.</span>
-        </div>
       </form>
+
+      <CreateVenueModal
+        isOpen={isCreateVenueOpen}
+        onClose={() => setIsCreateVenueOpen(false)}
+        onSuccess={(newVenue) => {
+          setVenues((prev) => [...prev, newVenue]);
+          form.setValue('venueId', newVenue.id);
+        }}
+      />
     </div>
   );
 }

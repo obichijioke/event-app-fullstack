@@ -14,6 +14,8 @@ import { resolveImageUrl } from '@/lib/utils/image';
 import { useEventCreatorDraft } from '@/components/creator-v2/event-creator-provider';
 import type { EventCreatorDraftSection } from '@/lib/types/event-creator-v2';
 import { debounce } from '@/lib/utils/debounce';
+import { ImagePlus, X } from 'lucide-react';
+import { toast } from 'react-hot-toast';
 
 const schema = z.object({
   title: z.string().min(1, 'Title is required').max(75, 'Keep it under 75'),
@@ -32,6 +34,32 @@ export function BasicsSection() {
   const [coverUrl, setCoverUrl] = React.useState<string | null>(
     (basics?.payload?.coverImageUrl as string) || null,
   );
+  const [isDragging, setIsDragging] = React.useState(false);
+
+  const handleImageUpload = async (file: File) => {
+    if (!draft) return;
+    
+    // Basic validation
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('Image must be less than 5MB');
+      return;
+    }
+
+    try {
+      // Optimistic preview could be done here with FileReader
+      const res = await eventCreatorV2Api.uploadCover(draft.id, file);
+      setCoverUrl(res.coverImageUrl);
+      await updateSection(
+        'basics',
+        { autosave: true, payload: { coverImageUrl: res.coverImageUrl } },
+        { showToast: false }
+      );
+      toast.success('Cover image uploaded');
+    } catch (error) {
+      toast.error('Failed to upload image');
+      console.error(error);
+    }
+  };
 
   // Categories (client-side fetch once)
   const [categories, setCategories] = React.useState<Category[]>([]);
@@ -77,6 +105,7 @@ export function BasicsSection() {
                     .filter(Boolean)
                 : [],
             },
+            status: 'valid',
           },
           { showToast: false }
         );
@@ -94,25 +123,6 @@ export function BasicsSection() {
     return () => subscription.unsubscribe();
   }, [form, debouncedSave]);
 
-  const onSubmit = form.handleSubmit(async (values) => {
-    await updateSection(
-      'basics',
-      {
-        payload: {
-          ...values,
-          tags: values.tags
-            ? values.tags
-                .split(',')
-                .map((t) => t.trim())
-                .filter(Boolean)
-            : [],
-        },
-        status: 'valid',
-      },
-      { showToast: true }
-    );
-  });
-
   return (
     <div className="space-y-8">
       <div>
@@ -122,7 +132,7 @@ export function BasicsSection() {
         </p>
       </div>
 
-      <form className="space-y-6" onSubmit={onSubmit}>
+      <form className="space-y-6" onSubmit={(e) => e.preventDefault()}>
         <div className="grid gap-5 md:grid-cols-2">
           <div className="space-y-3">
             <label className="text-sm font-medium">Title</label>
@@ -188,26 +198,82 @@ export function BasicsSection() {
 
         <div className="space-y-3">
           <label className="text-sm font-medium">Cover image</label>
-          <div className="flex items-center gap-4">
+          <div
+            className={`relative flex flex-col items-center justify-center rounded-xl border-2 border-dashed p-8 transition-colors ${
+              isDragging ? 'border-primary bg-primary/5' : 'border-border hover:bg-muted/50'
+            }`}
+            onDragOver={(e) => {
+              e.preventDefault();
+              setIsDragging(true);
+            }}
+            onDragLeave={() => setIsDragging(false)}
+            onDrop={async (e) => {
+              e.preventDefault();
+              setIsDragging(false);
+              const file = e.dataTransfer.files?.[0];
+              if (file) await handleImageUpload(file);
+            }}
+          >
             {coverUrl ? (
-              <img src={resolveImageUrl(coverUrl) || undefined} alt="Cover" className="h-20 w-36 rounded-md object-cover border" />
+              <div className="relative aspect-video w-full max-w-md overflow-hidden rounded-lg border bg-muted">
+                <img
+                  src={resolveImageUrl(coverUrl) || undefined}
+                  alt="Cover"
+                  className="h-full w-full object-cover"
+                />
+                <div className="absolute right-2 top-2 flex gap-2">
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    size="sm"
+                    className="h-8 w-8 p-0"
+                    onClick={() => {
+                      setCoverUrl(null);
+                      void updateSection(
+                        'basics',
+                        { autosave: true, payload: { coverImageUrl: null } },
+                        { showToast: false }
+                      );
+                    }}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
             ) : (
-              <div className="h-20 w-36 rounded-md border border-dashed flex items-center justify-center text-xs text-muted-foreground">No image</div>
+              <div className="flex flex-col items-center gap-2 text-center">
+                <div className="rounded-full bg-muted p-4">
+                  <ImagePlus className="h-8 w-8 text-muted-foreground" />
+                </div>
+                <div className="space-y-1">
+                  <p className="text-sm font-medium">
+                    <span className="text-primary cursor-pointer hover:underline">
+                      Click to upload
+                    </span>{' '}
+                    or drag and drop
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    SVG, PNG, JPG or GIF (max. 800x400px)
+                  </p>
+                </div>
+              </div>
             )}
             <input
               type="file"
+              className="absolute inset-0 cursor-pointer opacity-0 disabled:cursor-not-allowed"
               accept="image/*"
+              disabled={!!coverUrl}
               onChange={async (e) => {
                 const file = e.target.files?.[0];
-                if (!file || !draft) return;
-                if (file.size < 10 * 1024) return; // basic sanity
-                const res = await eventCreatorV2Api.uploadCover(draft.id, file);
-                setCoverUrl(res.coverImageUrl);
-                await updateSection('basics', { autosave: true, payload: { coverImageUrl: res.coverImageUrl } }, { showToast: false });
+                if (file) await handleImageUpload(file);
+                // Reset input so same file can be selected again if needed
+                e.target.value = '';
               }}
             />
           </div>
-          <p className="text-xs text-muted-foreground">16:9 recommended, minimum 1440×810.</p>
+          <p className="text-xs text-muted-foreground">
+            Recommended size: 2160 x 1080px (2:1 ratio)
+          </p>
         </div>
 
         <div className="space-y-3">
@@ -227,7 +293,7 @@ export function BasicsSection() {
 
         <div className="flex items-center gap-3">
           <Button type="submit" disabled={isSaving}>
-            {isSaving ? 'Saving…' : 'Save basics'}
+            {isSaving ? 'Saving...' : 'Save basics'}
           </Button>
           <span className="text-xs text-muted-foreground">
             Autosaves on change; this button also marks the section complete.

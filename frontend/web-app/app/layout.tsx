@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { AuthProvider } from "@/components/auth";
 import "./globals.css";
+import { Toaster } from 'react-hot-toast';
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -18,6 +19,8 @@ export const metadata: Metadata = {
   description: "Discover curated events, concerts, conferences, and nightlife experiences. Reserve seats, unlock presales, and follow your favourite organizers.",
 };
 
+
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -30,6 +33,7 @@ export default function RootLayout({
       >
         <AuthProvider>
           <main className="min-h-screen bg-background">{children}</main>
+          <Toaster position="top-center" />
         </AuthProvider>
       </body>
     </html>
