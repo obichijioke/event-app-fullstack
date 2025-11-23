@@ -250,7 +250,7 @@ export class AuthService {
   }
 
   async updateProfile(userId: string, updateProfileDto: UpdateProfileDto) {
-    const { email, name, phone } = updateProfileDto;
+    const { email, name, phone, bio } = updateProfileDto;
 
     // If email is being changed, check if it's already taken
     if (email) {
@@ -269,14 +269,17 @@ export class AuthService {
         email,
         name,
         phone,
+        bio,
       },
       select: {
         id: true,
         email: true,
         name: true,
         phone: true,
+        bio: true,
         role: true,
         status: true,
+        avatarUrl: true,
         createdAt: true,
         updatedAt: true,
       },

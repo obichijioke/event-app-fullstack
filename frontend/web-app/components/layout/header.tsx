@@ -303,7 +303,11 @@ function UserMenu({
         aria-expanded={userMenuOpen}
         aria-haspopup="true"
       >
-        <Avatar name={user.name ?? user.email} size="sm" />
+        <Avatar
+          src={user.avatarUrl ?? undefined}
+          name={user.name ?? user.email}
+          size="sm"
+        />
         <span className="hidden text-sm font-medium text-foreground md:inline">
           {user.name ?? user.email}
         </span>
@@ -314,10 +318,19 @@ function UserMenu({
       {userMenuOpen && (
         <div className="absolute right-0 mt-2 w-56 rounded-lg border border-border bg-card shadow-lg">
           <div className="border-b border-border p-4">
-            <p className="text-sm font-semibold text-foreground">
-              {user.name ?? user.email}
-            </p>
-            <p className="text-xs text-muted-foreground">{user.email}</p>
+            <div className="flex items-center gap-3">
+              <Avatar
+                src={user.avatarUrl ?? undefined}
+                name={user.name ?? user.email}
+                size="md"
+              />
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold text-foreground truncate">
+                  {user.name ?? user.email}
+                </p>
+                <p className="text-xs text-muted-foreground truncate">{user.email}</p>
+              </div>
+            </div>
           </div>
           <div className="p-2">
             <UserMenuItem href="/account" onClick={() => setUserMenuOpen(false)}>My Account</UserMenuItem>

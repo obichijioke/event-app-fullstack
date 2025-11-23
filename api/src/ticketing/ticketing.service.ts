@@ -595,58 +595,60 @@ export class TicketingService {
 
     const ticketSummaries = await Promise.all(
       event.ticketTypes.map(async (ticketType) => {
-        const [soldCount, checkedInCount, activeHolds, revenue] =
-          await Promise.all([
-            this.prisma.ticket.count({
-              where: {
-                ticketTypeId: ticketType.id,
-                status: {
-                  notIn: ['void'],
-                },
+        const [checkedInCount, activeHolds, orderItems] = await Promise.all([
+          this.prisma.ticket.count({
+            where: {
+              ticketTypeId: ticketType.id,
+              status: 'checked_in',
+            },
+          }),
+          this.prisma.hold.count({
+            where: {
+              ticketTypeId: ticketType.id,
+              expiresAt: { gt: now },
+            },
+          }),
+          this.prisma.orderItem.findMany({
+            where: {
+              ticketTypeId: ticketType.id,
+              order: {
+                status: OrderStatus.paid,
               },
-            }),
-            this.prisma.ticket.count({
-              where: {
-                ticketTypeId: ticketType.id,
-                status: 'checked_in',
-              },
-            }),
-            this.prisma.hold.count({
-              where: {
-                ticketTypeId: ticketType.id,
-                expiresAt: { gt: now },
-              },
-            }),
-            this.prisma.orderItem.aggregate({
-              where: {
-                ticketTypeId: ticketType.id,
-                order: {
-                  status: OrderStatus.paid,
-                },
-              },
-              _sum: {
-                quantity: true,
-                unitPriceCents: true,
-                unitFeeCents: true,
-              },
-            }),
-          ]);
+            },
+            select: {
+              quantity: true,
+              unitPriceCents: true,
+              unitFeeCents: true,
+            },
+          }),
+        ]);
 
         const capacity = ticketType.capacity ?? null;
-        const totalSold = soldCount;
+        const soldQuantity = orderItems.reduce(
+          (sum, item) => sum + item.quantity,
+          0,
+        );
         const remainingCapacity = capacity
-          ? Math.max(capacity - totalSold - activeHolds, 0)
+          ? Math.max(capacity - soldQuantity - activeHolds, 0)
           : null;
 
-        const grossCents = Number(revenue._sum.unitPriceCents || BigInt(0));
-        const feeCents = Number(revenue._sum.unitFeeCents || BigInt(0));
+        const grossCents = orderItems.reduce(
+          (sum, item) =>
+            sum + Number(item.unitPriceCents) * item.quantity,
+          0,
+        );
+        const feeCents = orderItems.reduce(
+          (sum, item) =>
+            sum + Number(item.unitFeeCents) * item.quantity,
+          0,
+        );
 
         return {
           id: ticketType.id,
           name: ticketType.name,
           kind: ticketType.kind,
           capacity,
-          sold: totalSold,
+          sold: soldQuantity,
           checkedIn: checkedInCount,
           holds: activeHolds,
           available: remainingCapacity,
@@ -656,6 +658,13 @@ export class TicketingService {
         };
       }),
     );
+
+    const ordersCount = await this.prisma.order.count({
+      where: {
+        eventId,
+        status: OrderStatus.paid,
+      },
+    });
 
     const totals = ticketSummaries.reduce(
       (acc, summary) => {
@@ -672,8 +681,10 @@ export class TicketingService {
         holds: 0,
         grossRevenueCents: 0,
         feeRevenueCents: 0,
+        orders: 0,
       },
     );
+    totals.orders = ordersCount;
 
     return {
       event: {

@@ -38,8 +38,14 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
         id: true,
         email: true,
         name: true,
+        phone: true,
+        bio: true,
         role: true,
         status: true,
+        avatarUrl: true,
+        emailVerifiedAt: true,
+        twofaEnabled: true,
+        createdAt: true,
       },
     });
 
@@ -47,6 +53,12 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       throw new Error('User not found or inactive');
     }
 
-    return { ...user, sessionId: payload.sessionId };
+    // Format for frontend consumption
+    return {
+      ...user,
+      emailVerified: !!user.emailVerifiedAt,
+      twoFactorEnabled: user.twofaEnabled,
+      sessionId: payload.sessionId,
+    };
   }
 }

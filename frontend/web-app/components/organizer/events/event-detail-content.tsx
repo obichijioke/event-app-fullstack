@@ -130,7 +130,10 @@ export function EventDetailContent({ eventId }: EventDetailContentProps) {
 
   const ticketsSold = inventory?.totals.sold ?? analytics?.tickets.issued ?? 0;
   const revenueCents = inventory?.totals.grossRevenueCents ?? 0;
-  const ordersCount = analytics?.tickets.issued ?? ticketsSold;
+  const ordersCount =
+    inventory?.totals.orders ??
+    analytics?.tickets.issued ??
+    ticketsSold;
   const checkedIn = inventory?.totals.checkedIn ?? analytics?.tickets.checked_in ?? 0;
   const currency =
     (event as any)?.currency || inventory?.ticketTypes?.[0]?.currency || 'USD';

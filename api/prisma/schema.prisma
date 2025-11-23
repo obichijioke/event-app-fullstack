@@ -144,6 +144,7 @@ model User {
   passwordHash    String?      @map("password_hash")
   name            String?
   phone           String?
+  bio             String?
   role            PlatformRole @default(attendee)
   twofaEnabled    Boolean      @default(false) @map("twofa_enabled")
   status          String       @default("active")
