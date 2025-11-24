@@ -5,6 +5,7 @@ import { TabNavigation } from './tab-navigation';
 import { EventOverview } from './event-overview';
 import { DetailPanels } from './detail-panels';
 import { GoogleMap } from './google-map';
+import { ReviewList } from './review-list';
 import type { EventDetailSummary } from '@/lib/events';
 import type { EventSummary } from '@/lib/homepage';
 
@@ -150,12 +151,7 @@ export function EventContentTabs({
             {activeTab === 'reviews' && (
               <div className="rounded border border-border bg-card p-6">
                 <h2 className="text-xl font-semibold mb-6">Event Reviews</h2>
-                <div className="text-center py-12">
-                  <p className="text-muted-foreground mb-4">No reviews yet</p>
-                  <p className="text-sm text-muted-foreground">
-                    Reviews will be available after the event has taken place.
-                  </p>
-                </div>
+                <ReviewList eventId={summary.id} />
               </div>
             )}
           </div>

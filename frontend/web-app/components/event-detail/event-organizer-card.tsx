@@ -1,13 +1,22 @@
+'use client';
+
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { BuildingIcon, CheckCircleIcon, MessageIcon, UserIcon, MailIcon, PhoneIcon, GlobeIcon } from '@/components/ui/icons';
 import { Button } from '@/components/ui';
 import type { EventSummary } from '@/lib/homepage';
+import { fetchOrganizerReviewsSummary, ReviewsSummary } from '@/lib/events';
 
 interface EventOrganizerCardProps {
   organizer: EventSummary['organization'];
 }
 
 export function EventOrganizerCard({ organizer }: EventOrganizerCardProps) {
+  const [reviewSummary, setReviewSummary] = useState<ReviewsSummary | null>(null);
+
+  useEffect(() => {
+    fetchOrganizerReviewsSummary(organizer.id).then(setReviewSummary);
+  }, [organizer.id]);
   return (
     <div className="rounded border border-border bg-card p-6">
       <h2 className="text-lg font-bold text-foreground mb-5">Event Organizer</h2>
@@ -25,19 +34,20 @@ export function EventOrganizerCard({ organizer }: EventOrganizerCardProps) {
               Verified
             </span>
           </div>
-          <p className="text-xs text-muted-foreground leading-relaxed mb-3">
-            Premier event organizer specializing in music festivals and concerts across Nigeria
-          </p>
-          <div className="flex gap-8">
-            <div>
-              <p className="text-sm font-semibold text-foreground">47</p>
-              <p className="text-xs text-muted-foreground">Events Hosted</p>
+          {reviewSummary && (
+            <div className="flex gap-8 mt-3">
+              {reviewSummary.totalReviews > 0 && (
+                <div>
+                  <p className="text-sm font-semibold text-foreground">
+                    {reviewSummary.averageRating.toFixed(1)} ⭐
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    ({reviewSummary.totalReviews.toLocaleString()} review{reviewSummary.totalReviews !== 1 ? 's' : ''})
+                  </p>
+                </div>
+              )}
             </div>
-            <div>
-              <p className="text-sm font-semibold text-foreground">4.8 ⭐</p>
-              <p className="text-xs text-muted-foreground">(1247 reviews)</p>
-            </div>
-          </div>
+          )}
         </div>
       </div>
 
@@ -63,38 +73,22 @@ export function EventOrganizerCard({ organizer }: EventOrganizerCardProps) {
         </Link>
       </div>
 
-      {/* Contact Information */}
-      <div className="space-y-3">
-        <div className="flex items-center gap-2.5">
-          <MailIcon className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-          <a
-            href="mailto:info@eventco.ng"
-            className="text-sm text-primary hover:underline"
-          >
-            info@eventco.ng
-          </a>
+      {/* Contact Information - Only show if available */}
+      {(organizer as any).website && (
+        <div className="space-y-3">
+          <div className="flex items-center gap-2.5">
+            <GlobeIcon className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+            <a
+              href={(organizer as any).website}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-sm text-primary hover:underline"
+            >
+              Visit Website
+            </a>
+          </div>
         </div>
-        <div className="flex items-center gap-2.5">
-          <PhoneIcon className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-          <a
-            href="tel:+2341234567890"
-            className="text-sm text-primary hover:underline"
-          >
-            +234 123 456 7890
-          </a>
-        </div>
-        <div className="flex items-center gap-2.5">
-          <GlobeIcon className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-          <a
-            href="https://eventco.ng"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-sm text-primary hover:underline"
-          >
-            Visit Website
-          </a>
-        </div>
-      </div>
+      )}
     </div>
   );
 }
