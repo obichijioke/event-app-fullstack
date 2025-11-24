@@ -92,10 +92,8 @@ export class StripePaymentProvider implements PaymentProvider {
       }
 
       // Retrieve the intent first to check its status
-      // Retrieve the intent first to check its status
-      let confirmedPayment = await this.stripe.paymentIntents.retrieve(
-        paymentIntentId,
-      );
+      let confirmedPayment =
+        await this.stripe.paymentIntents.retrieve(paymentIntentId);
 
       if (confirmedPayment.status === 'succeeded') {
         // Already succeeded, no need to confirm again

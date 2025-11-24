@@ -728,6 +728,7 @@ export interface Payout {
   provider?: string;
   providerRef?: string;
   failureReason?: string;
+  notes?: string;
   createdAt: string;
   updatedAt?: string;
 }

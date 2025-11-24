@@ -79,7 +79,13 @@ export function RequestPayoutModal({ onSuccess, onCancel }: RequestPayoutModalPr
 
     setLoading(true);
     try {
-      await organizerApi.payouts.create(formData, currentOrganization.id);
+      const payload: CreatePayoutDto = {
+        amountCents: Math.max(0, Math.round(formData.amountCents)),
+        currency: formData.currency,
+        scheduledFor: formData.scheduledFor || undefined,
+        notes: formData.notes?.trim() ? formData.notes.trim() : undefined,
+      };
+      await organizerApi.payouts.create(payload, currentOrganization.id);
       toast.success('Payout request submitted successfully');
       onSuccess();
     } catch (error: any) {
@@ -285,7 +291,10 @@ export function RequestPayoutModal({ onSuccess, onCancel }: RequestPayoutModalPr
                   }))
                 }
                 rows={3}
-                disabled={existingPayouts > 0 || (summary.totals.netRevenueCents - summary.totals.payoutsCents) <= 0}
+                disabled={
+                  existingPayouts > 0 ||
+                  (summary.totals.netRevenueCents - summary.totals.payoutsCents) <= 0
+                }
                 placeholder="Add any notes about this payout request..."
                 className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary resize-none disabled:opacity-50 disabled:cursor-not-allowed"
               />
