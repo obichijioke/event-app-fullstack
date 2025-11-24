@@ -6,6 +6,8 @@ import { EventOverview } from './event-overview';
 import { DetailPanels } from './detail-panels';
 import { GoogleMap } from './google-map';
 import { ReviewList } from './review-list';
+import { EventAnnouncements } from './event-announcements';
+import { TicketSelector } from './ticket-selector';
 import type { EventDetailSummary } from '@/lib/events';
 import type { EventSummary } from '@/lib/homepage';
 
@@ -40,6 +42,9 @@ export function EventContentTabs({
         <div className="grid gap-8 lg:grid-cols-3">
           {/* Left Column - Tab Content */}
           <div className="space-y-8 lg:col-span-2">
+            {/* Event Announcements - Shown on all tabs */}
+            <EventAnnouncements />
+
             {/* Overview Tab */}
             {activeTab === 'overview' && (
               <div className="space-y-8">
@@ -50,41 +55,13 @@ export function EventContentTabs({
 
             {/* Tickets Tab */}
             {activeTab === 'tickets' && (
-              <div className="rounded border border-border bg-card p-6">
+              <div>
                 <h2 className="text-xl font-semibold mb-6">Available Tickets</h2>
-                <div className="space-y-4">
-                  {tickets.map((ticket) => (
-                    <div
-                      key={ticket.id}
-                      className="flex items-center justify-between p-4 border border-border rounded hover:bg-muted/50 transition-colors"
-                    >
-                      <div className="flex-1">
-                        <h3 className="font-semibold text-foreground">{ticket.name}</h3>
-                        {(ticket as any).description && (
-                          <p className="text-sm text-muted-foreground mt-1">{(ticket as any).description}</p>
-                        )}
-                        <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
-                          {(ticket as any).maxPerOrder && (
-                            <span>Max {(ticket as any).maxPerOrder} per order</span>
-                          )}
-                          {(ticket as any).salesEndAt && (
-                            <span>Sales end: {new Date((ticket as any).salesEndAt).toLocaleDateString()}</span>
-                          )}
-                        </div>
-                      </div>
-                      <div className="text-right ml-4">
-                        <p className="text-2xl font-bold text-foreground">
-                          ₦{(Number(ticket.priceCents) / 100).toLocaleString()}
-                        </p>
-                        {(ticket as any).quantityAvailable !== null && (
-                          <p className="text-xs text-muted-foreground mt-1">
-                            {(ticket as any).quantityAvailable} available
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                </div>
+                <TicketSelector
+                  tickets={tickets}
+                  eventId={summary.id}
+                  eventTitle={summary.title}
+                />
               </div>
             )}
 

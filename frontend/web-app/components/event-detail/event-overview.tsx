@@ -1,5 +1,6 @@
 import Image from 'next/image';
 import { Heading } from '@/components/ui';
+import { EventFAQ } from './event-faq';
 import type { EventDetailSummary } from '@/lib/events';
 
 type EventOverviewProps = {
@@ -55,6 +56,9 @@ export function EventOverview({ description, assets }: EventOverviewProps) {
           </div>
         </section>
       )}
+
+      {/* FAQ Section */}
+      <EventFAQ />
     </div>
   );
 }
