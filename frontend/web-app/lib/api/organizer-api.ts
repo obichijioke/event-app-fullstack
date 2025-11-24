@@ -667,7 +667,7 @@ export const organizerApi = {
     },
 
     create: (data: CreatePayoutDto, orgId: string) => {
-      return apiClient.post<Payout>('/organizer/payouts', { ...data, orgId });
+      return apiClient.post<Payout>(`/organizer/payouts?orgId=${orgId}`, data);
     },
 
     createAccount: (data: CreatePayoutAccountDto, orgId: string) => {

@@ -34,7 +34,7 @@ export class PayoutsService {
       'You do not have permission to create payouts for this organization',
     );
 
-    const { amountCents, currency, scheduledFor, provider, providerRef } =
+    const { amountCents, currency, scheduledFor, provider, providerRef, notes } =
       createPayoutDto;
 
     // Create payout
@@ -47,6 +47,7 @@ export class PayoutsService {
         scheduledFor: scheduledFor ? new Date(scheduledFor) : null,
         provider,
         providerRef,
+        notes,
       },
       include: {
         org: {
@@ -189,7 +190,7 @@ export class PayoutsService {
       );
     }
 
-    const { amountCents, currency, scheduledFor, provider, providerRef } =
+    const { amountCents, currency, scheduledFor, provider, providerRef, notes } =
       updatePayoutDto;
 
     // Update payout
@@ -201,6 +202,7 @@ export class PayoutsService {
         scheduledFor: scheduledFor ? new Date(scheduledFor) : undefined,
         provider,
         providerRef,
+        notes,
       },
       include: {
         org: {

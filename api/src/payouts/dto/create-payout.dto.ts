@@ -7,9 +7,6 @@ import {
 } from 'class-validator';
 
 export class CreatePayoutDto {
-  @IsString()
-  orgId: string;
-
   @IsNumber()
   amountCents: number;
 
@@ -27,12 +24,13 @@ export class CreatePayoutDto {
   @IsString()
   @IsOptional()
   providerRef?: string;
+
+  @IsString()
+  @IsOptional()
+  notes?: string;
 }
 
 export class CreatePayoutAccountDto {
-  @IsString()
-  orgId: string;
-
   @IsString()
   provider: string; // 'stripe', 'paypal', etc.
 

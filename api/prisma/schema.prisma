@@ -412,6 +412,7 @@ model Payout {
   initiatedAt   DateTime?
   provider      String?
   providerRef   String?      @map("provider_ref")
+  notes         String?
   failureReason String?      @map("failure_reason")
   createdAt     DateTime     @default(now()) @map("created_at")
 
