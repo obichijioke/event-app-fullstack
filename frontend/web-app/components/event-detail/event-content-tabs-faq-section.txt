@@ -1,0 +1,7 @@
+
+            {/* FAQs Tab */}
+            {activeTab === 'faqs' && (
+              <div>
+                <EventFAQ eventId={summary.id} />
+              </div>
+            )}

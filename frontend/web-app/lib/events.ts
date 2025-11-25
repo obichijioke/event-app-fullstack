@@ -1,4 +1,3 @@
-import 'server-only';
 
 import { API_BASE_URL } from './config';
 import {
@@ -444,4 +443,433 @@ function transformPromo(promo: NonNullable<PublicEvent['promoCodes']>[0]) {
     label: discountText,
     endsAt: promo.endsAt,
   };
+}
+
+// ============================
+// Review API Functions
+// ============================
+
+export interface EventReview {
+  id: string;
+  eventId: string;
+  userId: string;
+  rating: number;
+  comment?: string | null;
+  createdAt: string;
+  updatedAt: string;
+  user: {
+    id: string;
+    name: string;
+    email: string;
+  };
+}
+
+export interface ReviewsSummary {
+  averageRating: number;
+  totalReviews: number;
+  ratingDistribution: {
+    1: number;
+    2: number;
+    3: number;
+    4: number;
+    5: number;
+  };
+}
+
+export interface CreateReviewInput {
+  rating: number;
+  comment?: string;
+}
+
+export interface UpdateReviewInput {
+  rating?: number;
+  comment?: string;
+}
+
+/**
+ * Fetch reviews for a specific event
+ */
+export async function fetchEventReviews(
+  eventId: string,
+  options?: {
+    page?: number;
+    limit?: number;
+    token?: string;
+  }
+): Promise<{ data: EventReview[]; total: number; page: number; limit: number }> {
+  try {
+    const url = new URL(`/api/events/${eventId}/reviews`, API_BASE_URL);
+
+    if (options?.page) {
+      url.searchParams.set('page', options.page.toString());
+    }
+    if (options?.limit) {
+      url.searchParams.set('limit', options.limit.toString());
+    }
+
+    const headers: HeadersInit = {
+      'Content-Type': 'application/json',
+    };
+
+    if (options?.token) {
+      headers['Authorization'] = `Bearer ${options.token}`;
+    }
+
+    const response = await fetch(url.toString(), {
+      headers,
+      next: { revalidate: 30 },
+    });
+
+    if (!response.ok) {
+      throw new Error(`Reviews API failed with status ${response.status}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('[reviews] Failed to fetch event reviews', error);
+    return { data: [], total: 0, page: 1, limit: 10 };
+  }
+}
+
+/**
+ * Fetch reviews summary for an event
+ */
+export async function fetchEventReviewsSummary(
+  eventId: string
+): Promise<ReviewsSummary | null> {
+  try {
+    const url = new URL(`/api/events/${eventId}/reviews/summary`, API_BASE_URL);
+
+    const response = await fetch(url.toString(), {
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      next: { revalidate: 60 },
+    });
+
+    if (!response.ok) {
+      throw new Error(`Reviews summary API failed with status ${response.status}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('[reviews] Failed to fetch event reviews summary', error);
+    return null;
+  }
+}
+
+/**
+ * Fetch reviews summary for an organizer
+ */
+export async function fetchOrganizerReviewsSummary(
+  organizerId: string
+): Promise<ReviewsSummary | null> {
+  try {
+    const url = new URL(`/api/organizations/${organizerId}/reviews/summary`, API_BASE_URL);
+
+    const response = await fetch(url.toString(), {
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      next: { revalidate: 60 },
+    });
+
+    if (!response.ok) {
+      throw new Error(`Organizer reviews summary API failed with status ${response.status}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('[reviews] Failed to fetch organizer reviews summary', error);
+    return null;
+  }
+}
+
+/**
+ * Create a new event review (requires authentication)
+ */
+export async function createEventReview(
+  eventId: string,
+  input: CreateReviewInput,
+  token: string
+): Promise<EventReview | null> {
+  try {
+    const url = new URL(`/api/events/${eventId}/reviews`, API_BASE_URL);
+
+    const response = await fetch(url.toString(), {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+      body: JSON.stringify(input),
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.message || 'Failed to create review');
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('[reviews] Failed to create review', error);
+    throw error;
+  }
+}
+
+/**
+ * Update an existing review (requires authentication)
+ */
+export async function updateEventReview(
+  eventId: string,
+  reviewId: string,
+  input: UpdateReviewInput,
+  token: string
+): Promise<EventReview | null> {
+  try {
+    const url = new URL(`/api/events/${eventId}/reviews/${reviewId}`, API_BASE_URL);
+
+    const response = await fetch(url.toString(), {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+      body: JSON.stringify(input),
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.message || 'Failed to update review');
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('[reviews] Failed to update review', error);
+    throw error;
+  }
+}
+
+/**
+ * Delete a review (requires authentication)
+ */
+export async function deleteEventReview(
+  eventId: string,
+  reviewId: string,
+  token: string
+): Promise<void> {
+  try {
+    const url = new URL(`/api/events/${eventId}/reviews/${reviewId}`, API_BASE_URL);
+
+    const response = await fetch(url.toString(), {
+      method: 'DELETE',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.message || 'Failed to delete review');
+    }
+  } catch (error) {
+    console.error('[reviews] Failed to delete review', error);
+    throw error;
+  }
+}
+
+// ============================
+// Announcements API Functions
+// ============================
+
+export interface EventAnnouncement {
+  id: string;
+  eventId: string;
+  title: string;
+  message: string;
+  type: 'info' | 'warning' | 'important' | 'urgent';
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export async function fetchEventAnnouncements(
+  eventId: string
+): Promise<EventAnnouncement[]> {
+  try {
+    const url = new URL(`/api/events/${eventId}/announcements`, API_BASE_URL);
+
+    const response = await fetch(url.toString(), {
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      next: { revalidate: 30 },
+    });
+
+    if (!response.ok) {
+      throw new Error(`Announcements API failed with status ${response.status}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('[announcements] Failed to fetch announcements', error);
+    return [];
+  }
+}
+
+// ============================
+// FAQs API Functions
+// ============================
+
+export interface EventFAQItem {
+  id: string;
+  eventId: string;
+  question: string;
+  answer: string;
+  sortOrder: number;
+  isActive: boolean;
+  viewCount?: number;
+  helpfulCount?: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export async function fetchEventFAQs(eventId: string): Promise<EventFAQItem[]> {
+  try {
+    const url = new URL(`/api/events/${eventId}/faqs`, API_BASE_URL);
+
+    const response = await fetch(url.toString(), {
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      next: { revalidate: 60 },
+    });
+
+    if (!response.ok) {
+      throw new Error(`FAQs API failed with status ${response.status}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('[faqs] Failed to fetch FAQs', error);
+    return [];
+  }
+}
+
+// ============================
+// Announcement Tracking & Dismissals
+// ============================
+
+export async function trackAnnouncementView(
+  announcementId: string,
+  token: string
+): Promise<void> {
+  try {
+    const url = new URL(`/api/events/_/announcements/${announcementId}/view`, API_BASE_URL);
+    await fetch(url.toString(), {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+    });
+  } catch (error) {
+    console.error('[announcements] Failed to track view', error);
+  }
+}
+
+export async function dismissAnnouncement(
+  announcementId: string,
+  token: string
+): Promise<void> {
+  try {
+    const url = new URL(`/api/events/_/announcements/${announcementId}/dismiss`, API_BASE_URL);
+    await fetch(url.toString(), {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+    });
+  } catch (error) {
+    console.error('[announcements] Failed to dismiss', error);
+  }
+}
+
+export async function getDismissedAnnouncements(
+  eventId: string,
+  token: string
+): Promise<string[]> {
+  try {
+    const url = new URL(`/api/events/${eventId}/announcements/dismissed`, API_BASE_URL);
+    const response = await fetch(url.toString(), {
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+    });
+
+    if (!response.ok) {
+      return [];
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('[announcements] Failed to get dismissed', error);
+    return [];
+  }
+}
+
+// ============================
+// FAQ Tracking & Search
+// ============================
+
+export async function searchFAQs(eventId: string, query: string): Promise<EventFAQItem[]> {
+  try {
+    const url = new URL(`/api/events/${eventId}/faqs/search`, API_BASE_URL);
+    url.searchParams.set('q', query);
+
+    const response = await fetch(url.toString(), {
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      return [];
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('[faqs] Failed to search', error);
+    return [];
+  }
+}
+
+export async function trackFAQView(faqId: string): Promise<void> {
+  try {
+    const url = new URL(`/api/events/_/faqs/${faqId}/view`, API_BASE_URL);
+    await fetch(url.toString(), {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+  } catch (error) {
+    console.error('[faqs] Failed to track view', error);
+  }
+}
+
+export async function markFAQHelpful(faqId: string): Promise<void> {
+  try {
+    const url = new URL(`/api/events/_/faqs/${faqId}/helpful`, API_BASE_URL);
+    await fetch(url.toString(), {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+  } catch (error) {
+    console.error('[faqs] Failed to mark helpful', error);
+  }
 }

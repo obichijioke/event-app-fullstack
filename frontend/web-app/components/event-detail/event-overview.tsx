@@ -8,29 +8,15 @@ type EventOverviewProps = {
 };
 
 export function EventOverview({ description, assets }: EventOverviewProps) {
-  const paragraphs = description
-    .split(/\n{2,}/)
-    .map((paragraph) => paragraph.trim())
-    .filter(Boolean);
+  const hasHtml = /<\/?[a-z][\s\S]*>/i.test(description);
+  const paragraphs = !hasHtml
+    ? description
+        .split(/\n{2,}/)
+        .map((paragraph) => paragraph.trim())
+        .filter(Boolean)
+    : [];
 
   const images = assets.filter((asset) => asset.kind === 'image');
-
-  // Mock data for highlights and what's included - replace with real data
-  const highlights = [
-    'Live performances from top Nigerian artists',
-    'Multiple stages with diverse music genres',
-    'Food and beverage vendors',
-    'VIP lounge access available',
-    'Professional sound and lighting',
-    'Secure parking facilities',
-  ];
-
-  const included = [
-    'Event entry ticket',
-    'Access to all performance stages',
-    'Event program and schedule',
-    'Complimentary event merchandise',
-  ];
 
   return (
     <div className="space-y-8">
@@ -40,7 +26,9 @@ export function EventOverview({ description, assets }: EventOverviewProps) {
           About This Event
         </Heading>
         <div className="prose prose-slate max-w-none text-sm text-foreground leading-relaxed">
-          {paragraphs.length > 0 ? (
+          {hasHtml ? (
+            <div dangerouslySetInnerHTML={{ __html: description }} />
+          ) : paragraphs.length > 0 ? (
             paragraphs.map((paragraph, index) => (
               <p key={index} className="mb-3">
                 {paragraph}
@@ -50,36 +38,6 @@ export function EventOverview({ description, assets }: EventOverviewProps) {
             <p>Details coming soon.</p>
           )}
         </div>
-      </section>
-
-      {/* Event Highlights */}
-      <section className="rounded border border-border bg-card p-6">
-        <Heading as="h2" className="text-xl font-semibold mb-4">
-          Event Highlights
-        </Heading>
-        <ul className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          {highlights.map((highlight, index) => (
-            <li key={index} className="flex items-start gap-2 text-sm text-foreground">
-              <span className="text-success mt-0.5">✓</span>
-              <span>{highlight}</span>
-            </li>
-          ))}
-        </ul>
-      </section>
-
-      {/* What's Included */}
-      <section className="rounded border border-border bg-card p-6">
-        <Heading as="h2" className="text-xl font-semibold mb-4">
-          What&apos;s Included
-        </Heading>
-        <ul className="space-y-3">
-          {included.map((item, index) => (
-            <li key={index} className="flex items-start gap-2 text-sm text-foreground">
-              <span className="text-primary mt-0.5">•</span>
-              <span>{item}</span>
-            </li>
-          ))}
-        </ul>
       </section>
 
       {/* Event Gallery */}
@@ -102,6 +60,7 @@ export function EventOverview({ description, assets }: EventOverviewProps) {
           </div>
         </section>
       )}
+
     </div>
   );
 }

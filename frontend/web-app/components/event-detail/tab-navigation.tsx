@@ -6,6 +6,7 @@ const tabs = [
   { id: 'overview', label: 'Overview' },
   { id: 'tickets', label: 'Tickets' },
   { id: 'venue', label: 'Venue' },
+  { id: 'faqs', label: 'FAQs' },
   { id: 'reviews', label: 'Reviews' },
 ];
 

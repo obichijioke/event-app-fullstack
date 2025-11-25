@@ -1,22 +1,39 @@
+'use client';
+
+import { useEffect, useState } from 'react';
 import { LocationIcon, UsersIcon, StarIcon } from '@/components/ui/icons';
 import type { EventSummary } from '@/lib/homepage';
+import type { EventDetailSummary } from '@/lib/events';
+import { fetchEventReviewsSummary, ReviewsSummary } from '@/lib/events';
 
 interface QuickInfoCardsProps {
+  eventId: string;
   venue: EventSummary['venue'];
   stats: EventSummary['stats'];
+  tickets: EventDetailSummary['tickets'];
 }
 
-export function QuickInfoCards({ venue, stats }: QuickInfoCardsProps) {
+export function QuickInfoCards({ eventId, venue, stats, tickets }: QuickInfoCardsProps) {
+  const [reviewSummary, setReviewSummary] = useState<ReviewsSummary | null>(null);
+
+  useEffect(() => {
+    fetchEventReviewsSummary(eventId).then(setReviewSummary);
+  }, [eventId]);
+
   const venueName = venue?.name || 'TBA';
   const venueLocation = [venue?.city, venue?.region]
     .filter(Boolean)
     .join(', ') || 'Location TBA';
 
-  // Mock data for attendees and rating - replace with real data when available
+  // Calculate real ticket availability
   const attendeesCount = stats.orderCount || 0;
-  const ticketsLeft = 1479; // This should come from actual ticket availability
-  const rating = 4.8;
-  const reviewCount = 324;
+  const totalCapacity = tickets.reduce((sum, ticket) => sum + (ticket.capacity || 0), 0);
+  // Assuming sold tickets are tracked in stats; otherwise we'd need to fetch this separately
+  const ticketsLeft = totalCapacity > 0 ? totalCapacity - attendeesCount : 0;
+
+  // Use real review data
+  const rating = reviewSummary?.averageRating || 0;
+  const reviewCount = reviewSummary?.totalReviews || 0;
 
   return (
     <section className="border-b border-border bg-background">
@@ -63,10 +80,19 @@ export function QuickInfoCards({ venue, stats }: QuickInfoCardsProps) {
               <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1">
                 Rating
               </p>
-              <p className="text-base font-semibold text-foreground">{rating} ★</p>
-              <p className="text-sm text-muted-foreground">
-                {reviewCount.toLocaleString()} reviews
-              </p>
+              {reviewCount > 0 ? (
+                <>
+                  <p className="text-base font-semibold text-foreground">{rating.toFixed(1)} ★</p>
+                  <p className="text-sm text-muted-foreground">
+                    {reviewCount.toLocaleString()} review{reviewCount !== 1 ? 's' : ''}
+                  </p>
+                </>
+              ) : (
+                <>
+                  <p className="text-base font-semibold text-foreground">No ratings yet</p>
+                  <p className="text-sm text-muted-foreground">Be the first to review</p>
+                </>
+              )}
             </div>
           </div>
         </div>

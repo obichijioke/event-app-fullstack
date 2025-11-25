@@ -37,7 +37,14 @@
       "Bash(timeout 30 npx prisma generate:*)",
       "Bash(node test-promo-fix.js:*)",
       "Bash(node test-promo-fix-v2.js:*)",
-      "Bash(tasklist:*)"
+      "Bash(tasklist:*)",
+      "Bash(powershell.exe -Command \"(Get-Content lib/events.ts) | Where-Object { $_-notmatch \"\"import ''server-only'';\"\" } | Set-Content lib/events-temp.ts && Move-Item -Force lib/events-temp.ts lib/events.ts\")",
+      "Bash(powershell.exe -Command \"(Get-Content lib/events.ts) | Where-Object { $_ -notmatch \"\"import ''server-only'';\"\" } | Set-Content lib/events-temp.ts; Move-Item -Force lib/events-temp.ts lib/events.ts\")",
+      "Bash(timeout 30 npm run build:*)",
+      "Bash(npx tsx:*)",
+      "Bash(node check-seed-data.js:*)",
+      "Bash(timeout 10 bash:*)",
+      "Bash(powershell.exe -Command \"Stop-Process -Id 64360 -Force\")"
     ],
     "deny": [],
     "ask": []

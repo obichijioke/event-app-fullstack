@@ -6,6 +6,7 @@ import { Badge, Button } from '@/components/ui';
 import { HeartIcon } from '@/components/ui/icons';
 import { SocialShareDropdown } from './social-share-dropdown';
 import type { EventSummary } from '@/lib/homepage';
+import type { EventDetailSummary } from '@/lib/events';
 import { formatDate } from '@/lib/utils';
 
 type EventHeroProps = {
@@ -13,6 +14,7 @@ type EventHeroProps = {
   occurrenceStart?: string;
   eventUrl?: string;
   eventDescription?: string;
+  tickets?: EventDetailSummary['tickets'];
 };
 
 function getTimezoneAbbr(timezone?: string | null): string {
@@ -28,7 +30,7 @@ function getTimezoneAbbr(timezone?: string | null): string {
   return timezoneMap[timezone] || 'WAT';
 }
 
-export function EventHero({ summary, occurrenceStart, eventUrl, eventDescription }: EventHeroProps) {
+export function EventHero({ summary, occurrenceStart, eventUrl, eventDescription, tickets }: EventHeroProps) {
   const coverImage = resolveImageUrl(
     summary.coverImageUrl ?? summary.assets.find((asset) => asset.kind === 'image')?.url,
   );
@@ -41,6 +43,19 @@ export function EventHero({ summary, occurrenceStart, eventUrl, eventDescription
   ]
     .filter(Boolean)
     .join(', ');
+
+  // Calculate ticket availability
+  const totalCapacity = tickets?.reduce((sum, ticket) => sum + (ticket.capacity || 0), 0) || 0;
+  const soldTickets = summary.stats.orderCount || 0;
+  const availableTickets = totalCapacity > 0 ? totalCapacity - soldTickets : 0;
+  const soldOutPercentage = totalCapacity > 0 ? (soldTickets / totalCapacity) * 100 : 0;
+
+  const isSoldOut = totalCapacity > 0 && availableTickets <= 0;
+  const isAlmostSoldOut = !isSoldOut && soldOutPercentage >= 90;
+  const isSellingFast = !isSoldOut && !isAlmostSoldOut && summary.stats.isLowInventory;
+
+  // Check for active promo
+  const hasActivePromo = summary.promo !== undefined;
 
   // Get current URL for sharing
   const shareUrl = eventUrl || (typeof window !== 'undefined' ? window.location.href : '');
@@ -88,16 +103,38 @@ export function EventHero({ summary, occurrenceStart, eventUrl, eventDescription
       <div className="absolute bottom-0 left-0 right-0 z-10 px-6 pb-8">
         <div className="container mx-auto">
           <div className="flex flex-wrap gap-2 mb-4">
-            {summary.stats.isLowInventory && (
+            {/* Inventory Status Badges */}
+            {isSoldOut && (
+              <Badge variant="error" size="sm" className="bg-red-600 text-white font-semibold">
+                ❌ Sold Out
+              </Badge>
+            )}
+            {isAlmostSoldOut && (
+              <Badge variant="error" size="sm" className="bg-orange-600 text-white font-semibold">
+                ⚠️ Almost Sold Out
+              </Badge>
+            )}
+            {isSellingFast && (
               <Badge variant="error" size="sm" className="bg-error text-white">
                 🔥 Selling Fast
               </Badge>
             )}
+
+            {/* Promo Badge */}
+            {hasActivePromo && summary.promo && (
+              <Badge variant="success" size="sm" className="bg-green-600 text-white font-semibold">
+                🎟️ {summary.promo.label}
+              </Badge>
+            )}
+
+            {/* Category Badge */}
             {summary.category?.name && (
               <Badge variant="secondary" size="sm" className="bg-primary/90 text-white">
                 🎵 {summary.category.name}
               </Badge>
             )}
+
+            {/* Age Restriction Badge */}
             {summary.ageRestriction && (
               <Badge variant="outline" size="sm" className="border-white/60 text-white bg-white/10">
                 {summary.ageRestriction}

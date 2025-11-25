@@ -57,10 +57,16 @@ export default async function EventDetailsPage({ params }: Props) {
         occurrenceStart={primaryOccurrence?.startsAt}
         eventUrl={eventUrl}
         eventDescription={description}
+        tickets={tickets}
       />
 
       {/* Quick Info Cards */}
-      <QuickInfoCards venue={summary.venue} stats={summary.stats} />
+      <QuickInfoCards
+        eventId={summary.id}
+        venue={summary.venue}
+        stats={summary.stats}
+        tickets={tickets}
+      />
 
       {/* Tab Navigation & Content with Sidebar */}
       <EventContentTabs
