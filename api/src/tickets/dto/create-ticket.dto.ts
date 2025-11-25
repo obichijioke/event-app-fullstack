@@ -1,4 +1,4 @@
-import { IsString, IsOptional, IsEnum } from 'class-validator';
+import { IsString, IsOptional, IsEnum, IsEmail } from 'class-validator';
 import { TicketStatus } from '@prisma/client';
 
 export class CreateTransferDto {
@@ -6,7 +6,12 @@ export class CreateTransferDto {
   ticketId: string;
 
   @IsString()
-  toUserId: string;
+  @IsOptional()
+  toUserId?: string;
+
+  @IsEmail()
+  @IsOptional()
+  recipientEmail?: string;
 }
 
 export class AcceptTransferDto {
