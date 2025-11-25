@@ -224,7 +224,18 @@ export default function CheckoutPage({ params }: Props) {
         items: selectedItems,
         promoCode: appliedPromoCode,
       });
-      router.push(`/events/${eventId}/checkout/payment?orderId=${order.id}`);
+      const isFreeOrder =
+        typeof order.totalCents === 'bigint'
+          ? order.totalCents === BigInt(0)
+          : Number(order.totalCents) === 0;
+
+      if (isFreeOrder || (order as any).isFreeOrder) {
+        router.push(
+          `/events/${eventId}/checkout/confirmation?orderId=${order.id}`,
+        );
+      } else {
+        router.push(`/events/${eventId}/checkout/payment?orderId=${order.id}`);
+      }
     } catch (error) {
       const message = getErrorMessage(error, 'Failed to create order. Please try again.');
       console.error('Failed to create order:', error);

@@ -102,6 +102,7 @@ export interface PublishDraftRequest {
 
 export interface PublishDraftResponse {
   id: string;
+  eventId?: string;
   status: EventCreatorDraftStatus;
   targetPublishAt?: string | null;
   message: string;

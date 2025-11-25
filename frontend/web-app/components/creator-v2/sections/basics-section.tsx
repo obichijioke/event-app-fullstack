@@ -14,13 +14,16 @@ import { resolveImageUrl } from '@/lib/utils/image';
 import { useEventCreatorDraft } from '@/components/creator-v2/event-creator-provider';
 import type { EventCreatorDraftSection } from '@/lib/types/event-creator-v2';
 import { debounce } from '@/lib/utils/debounce';
-import { ImagePlus, X } from 'lucide-react';
 import { toast } from 'react-hot-toast';
+import { VisibilitySelector } from '@/components/creator-v2/visibility-selector';
+import { TagInput } from '@/components/creator-v2/tag-input';
+import { CoverImageUpload } from '@/components/creator-v2/cover-image-upload';
+import { cn } from '@/lib/utils';
 
 const schema = z.object({
   title: z.string().min(1, 'Title is required').max(75, 'Keep it under 75'),
   categoryId: z.string().min(1, 'Choose a category'),
-  tags: z.string().optional(),
+  tags: z.array(z.string()).max(10, 'Maximum 10 tags').optional(),
   shortDescription: z.string().max(160, 'Max 160 characters').optional(),
   visibility: z.enum(['public', 'unlisted', 'private']),
 });
@@ -34,7 +37,6 @@ export function BasicsSection() {
   const [coverUrl, setCoverUrl] = React.useState<string | null>(
     (basics?.payload?.coverImageUrl as string) || null,
   );
-  const [isDragging, setIsDragging] = React.useState(false);
 
   const handleImageUpload = async (file: File) => {
     if (!draft) return;
@@ -72,8 +74,8 @@ export function BasicsSection() {
       title: (basics?.payload?.title as string) || draft?.title || '',
       categoryId: (basics?.payload?.categoryId as string) || '',
       tags: Array.isArray(basics?.payload?.tags)
-        ? (basics?.payload?.tags as string[]).join(', ')
-        : '',
+        ? (basics?.payload?.tags as string[])
+        : [],
       shortDescription: (basics?.payload?.shortDescription as string) || '',
       visibility: ((basics?.payload?.visibility as any) || draft?.visibility || 'public') as any,
     },
@@ -96,15 +98,7 @@ export function BasicsSection() {
           'basics',
           {
             autosave: true,
-            payload: {
-              ...values,
-              tags: values.tags
-                ? values.tags
-                    .split(',')
-                    .map((t) => t.trim())
-                    .filter(Boolean)
-                : [],
-            },
+            payload: values,
             status: 'valid',
           },
           { showToast: false }
@@ -133,162 +127,147 @@ export function BasicsSection() {
       </div>
 
       <form className="space-y-6" onSubmit={(e) => e.preventDefault()}>
-        <div className="grid gap-5 md:grid-cols-2">
-          <div className="space-y-3">
-            <label className="text-sm font-medium">Title</label>
-            <Input
-              placeholder="Give your event a clear name"
-              {...form.register('title')}
-            />
-            {form.formState.errors.title && (
-              <p className="text-xs text-error">
+        {/* Title with character counter */}
+        <div className="space-y-2">
+          <label className="text-sm font-medium">Event Title *</label>
+          <Input
+            placeholder="Give your event a clear, descriptive name"
+            {...form.register('title')}
+            className={cn(
+              form.formState.errors.title && 'border-red-600 dark:border-red-400'
+            )}
+            maxLength={75}
+          />
+          <div className="flex items-center justify-between text-xs">
+            {form.formState.errors.title ? (
+              <p className="text-red-600 dark:text-red-400">
                 {form.formState.errors.title.message}
               </p>
-            )}
-          </div>
-
-          <div className="space-y-3">
-            <label className="text-sm font-medium">Visibility</label>
-            <Select
-              value={form.watch('visibility')}
-              onChange={(e) => form.setValue('visibility', e.target.value as any)}
-            >
-              <option value="public">Public</option>
-              <option value="unlisted">Unlisted</option>
-              <option value="private">Private</option>
-            </Select>
-          </div>
-        </div>
-
-        <div className="grid gap-5 md:grid-cols-2">
-          <div className="space-y-3">
-            <label className="text-sm font-medium">Category</label>
-            <Select
-              value={form.watch('categoryId')}
-              onChange={(e) => form.setValue('categoryId', e.target.value)}
-              disabled={isLoadingCategories}
-            >
-              <option value="" disabled>
-                {isLoadingCategories ? 'Loading...' : 'Select a category'}
-              </option>
-              {categories.map((cat) => (
-                <option key={cat.id} value={cat.id}>
-                  {cat.name}
-                </option>
-              ))}
-            </Select>
-            {form.formState.errors.categoryId && (
-              <p className="text-xs text-error">
-                {form.formState.errors.categoryId.message}
+            ) : (
+              <p className="text-muted-foreground">
+                Choose a title that clearly describes your event
               </p>
             )}
-          </div>
-
-          <div className="space-y-3">
-            <label className="text-sm font-medium">Tags</label>
-            <Input
-              placeholder="marketing, vip, workshop"
-              {...form.register('tags')}
-            />
-            <p className="text-xs text-muted-foreground">
-              Separate tags with commas. Up to 10.
-            </p>
+            <span
+              className={cn(
+                'font-medium',
+                form.watch('title').length > 70
+                  ? 'text-red-600 dark:text-red-400'
+                  : 'text-muted-foreground'
+              )}
+            >
+              {form.watch('title').length} / 75
+            </span>
           </div>
         </div>
 
-        <div className="space-y-3">
-          <label className="text-sm font-medium">Cover image</label>
-          <div
-            className={`relative flex flex-col items-center justify-center rounded-xl border-2 border-dashed p-8 transition-colors ${
-              isDragging ? 'border-primary bg-primary/5' : 'border-border hover:bg-muted/50'
-            }`}
-            onDragOver={(e) => {
-              e.preventDefault();
-              setIsDragging(true);
-            }}
-            onDragLeave={() => setIsDragging(false)}
-            onDrop={async (e) => {
-              e.preventDefault();
-              setIsDragging(false);
-              const file = e.dataTransfer.files?.[0];
-              if (file) await handleImageUpload(file);
-            }}
-          >
-            {coverUrl ? (
-              <div className="relative aspect-video w-full max-w-md overflow-hidden rounded-lg border bg-muted">
-                <img
-                  src={resolveImageUrl(coverUrl) || undefined}
-                  alt="Cover"
-                  className="h-full w-full object-cover"
-                />
-                <div className="absolute right-2 top-2 flex gap-2">
-                  <Button
-                    type="button"
-                    variant="secondary"
-                    size="sm"
-                    className="h-8 w-8 p-0"
-                    onClick={() => {
-                      setCoverUrl(null);
-                      void updateSection(
-                        'basics',
-                        { autosave: true, payload: { coverImageUrl: null } },
-                        { showToast: false }
-                      );
-                    }}
-                  >
-                    <X className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
-            ) : (
-              <div className="flex flex-col items-center gap-2 text-center">
-                <div className="rounded-full bg-muted p-4">
-                  <ImagePlus className="h-8 w-8 text-muted-foreground" />
-                </div>
-                <div className="space-y-1">
-                  <p className="text-sm font-medium">
-                    <span className="text-primary cursor-pointer hover:underline">
-                      Click to upload
-                    </span>{' '}
-                    or drag and drop
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    SVG, PNG, JPG or GIF (max. 800x400px)
-                  </p>
-                </div>
-              </div>
+        {/* Visibility Selector */}
+        <VisibilitySelector
+          value={form.watch('visibility')}
+          onChange={(value) => form.setValue('visibility', value)}
+          disabled={isSaving}
+        />
+
+        {/* Category */}
+        <div className="space-y-2">
+          <label className="text-sm font-medium">Category *</label>
+          <Select
+            value={form.watch('categoryId')}
+            onChange={(e) => form.setValue('categoryId', e.target.value)}
+            disabled={isLoadingCategories}
+            className={cn(
+              'text-sm',
+              form.formState.errors.categoryId && 'border-red-600 dark:border-red-400'
             )}
-            <input
-              type="file"
-              className="absolute inset-0 cursor-pointer opacity-0 disabled:cursor-not-allowed"
-              accept="image/*"
-              disabled={!!coverUrl}
-              onChange={async (e) => {
-                const file = e.target.files?.[0];
-                if (file) await handleImageUpload(file);
-                // Reset input so same file can be selected again if needed
-                e.target.value = '';
-              }}
-            />
-          </div>
-          <p className="text-xs text-muted-foreground">
-            Recommended size: 2160 x 1080px (2:1 ratio)
-          </p>
+          >
+            <option value="" disabled>
+              {isLoadingCategories ? 'Loading categories...' : 'Select a category'}
+            </option>
+            {categories.map((cat) => (
+              <option key={cat.id} value={cat.id}>
+                {cat.name}
+              </option>
+            ))}
+          </Select>
+          {form.formState.errors.categoryId ? (
+            <p className="text-xs text-red-600 dark:text-red-400">
+              {form.formState.errors.categoryId.message}
+            </p>
+          ) : (
+            <p className="text-xs text-muted-foreground">
+              Help people discover your event in the right category
+            </p>
+          )}
         </div>
 
-        <div className="space-y-3">
-          <label className="text-sm font-medium">Short description</label>
+        {/* Tags */}
+        <div className="space-y-2">
+          <label className="text-sm font-medium">Tags</label>
+          <TagInput
+            value={form.watch('tags') || []}
+            onChange={(tags) => form.setValue('tags', tags)}
+            maxTags={10}
+            disabled={isSaving}
+          />
+          {form.formState.errors.tags && (
+            <p className="text-xs text-red-600 dark:text-red-400">
+              {form.formState.errors.tags.message}
+            </p>
+          )}
+        </div>
+
+        {/* Cover Image */}
+        <div className="space-y-2">
+          <label className="text-sm font-medium">Cover Image</label>
+          <CoverImageUpload
+            value={coverUrl ? resolveImageUrl(coverUrl) : null}
+            onUpload={handleImageUpload}
+            onRemove={() => {
+              setCoverUrl(null);
+              void updateSection(
+                'basics',
+                { autosave: true, payload: { coverImageUrl: null } },
+                { showToast: false }
+              );
+            }}
+            maxSize={5}
+            disabled={isSaving}
+          />
+        </div>
+
+        {/* Short Description with character counter */}
+        <div className="space-y-2">
+          <label className="text-sm font-medium">Short Description</label>
           <Textarea
-            placeholder="One-line summary for cards and SEO (max 160 chars)"
+            placeholder="One-line summary for event cards and search engine previews"
             rows={3}
             maxLength={160}
             {...form.register('shortDescription')}
+            className={cn(
+              form.formState.errors.shortDescription && 'border-red-600 dark:border-red-400'
+            )}
           />
-          {form.formState.errors.shortDescription && (
-            <p className="text-xs text-error">
-              {form.formState.errors.shortDescription.message}
-            </p>
-          )}
+          <div className="flex items-center justify-between text-xs">
+            {form.formState.errors.shortDescription ? (
+              <p className="text-red-600 dark:text-red-400">
+                {form.formState.errors.shortDescription.message}
+              </p>
+            ) : (
+              <p className="text-muted-foreground">
+                Brief summary that appears in listings and search results
+              </p>
+            )}
+            <span
+              className={cn(
+                'font-medium',
+                (form.watch('shortDescription')?.length || 0) > 150
+                  ? 'text-red-600 dark:text-red-400'
+                  : 'text-muted-foreground'
+              )}
+            >
+              {form.watch('shortDescription')?.length || 0} / 160
+            </span>
+          </div>
         </div>
 
         <div className="flex items-center gap-3">

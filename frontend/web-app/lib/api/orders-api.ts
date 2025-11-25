@@ -16,6 +16,7 @@ export interface Order {
   currency: string;
   createdAt: string;
   updatedAt: string;
+  isFreeOrder?: boolean;
   event?: {
     id: string;
     title: string;

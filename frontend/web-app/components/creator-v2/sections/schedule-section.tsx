@@ -5,23 +5,26 @@ import { useEffect, useMemo, useCallback } from 'react';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Input } from '@/components/ui/input';
-import { Select } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { debounce } from '@/lib/utils/debounce';
-import { POPULAR_TIMEZONES } from '@/lib/data/timezones';
 import { useEventCreatorDraft } from '@/components/creator-v2/event-creator-provider';
 import type { EventCreatorDraftSection } from '@/lib/types/event-creator-v2';
 import { RecurrenceBuilder, type RecurrenceConfig } from '@/components/creator-v2/sections/recurrence-builder';
 import { venuesApi, type Venue } from '@/lib/api/venues-api';
 import { useOrganizerStore } from '@/lib/stores/organizer-store';
-
 import { CreateVenueModal } from '@/components/creator-v2/modals/create-venue-modal';
+import { OccurrenceCard } from '@/components/creator-v2/occurrence-card';
+import { VenueComboBox } from '@/components/creator-v2/venue-combobox';
+import { EventModeSelector } from '@/components/creator-v2/event-mode-selector';
+import { TimezoneSelector } from '@/components/creator-v2/timezone-selector';
+import { Calendar, Plus } from 'lucide-react';
 
 const occurrenceSchema = z.object({
   startsAt: z.string().min(1, 'Start time required'),
-  endsAt: z.string().optional(),
+  endsAt: z.string()
+    .optional()
+    .transform(val => val === '' ? undefined : val),
 });
 
 const overrideSchema = z.object({
@@ -101,25 +104,9 @@ export function ScheduleSection() {
     loadVenues();
   }, [loadVenues]);
 
-  const filteredVenues = useMemo(() => {
-    if (!venueSearchQuery) return venues;
-    return venues.filter((v) => 
-      v.name.toLowerCase().includes(venueSearchQuery.toLowerCase()) ||
-      v.address?.city?.toLowerCase().includes(venueSearchQuery.toLowerCase())
-    );
-  }, [venues, venueSearchQuery]);
-
-  const toLocalInput = (iso?: string) => {
-    if (!iso) return '';
-    const d = new Date(iso);
-    const pad = (n: number) => (n < 10 ? `0${n}` : `${n}`);
-    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
-  };
-  const fromLocalInput = (val: string) => {
-    if (!val) return '';
-    const d = new Date(val);
-    return d.toISOString();
-  };
+  // Get default venue name for display
+  const defaultVenue = venues.find(v => v.id === form.watch('venueId'));
+  const defaultVenueName = defaultVenue?.name;
 
   const debouncedSave = useMemo(
     () =>
@@ -159,76 +146,38 @@ export function ScheduleSection() {
   return (
     <div className="space-y-8">
       <div>
-        <h2 className="text-2xl font-bold">Schedule & venue</h2>
-        <p className="text-sm text-muted-foreground">Set date, time, and timezone. Add more occurrences as needed.</p>
+        <h2 className="text-2xl font-bold">Schedule & Venue</h2>
+        <p className="text-sm text-muted-foreground">
+          Set up when and where your event happens
+        </p>
       </div>
 
-      <form className="space-y-6" onSubmit={(e) => e.preventDefault()}>
-        <div className="grid gap-5 md:grid-cols-3">
-          <div className="space-y-3">
-            <label className="text-sm font-medium">Mode</label>
-            <p className="text-xs text-muted-foreground">
-              Choose whether this event happens once, over multiple days, or on a recurring cadence.
-            </p>
-            <Select
-              value={form.watch('mode') as any}
-              onChange={(e) => form.setValue('mode', e.target.value as any)}
-            >
-              <option value="single">Single date</option>
-              <option value="multi_day">Multi-day</option>
-              <option value="recurring">Recurring</option>
-            </Select>
-          </div>
-          <div className="space-y-3 md:col-span-2">
-            <label className="text-sm font-medium">Timezone</label>
-            <p className="text-xs text-muted-foreground">
-              All occurrences below will use this timezone when shown to attendees.
-            </p>
-            <Select
-              value={form.watch('timezone')}
-              onChange={(e) => form.setValue('timezone', e.target.value)}
-            >
-              {POPULAR_TIMEZONES.map((tz) => (
-                <option key={tz.value} value={tz.value}>
-                  {tz.label}
-                </option>
-              ))}
-            </Select>
-            {form.formState.errors.timezone && (
-              <p className="text-xs text-error">{form.formState.errors.timezone.message}</p>
-            )}
-          </div>
-        </div>
+      <form className="space-y-8" onSubmit={(e) => e.preventDefault()}>
+        {/* Event Mode Selector */}
+        <EventModeSelector
+          value={form.watch('mode') as any}
+          onChange={(mode) => form.setValue('mode', mode)}
+        />
 
+        {/* Timezone Selector */}
+        <TimezoneSelector
+          value={form.watch('timezone')}
+          onChange={(tz) => form.setValue('timezone', tz)}
+          autoDetect
+        />
+
+        {/* Venue Selection */}
         <div className="space-y-3">
-          <div className="flex items-center justify-between">
-            <label className="text-sm font-medium">Venue</label>
-            <Button type="button" variant="ghost" size="sm" onClick={() => setIsCreateVenueOpen(true)}>
-              + Create new venue
-            </Button>
-          </div>
-          
-          <Input 
-            placeholder="Filter venues..." 
-            value={venueSearchQuery}
-            onChange={(e) => setVenueSearchQuery(e.target.value)}
-            className="mb-2"
+          <label className="text-sm font-medium">Default Venue</label>
+          <VenueComboBox
+            venues={venues}
+            selectedVenueId={form.watch('venueId')}
+            loading={venuesLoading}
+            onSelect={(venueId) => form.setValue('venueId', venueId)}
+            onCreateNew={() => setIsCreateVenueOpen(true)}
           />
-
-          <Select
-            value={form.watch('venueId') || ''}
-            onChange={(e) => form.setValue('venueId', e.target.value)}
-            disabled={venuesLoading}
-          >
-            <option value="">Select a venue...</option>
-            {filteredVenues.map((v) => (
-              <option key={v.id} value={v.id}>
-                {v.name} {v.address?.city ? `(${v.address.city})` : ''}
-              </option>
-            ))}
-          </Select>
           <p className="text-xs text-muted-foreground">
-            The default venue for this event. You can override this for specific occurrences below.
+            This venue will be used for all occurrences unless overridden
           </p>
         </div>
 
@@ -248,105 +197,74 @@ export function ScheduleSection() {
           />
         )}
 
+        {/* Occurrences */}
         <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <h3 className="text-lg font-semibold">Occurrences</h3>
-            <Button type="button" variant="outline" onClick={() => append({ startsAt: '', endsAt: '' })}>
-              Add occurrence
-            </Button>
+            <div>
+              <h3 className="text-lg font-semibold flex items-center gap-2">
+                <Calendar className="h-5 w-5" />
+                Event Dates
+              </h3>
+              <p className="text-xs text-muted-foreground mt-1">
+                {fields.length === 1 ? '1 occurrence' : `${fields.length} occurrences`}
+                {form.watch('mode') !== 'single' && ' scheduled'}
+              </p>
+            </div>
+            {(form.watch('mode') !== 'single' || fields.length === 0) && (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => append({ startsAt: '', endsAt: '' })}
+                className="gap-2"
+              >
+                <Plus className="h-4 w-4" />
+                Add occurrence
+              </Button>
+            )}
           </div>
-          <p className="text-xs text-muted-foreground">
-            List every date and time attendees can select. You can override capacity, venue, or door time per row.
-          </p>
-          <div className="space-y-3">
+
+          <div className="space-y-4">
             {fields.map((field, index) => {
               const occStart = form.watch(`occurrences.${index}.startsAt` as const) as string;
               const isCanceled = (form.watch('exceptions') || []).includes(occStart);
+
               return (
-                <div key={field.id} className="grid gap-3 md:grid-cols-6">
-                <div className="space-y-2 md:col-span-3">
-                  <label className="text-xs font-medium">Start date & time</label>
-                  <Input
-                    type="datetime-local"
-                    placeholder="Start"
-                    disabled={isCanceled}
-                    value={toLocalInput(form.watch(`occurrences.${index}.startsAt` as const) as string)}
-                    onChange={(e) => form.setValue(`occurrences.${index}.startsAt` as const, fromLocalInput(e.target.value))}
-                  />
-                  <p className="text-xs text-muted-foreground">Attendees will see this time on the event page.</p>
-                </div>
-                <div className="space-y-2 md:col-span-2">
-                  <label className="text-xs font-medium">End date & time</label>
-                  <Input
-                    type="datetime-local"
-                    placeholder="End"
-                    disabled={isCanceled}
-                    value={toLocalInput(form.watch(`occurrences.${index}.endsAt` as const) as string)}
-                    onChange={(e) => form.setValue(`occurrences.${index}.endsAt` as const, fromLocalInput(e.target.value))}
-                  />
-                  <p className="text-xs text-muted-foreground">Leave blank if the experience has no defined end.</p>
-                </div>
-                <div className="flex items-end">
-                  <Button type="button" variant="outline" onClick={() => remove(index)}>
-                    Remove
-                  </Button>
-                </div>
-                {form.formState.errors.occurrences?.[index]?.startsAt && (
-                  <p className="md:col-span-6 text-xs text-error">
-                    {form.formState.errors.occurrences[index]?.startsAt?.message as string}
-                  </p>
-                )}
-                <div className="md:col-span-6 grid gap-3 md:grid-cols-4">
-                  <Input
-                    type="datetime-local"
-                    placeholder="Door time"
-                    disabled={isCanceled}
-                    value={toLocalInput(form.watch(`overrides.${index}.doorTime` as const) as string)}
-                    onChange={(e) => {
-                      form.setValue(`overrides.${index}.sourceStart` as const, form.getValues(`occurrences.${index}.startsAt` as const));
-                      form.setValue(`overrides.${index}.doorTime` as const, fromLocalInput(e.target.value));
-                    }}
-                  />
-                  <Input
-                    type="number"
-                    placeholder="Capacity override"
-                    disabled={isCanceled}
-                    {...form.register(`overrides.${index}.capacityOverride` as const, { valueAsNumber: true })}
-                    onFocus={() => form.setValue(`overrides.${index}.sourceStart` as const, form.getValues(`occurrences.${index}.startsAt` as const))}
-                  />
-                  <Select
-                    value={(form.watch(`overrides.${index}.venueId` as const) as any) || ''}
-                    onChange={(e) => {
-                      form.setValue(`overrides.${index}.sourceStart` as const, form.getValues(`occurrences.${index}.startsAt` as const));
-                      form.setValue(`overrides.${index}.venueId` as const, e.target.value as any);
-                    }}
-                    disabled={venuesLoading || isCanceled}
-                  >
-                    <option value="">{venuesLoading ? 'Loading venues...' : 'Select venue (override)'}</option>
-                    {venues.map((v) => (
-                      <option key={v.id} value={v.id}>
-                        {v.name}
-                      </option>
-                    ))}
-                    {(!venuesLoading && venues.length === 0) && (
-                      <option value="" disabled>No venues found</option>
-                    )}
-                  </Select>
-                  <div className="flex items-center gap-2 self-center">
-                    <input
-                      type="checkbox"
-                      checked={isCanceled}
-                      onChange={(e) => {
-                        const list = new Set(form.getValues('exceptions') || []);
-                        if (e.target.checked && occStart) list.add(occStart);
-                        if (!e.target.checked && occStart) list.delete(occStart);
-                        form.setValue('exceptions', Array.from(list));
-                      }}
-                    />
-                    <span className="text-xs text-muted-foreground">Cancel this occurrence</span>
-                  </div>
-                </div>
-              </div>
+                <OccurrenceCard
+                  key={field.id}
+                  index={index}
+                  startsAt={occStart}
+                  endsAt={form.watch(`occurrences.${index}.endsAt` as const) as string}
+                  doorTime={form.watch(`overrides.${index}.doorTime` as const) as string}
+                  capacityOverride={form.watch(`overrides.${index}.capacityOverride` as const) as number}
+                  venueId={form.watch(`overrides.${index}.venueId` as const) as string}
+                  isCanceled={isCanceled}
+                  venues={venues}
+                  venuesLoading={venuesLoading}
+                  defaultVenueName={defaultVenueName}
+                  onStartChange={(value) => form.setValue(`occurrences.${index}.startsAt` as const, value)}
+                  onEndChange={(value) => form.setValue(`occurrences.${index}.endsAt` as const, value)}
+                  onDoorTimeChange={(value) => {
+                    form.setValue(`overrides.${index}.sourceStart` as const, form.getValues(`occurrences.${index}.startsAt` as const));
+                    form.setValue(`overrides.${index}.doorTime` as const, value);
+                  }}
+                  onCapacityChange={(value) => {
+                    form.setValue(`overrides.${index}.sourceStart` as const, form.getValues(`occurrences.${index}.startsAt` as const));
+                    form.setValue(`overrides.${index}.capacityOverride` as const, value as any);
+                  }}
+                  onVenueChange={(value) => {
+                    form.setValue(`overrides.${index}.sourceStart` as const, form.getValues(`occurrences.${index}.startsAt` as const));
+                    form.setValue(`overrides.${index}.venueId` as const, value);
+                  }}
+                  onCancelToggle={(canceled) => {
+                    const list = new Set(form.getValues('exceptions') || []);
+                    if (canceled && occStart) list.add(occStart);
+                    if (!canceled && occStart) list.delete(occStart);
+                    form.setValue('exceptions', Array.from(list));
+                  }}
+                  onRemove={() => remove(index)}
+                  canRemove={fields.length > 1 || form.watch('mode') !== 'single'}
+                />
               );
             })}
           </div>

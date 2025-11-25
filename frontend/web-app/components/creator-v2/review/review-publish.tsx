@@ -5,9 +5,12 @@ import { Button } from '@/components/ui/button';
 import { useEventCreatorDraft } from '@/components/creator-v2/event-creator-provider';
 import { eventCreatorV2Api } from '@/lib/api/event-creator-v2-api';
 import { format } from 'date-fns';
+import { useRouter } from 'next/navigation';
+import { toast } from 'react-hot-toast';
 
 export function ReviewPublish() {
   const { draft, refresh } = useEventCreatorDraft();
+  const router = useRouter();
   const [publishing, setPublishing] = useState(false);
   const [scheduleAt, setScheduleAt] = useState<string>('');
   const [message, setMessage] = useState<string | null>(null);
@@ -29,10 +32,28 @@ export function ReviewPublish() {
       const payload: any = {};
       if (scheduled && scheduleAt) payload.publishAt = scheduleAt;
       const res = await eventCreatorV2Api.publishDraft(draft.id, payload);
-      setMessage(res.message);
+
+      // Show success message
+      if (scheduled) {
+        toast.success(`Event scheduled for ${format(new Date(scheduleAt), 'MMM d, yyyy • h:mm a')}`);
+      } else {
+        toast.success('Event published successfully!');
+      }
+
+      // Redirect to event details or organizer events list
+      // If we have an eventId in the response, go to event details
+      if ('eventId' in res && res.eventId) {
+        router.push(`/organizer/events/${res.eventId}`);
+      } else {
+        // Otherwise go to organizer events list
+        router.push('/organizer/events');
+      }
+
       await refresh();
     } catch (e: any) {
-      setMessage(e?.message || 'Unable to publish');
+      const errorMessage = e?.message || 'Unable to publish';
+      setMessage(errorMessage);
+      toast.error(errorMessage);
     } finally {
       setPublishing(false);
     }
