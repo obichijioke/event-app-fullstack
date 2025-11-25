@@ -85,7 +85,7 @@ export default function ComponentsDemo() {
                 Icon Buttons
               </Text>
               <div className="flex flex-wrap gap-3">
-                <IconButton aria-label="Close" variant="default">
+                <IconButton aria-label="Close" variant="primary">
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                   </svg>
@@ -233,7 +233,7 @@ export default function ComponentsDemo() {
                 Badges
               </Text>
               <div className="flex flex-wrap gap-2">
-                <Badge variant="default">Default</Badge>
+                <Badge variant="primary">Default</Badge>
                 <Badge variant="primary">Primary</Badge>
                 <Badge variant="secondary">Secondary</Badge>
                 <Badge variant="success">Success</Badge>

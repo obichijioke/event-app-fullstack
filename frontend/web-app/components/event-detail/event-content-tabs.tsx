@@ -7,6 +7,7 @@ import { DetailPanels } from './detail-panels';
 import { GoogleMap } from './google-map';
 import { ReviewList } from './review-list';
 import { EventAnnouncements } from './event-announcements';
+import { EventFAQ } from './event-faq';
 import { TicketSelector } from './ticket-selector';
 import type { EventDetailSummary } from '@/lib/events';
 import type { EventSummary } from '@/lib/homepage';
@@ -43,7 +44,7 @@ export function EventContentTabs({
           {/* Left Column - Tab Content */}
           <div className="space-y-8 lg:col-span-2">
             {/* Event Announcements - Shown on all tabs */}
-            <EventAnnouncements />
+            <EventAnnouncements eventId={summary.id} />
 
             {/* Overview Tab */}
             {activeTab === 'overview' && (
@@ -121,6 +122,13 @@ export function EventContentTabs({
                 ) : (
                   <p className="text-muted-foreground">Venue information to be announced.</p>
                 )}
+              </div>
+            )}
+
+            {/* FAQs Tab */}
+            {activeTab === 'faqs' && (
+              <div>
+                <EventFAQ eventId={summary.id} />
               </div>
             )}
 

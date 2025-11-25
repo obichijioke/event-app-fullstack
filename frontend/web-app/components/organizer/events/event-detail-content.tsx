@@ -15,6 +15,8 @@ import {
   Settings,
   Tag,
   Loader2,
+  Megaphone,
+  HelpCircle,
 } from 'lucide-react';
 import { useOrganizerStore } from '@/lib/stores/organizer-store';
 import { organizerApi } from '@/lib/api/organizer-api';
@@ -120,6 +122,8 @@ export function EventDetailContent({ eventId }: EventDetailContentProps) {
     { href: `/organizer/events/${eventId}/attendees`, icon: Users, label: 'Attendees' },
     { href: `/organizer/events/${eventId}/check-in`, icon: UserCheck, label: 'Check-In' },
     { href: `/organizer/events/${eventId}/promo-codes`, icon: Tag, label: 'Promo Codes' },
+    { href: `/organizer/events/${eventId}/announcements`, icon: Megaphone, label: 'Announcements' },
+    { href: `/organizer/events/${eventId}/faqs`, icon: HelpCircle, label: 'FAQs' },
     {
       href: `/organizer/events/${eventId}/occurrences`,
       icon: Calendar,

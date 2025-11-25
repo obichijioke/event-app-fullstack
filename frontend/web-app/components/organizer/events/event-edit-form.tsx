@@ -81,11 +81,28 @@ export function EventEditForm({ eventId }: EventEditFormProps) {
     try {
       setSaving(true);
 
+      const trimmedCoverImage = formData.coverImageUrl?.trim();
+      if (trimmedCoverImage) {
+        try {
+          // Validate absolute URL early to avoid API 400s
+          const url = new URL(trimmedCoverImage);
+          if (!url.protocol.startsWith('http')) {
+            throw new Error('Cover image must use http/https');
+          }
+        } catch (err) {
+          const message =
+            err instanceof Error ? err.message : 'Cover image URL must be a valid link';
+          toast.error(message);
+          setSaving(false);
+          return;
+        }
+      }
+
       const updateData: UpdateEventDto = {
         title: formData.title,
         descriptionMd: formData.descriptionMd,
         visibility: formData.visibility,
-        coverImageUrl: formData.coverImageUrl || undefined,
+        coverImageUrl: trimmedCoverImage || undefined,
       };
 
       if (formData.startAt) {

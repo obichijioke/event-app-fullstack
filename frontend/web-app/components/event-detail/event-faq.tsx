@@ -1,61 +1,74 @@
 'use client';
 
-import { useState } from 'react';
-import { ChevronDown, ChevronUp } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { ChevronDown, ChevronUp, Search, ThumbsUp } from 'lucide-react';
 import { Heading } from '@/components/ui';
 import { cn } from '@/lib/utils';
-
-interface FAQItem {
-  question: string;
-  answer: string;
-}
+import { fetchEventFAQs, EventFAQItem, searchFAQs, trackFAQView, markFAQHelpful } from '@/lib/events';
 
 interface EventFAQProps {
+  eventId: string;
   className?: string;
 }
 
-// Default FAQs - these should ideally come from the event data
-const defaultFAQs: FAQItem[] = [
-  {
-    question: 'What should I bring to the event?',
-    answer: 'Please bring your ticket (printed or on your mobile device), a valid ID, and any personal items you may need. Bags may be subject to search upon entry.',
-  },
-  {
-    question: 'Is parking available at the venue?',
-    answer: 'Yes, parking is available at the venue. Please arrive early as spaces are limited. Additional parking information will be sent to ticket holders closer to the event date.',
-  },
-  {
-    question: 'What is the refund policy?',
-    answer: 'Refund policies vary by event. Please check the "Policies" section for specific refund terms. Generally, tickets are non-refundable unless the event is canceled or rescheduled.',
-  },
-  {
-    question: 'Can I transfer my ticket to someone else?',
-    answer: 'Ticket transfer policies vary by event. Please check the "Policies" section for specific transfer terms. If transfers are allowed, you can do so through your account dashboard.',
-  },
-  {
-    question: 'What time should I arrive?',
-    answer: 'We recommend arriving at least 30-45 minutes before the event start time to allow time for parking, entry, and finding your seat. Gates typically open 1 hour before the event.',
-  },
-  {
-    question: 'Are there age restrictions for this event?',
-    answer: 'Age restrictions vary by event and will be clearly stated on the event page. Some events may require attendees to be 18+ or 21+. Children under a certain age may require adult supervision.',
-  },
-  {
-    question: 'What items are prohibited at the venue?',
-    answer: 'Prohibited items typically include weapons, outside food and beverages, professional cameras, recording devices, and illegal substances. Check the venue\'s policy for a complete list.',
-  },
-  {
-    question: 'Is the venue wheelchair accessible?',
-    answer: 'Most venues offer wheelchair accessibility. Please check the "Venue" tab for specific accessibility information or contact the organizer directly for assistance.',
-  },
-];
-
-export function EventFAQ({ className }: EventFAQProps) {
+export function EventFAQ({ eventId, className }: EventFAQProps) {
+  const [faqs, setFaqs] = useState<EventFAQItem[]>([]);
   const [openIndex, setOpenIndex] = useState<number | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [markedHelpful, setMarkedHelpful] = useState<Set<string>>(new Set());
 
-  const toggleFAQ = (index: number) => {
-    setOpenIndex(openIndex === index ? null : index);
+  useEffect(() => {
+    async function loadFAQs() {
+      setLoading(true);
+      if (searchQuery.trim()) {
+        const results = await searchFAQs(eventId, searchQuery);
+        setFaqs(results);
+      } else {
+        const data = await fetchEventFAQs(eventId);
+        setFaqs(data);
+      }
+      setLoading(false);
+    }
+    loadFAQs();
+  }, [eventId, searchQuery]);
+
+  const toggleFAQ = async (index: number, faqId: string) => {
+    if (openIndex !== index) {
+      // Track view when expanding
+      await trackFAQView(faqId);
+      setOpenIndex(index);
+    } else {
+      setOpenIndex(null);
+    }
   };
+
+  const handleMarkHelpful = async (faqId: string) => {
+    await markFAQHelpful(faqId);
+    setMarkedHelpful(prev => new Set(prev).add(faqId));
+  };
+
+  if (loading) {
+    return (
+      <section className={cn('rounded border border-border bg-card p-6', className)}>
+        <Heading as="h2" className="text-xl font-semibold mb-6">
+          Frequently Asked Questions
+        </Heading>
+        <p className="text-sm text-muted-foreground">Loading FAQs...</p>
+      </section>
+    );
+  }
+
+  if (faqs.length === 0) {
+    return (
+      <section className={cn('rounded border border-border bg-card p-6', className)}>
+        <Heading as="h2" className="text-xl font-semibold mb-6">
+          Frequently Asked Questions
+        </Heading>
+        <p className="text-sm text-muted-foreground">No FAQs available for this event yet.</p>
+      </section>
+    );
+  }
 
   return (
     <section className={cn('rounded border border-border bg-card p-6', className)}>
@@ -63,14 +76,29 @@ export function EventFAQ({ className }: EventFAQProps) {
         Frequently Asked Questions
       </Heading>
 
+      {/* Search Bar */}
+      <div className="mb-6">
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <input
+            type="text"
+            placeholder="Search FAQs..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full pl-10 pr-4 py-2 border border-border rounded bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+          />
+        </div>
+      </div>
+
       <div className="space-y-3">
-        {defaultFAQs.map((faq, index) => (
+        {faqs.map((faq, index) => (
           <FAQAccordionItem
-            key={index}
-            question={faq.question}
-            answer={faq.answer}
+            key={faq.id}
+            faq={faq}
             isOpen={openIndex === index}
-            onToggle={() => toggleFAQ(index)}
+            onToggle={() => toggleFAQ(index, faq.id)}
+            onMarkHelpful={() => handleMarkHelpful(faq.id)}
+            isMarkedHelpful={markedHelpful.has(faq.id)}
           />
         ))}
       </div>
@@ -88,13 +116,14 @@ export function EventFAQ({ className }: EventFAQProps) {
 }
 
 interface FAQAccordionItemProps {
-  question: string;
-  answer: string;
+  faq: EventFAQItem;
   isOpen: boolean;
   onToggle: () => void;
+  onMarkHelpful: () => void;
+  isMarkedHelpful: boolean;
 }
 
-function FAQAccordionItem({ question, answer, isOpen, onToggle }: FAQAccordionItemProps) {
+function FAQAccordionItem({ faq, isOpen, onToggle, onMarkHelpful, isMarkedHelpful }: FAQAccordionItemProps) {
   return (
     <div className="border border-border rounded overflow-hidden">
       <button
@@ -102,7 +131,7 @@ function FAQAccordionItem({ question, answer, isOpen, onToggle }: FAQAccordionIt
         className="w-full flex items-center justify-between p-4 bg-card hover:bg-muted/50 transition-colors text-left"
         aria-expanded={isOpen}
       >
-        <span className="font-medium text-foreground pr-4">{question}</span>
+        <span className="font-medium text-foreground pr-4">{faq.question}</span>
         {isOpen ? (
           <ChevronUp className="h-5 w-5 text-muted-foreground flex-shrink-0" />
         ) : (
@@ -110,14 +139,27 @@ function FAQAccordionItem({ question, answer, isOpen, onToggle }: FAQAccordionIt
         )}
       </button>
 
-      <div
-        className={cn(
-          'transition-all duration-200 overflow-hidden',
-          isOpen ? 'max-h-96' : 'max-h-0'
-        )}
-      >
+      <div className={cn('transition-all duration-200 overflow-hidden', isOpen ? 'max-h-96' : 'max-h-0')}>
         <div className="p-4 pt-0 bg-muted/30">
-          <p className="text-sm text-foreground leading-relaxed">{answer}</p>
+          <p className="text-sm text-foreground leading-relaxed mb-3">{faq.answer}</p>
+
+          {/* Footer with stats and helpful button */}
+          <div className="flex items-center justify-between text-xs text-muted-foreground pt-2 border-t border-border">
+            <span>{faq.viewCount || 0} views • {faq.helpfulCount || 0} found helpful</span>
+
+            {!isMarkedHelpful && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onMarkHelpful();
+                }}
+                className="flex items-center gap-1 text-primary hover:underline"
+              >
+                <ThumbsUp className="w-3 h-3" />
+                Helpful
+              </button>
+            )}
+          </div>
         </div>
       </div>
     </div>

@@ -146,7 +146,7 @@ export function ReviewList({
         <div className="pb-8 border-b">
           <Button
             onClick={() => setShowReviewForm(true)}
-            variant="default"
+            variant="primary"
             className="w-full md:w-auto"
           >
             Write a Review

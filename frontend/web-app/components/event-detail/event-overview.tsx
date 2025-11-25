@@ -1,6 +1,5 @@
 import Image from 'next/image';
 import { Heading } from '@/components/ui';
-import { EventFAQ } from './event-faq';
 import type { EventDetailSummary } from '@/lib/events';
 
 type EventOverviewProps = {
@@ -9,10 +8,13 @@ type EventOverviewProps = {
 };
 
 export function EventOverview({ description, assets }: EventOverviewProps) {
-  const paragraphs = description
-    .split(/\n{2,}/)
-    .map((paragraph) => paragraph.trim())
-    .filter(Boolean);
+  const hasHtml = /<\/?[a-z][\s\S]*>/i.test(description);
+  const paragraphs = !hasHtml
+    ? description
+        .split(/\n{2,}/)
+        .map((paragraph) => paragraph.trim())
+        .filter(Boolean)
+    : [];
 
   const images = assets.filter((asset) => asset.kind === 'image');
 
@@ -24,7 +26,9 @@ export function EventOverview({ description, assets }: EventOverviewProps) {
           About This Event
         </Heading>
         <div className="prose prose-slate max-w-none text-sm text-foreground leading-relaxed">
-          {paragraphs.length > 0 ? (
+          {hasHtml ? (
+            <div dangerouslySetInnerHTML={{ __html: description }} />
+          ) : paragraphs.length > 0 ? (
             paragraphs.map((paragraph, index) => (
               <p key={index} className="mb-3">
                 {paragraph}
@@ -57,8 +61,6 @@ export function EventOverview({ description, assets }: EventOverviewProps) {
         </section>
       )}
 
-      {/* FAQ Section */}
-      <EventFAQ />
     </div>
   );
 }
