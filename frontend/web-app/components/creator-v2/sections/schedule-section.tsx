@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useCallback } from 'react';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -148,6 +148,14 @@ export function ScheduleSection() {
     return () => subscription.unsubscribe();
   }, [form, debouncedSave]);
 
+  const handleRecurrenceChange = useCallback(
+    (rrule: string, exceptions: string[], preview: { start: string; end?: string }[]) => {
+      form.setValue('rrule', rrule as any);
+      form.setValue('exceptions', exceptions as any);
+    },
+    [form]
+  );
+
   return (
     <div className="space-y-8">
       <div>
@@ -236,10 +244,7 @@ export function ScheduleSection() {
               exceptions: form.watch('exceptions') || [],
             } as RecurrenceConfig}
             timezone={form.watch('timezone')}
-            onChange={(rrule, exceptions, preview) => {
-              form.setValue('rrule', rrule as any);
-              form.setValue('exceptions', exceptions as any);
-            }}
+            onChange={handleRecurrenceChange}
           />
         )}
 

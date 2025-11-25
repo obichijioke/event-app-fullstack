@@ -70,19 +70,10 @@ class EventCreatorV2Api {
 
   async uploadCover(draftId: string, file: File): Promise<{ id: string; coverImageUrl: string }>
   {
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
-    const base = `${apiUrl}/api`;
-    const form = new FormData();
-    form.append('file', file);
-    const res = await fetch(`${base}/creator-v2/drafts/${draftId}/cover`, {
-      method: 'POST',
-      credentials: 'include',
-      body: form,
-    });
-    if (!res.ok) {
-      throw new Error('Failed to upload cover');
-    }
-    return res.json();
+    return apiClient.upload<{ id: string; coverImageUrl: string }>(
+      `/creator-v2/drafts/${draftId}/cover`,
+      file
+    );
   }
 
   listVersions(draftId: string) {

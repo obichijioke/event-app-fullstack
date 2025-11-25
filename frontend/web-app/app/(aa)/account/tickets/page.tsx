@@ -162,7 +162,7 @@ export default function TicketsPage() {
                         </span>
                       </p>
                     </div>
-                    <div className="flex-shrink-0 ml-4">
+                    <div className="shrink-0 ml-4">
                       <QRCode value={ticket.qrCode} size={80} className="p-2" />
                     </div>
                   </div>
