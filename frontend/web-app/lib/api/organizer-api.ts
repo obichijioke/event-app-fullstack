@@ -252,6 +252,10 @@ export const organizerApi = {
       return apiClient.post<DashboardEvent>('/organizer/events', data);
     },
 
+    uploadImage: (file: File) => {
+      return apiClient.upload<{ url: string }>('/organizer/events/upload', file);
+    },
+
     get: (eventId: string, orgId: string) => {
       return apiClient.get<DashboardEvent>(`/organizer/events/${eventId}`, { orgId });
     },
@@ -315,11 +319,8 @@ export const organizerApi = {
 
     // Policies
     policies: {
-      createOrUpdate: (eventId: string, data: EventPolicies, orgId: string) => {
-        return apiClient.post<EventPolicies>(`/organizer/events/${eventId}/policies`, {
-          ...data,
-          orgId,
-        });
+      createOrUpdate: (eventId: string, data: EventPolicies) => {
+        return apiClient.post<EventPolicies>(`/organizer/events/${eventId}/policies`, data);
       },
     },
   },
@@ -382,7 +383,8 @@ export const organizerApi = {
 
   checkins: {
     create: (data: CheckinDto, orgId: string) => {
-      return apiClient.post<CheckinResponse>('/organizer/checkins', { ...data, orgId });
+      const params = new URLSearchParams({ orgId });
+      return apiClient.post<CheckinResponse>(`/organizer/checkins?${params.toString()}`, data);
     },
     getStats: (eventId: string, orgId: string) => {
       return apiClient.get<CheckinStats>(

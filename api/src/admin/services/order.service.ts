@@ -189,7 +189,17 @@ export class AdminOrderService {
             },
           },
         },
-        payments: true,
+        payments: {
+          select: {
+            id: true,
+            provider: true,
+            status: true,
+            amountCents: true,
+            currency: true,
+            createdAt: true,
+          },
+          orderBy: { createdAt: 'desc' },
+        },
         tickets: {
           select: {
             id: true,
@@ -197,6 +207,7 @@ export class AdminOrderService {
             qrCode: true,
             issuedAt: true,
           },
+          orderBy: { issuedAt: 'asc' },
         },
         refunds: true,
       },
@@ -206,7 +217,41 @@ export class AdminOrderService {
       throw new NotFoundException('Order not found');
     }
 
-    return order;
+    return {
+      id: order.id,
+      orderNumber: order.id,
+      buyerId: order.buyerId,
+      buyerName: order.buyer?.name,
+      buyerEmail: order.buyer?.email,
+      orgId: order.orgId,
+      orgName: order.org?.name,
+      eventId: order.eventId,
+      eventTitle: order.event?.title,
+      eventStartAt: order.event?.startAt,
+      status: order.status,
+      paymentStatus: order.payments?.[0]?.status || order.status,
+      currency: order.currency,
+      amountCents: Number(order.totalCents),
+      totalCents: Number(order.totalCents),
+      ticketCount: order.tickets?.length || 0,
+      createdAt: order.createdAt,
+      paidAt: order.paidAt,
+      tickets: order.tickets?.map((t) => ({
+        id: t.id,
+        status: t.status,
+      })),
+      payments: order.payments?.map((p) => ({
+        id: p.id,
+        provider: p.provider,
+        status: p.status,
+        amountCents: Number(p.amountCents),
+        currency: p.currency,
+        createdAt: p.createdAt,
+      })),
+      items: order.items?.map((i) => ({
+        ticketType: { name: i.ticketType?.name },
+      })),
+    };
   }
 
   async updateOrderStatus(orderId: string, dto: UpdateOrderStatusDto) {

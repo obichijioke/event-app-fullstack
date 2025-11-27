@@ -1,0 +1,39 @@
+<h2>Verify Your Email Address</h2>
+
+<p>Hi {{userName}},</p>
+
+<p>Welcome to EventFlow! To complete your registration and start discovering amazing events, please verify your email address.</p>
+
+<div class="info-box">
+    <h3 style="margin-top: 0; color: #1e40af;">Your Verification Code</h3>
+    <p style="text-align: center; font-size: 32px; font-weight: bold; letter-spacing: 8px; font-family: monospace; color: #1e40af; margin: 20px 0;">
+        {{verificationCode}}
+    </p>
+    <p class="text-muted" style="text-align: center;">This code expires in {{expiryMinutes}} minutes</p>
+</div>
+
+<a href="{{verificationUrl}}" class="button">Verify Email Address</a>
+
+<p style="text-align: center; margin-top: 20px;">
+    <span class="text-muted">Or copy and paste this link into your browser:</span><br>
+    <a href="{{verificationUrl}}" style="color: #1e40af; word-break: break-all; font-size: 12px;">{{verificationUrl}}</a>
+</p>
+
+<div class="divider"></div>
+
+<h3 style="color: #1e40af;">Why Verify Your Email?</h3>
+<ul>
+    <li>Secure your account and prevent unauthorized access</li>
+    <li>Receive order confirmations and ticket updates</li>
+    <li>Get notifications about your favorite events</li>
+    <li>Reset your password if you forget it</li>
+</ul>
+
+<div class="info-box" style="background-color: #fef3c7; border-left-color: #f59e0b;">
+    <p style="margin: 0;"><strong>Didn't create an account?</strong></p>
+    <p style="margin: 5px 0 0 0;">If you didn't sign up for EventFlow, you can safely ignore this email. The verification link will expire automatically.</p>
+</div>
+
+<p class="text-muted">
+    Having trouble? Contact our support team at <a href="mailto:{{supportEmail}}">{{supportEmail}}</a>
+</p>

@@ -23,6 +23,11 @@ export class OrganizerRecentCheckinsQueryDto {
   @Min(1)
   limit?: number = 20;
 
+  @ApiPropertyOptional({ description: 'Organization ID' })
+  @IsOptional()
+  @IsString()
+  orgId?: string;
+
   @ApiPropertyOptional({ description: 'Event ID to filter by' })
   @IsOptional()
   @IsString()

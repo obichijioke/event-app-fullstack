@@ -300,7 +300,15 @@ export class PayoutsService {
       'You do not have permission to create payout accounts for this organization',
     );
 
-    const { provider, externalId, defaultAccount } = createPayoutAccountDto;
+    const {
+      provider,
+      externalId,
+      defaultAccount,
+      bankName,
+      accountName,
+      sortCode,
+      bic,
+    } = createPayoutAccountDto;
 
     // If this is set as default, unset all other default accounts for this org
     if (defaultAccount) {
@@ -321,8 +329,12 @@ export class PayoutsService {
         orgId,
         provider,
         externalId,
-        defaultAccount: defaultAccount || true,
-      },
+        bankName,
+        accountName,
+        sortCode,
+        bic,
+        defaultAccount: defaultAccount ?? true,
+      } as any,
     });
 
     return payoutAccount;
@@ -384,7 +396,15 @@ export class PayoutsService {
       );
     }
 
-    const { provider, externalId, defaultAccount } = updatePayoutAccountDto;
+    const {
+      provider,
+      externalId,
+      bankName,
+      accountName,
+      sortCode,
+      bic,
+      defaultAccount,
+    } = updatePayoutAccountDto;
 
     // If this is set as default, unset all other default accounts for this org
     if (defaultAccount) {
@@ -406,8 +426,12 @@ export class PayoutsService {
       data: {
         provider,
         externalId,
+        bankName,
+        accountName,
+        sortCode,
+        bic,
         defaultAccount,
-      },
+      } as any,
     });
 
     return updatedPayoutAccount;

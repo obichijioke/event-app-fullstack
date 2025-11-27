@@ -402,6 +402,10 @@ model PayoutAccount {
   orgId          String   @map("org_id")
   provider       String
   externalId     String   @map("external_id")
+  bankName       String?  @map("bank_name")
+  accountName    String?  @map("account_name")
+  sortCode       String?  @map("sort_code")
+  bic            String?  @map("bic")
   defaultAccount Boolean  @default(true) @map("default_account")
   createdAt      DateTime @default(now()) @map("created_at")
 
@@ -559,6 +563,7 @@ model Event {
   venueId        String?     @map("venue_id")
   seatmapId      String?     @map("seatmap_id")
   title          String
+  shortDescription String?     @map("short_description")
   descriptionMd  String?     @map("description_md")
   status         EventStatus @default(draft)
   visibility     Visibility  @default(public)

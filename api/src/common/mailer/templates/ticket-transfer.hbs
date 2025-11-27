@@ -1,0 +1,109 @@
+{{#if isRecipient}}
+<h2>You've Received Tickets!</h2>
+
+<p>Hi {{recipientName}},</p>
+
+<p><strong>{{senderName}}</strong> has transferred {{ticketCount}} ticket(s) to you for <strong>{{eventName}}</strong>!</p>
+
+{{else}}
+<h2>Ticket Transfer Confirmed</h2>
+
+<p>Hi {{senderName}},</p>
+
+<p>You have successfully transferred {{ticketCount}} ticket(s) for <strong>{{eventName}}</strong> to <strong>{{recipientName}}</strong>.</p>
+{{/if}}
+
+<div class="info-box">
+    <h3 style="margin-top: 0; color: #1e40af;">Event Information</h3>
+    <p><strong>Event:</strong> {{eventName}}</p>
+    <p><strong>Date:</strong> {{eventDate}}</p>
+    <p><strong>Time:</strong> {{eventTime}}</p>
+    {{#if venueName}}
+    <p><strong>Venue:</strong> {{venueName}}</p>
+    {{/if}}
+    {{#if venueAddress}}
+    <p><strong>Address:</strong> {{venueAddress}}</p>
+    {{/if}}
+</div>
+
+<div class="info-box">
+    <h3 style="margin-top: 0; color: #7c3aed;">Transferred Tickets</h3>
+    {{#each tickets}}
+    <p><strong>Ticket #{{this.ticketNumber}}</strong></p>
+    <p>Type: {{this.ticketType}}</p>
+    {{#if this.seatInfo}}
+    <p>Seat: {{this.seatInfo}}</p>
+    {{/if}}
+    <p class="text-muted" style="font-size: 12px; margin-bottom: 15px;">Ticket ID: {{this.ticketId}}</p>
+    {{/each}}
+</div>
+
+{{#if isRecipient}}
+<div class="info-box" style="background-color: #dbeafe; border-left-color: #1e40af;">
+    <h3 style="margin-top: 0; color: #1e40af;">Accept Your Tickets</h3>
+    <p>To claim your tickets, you need to accept this transfer.</p>
+    {{#if hasAccount}}
+    <p>Log in to your account to view and accept the transfer.</p>
+    {{else}}
+    <p>Create a free account or log in to accept these tickets.</p>
+    {{/if}}
+</div>
+
+<a href="{{acceptUrl}}" class="button">Accept Tickets</a>
+
+{{else}}
+<div class="info-box" style="background-color: #dcfce7; border-left-color: #10b981;">
+    <h3 style="margin-top: 0; color: #065f46;">Transfer Complete</h3>
+    <p>The tickets have been removed from your account and transferred to {{recipientName}}.</p>
+    {{#if recipientEmail}}
+    <p>Confirmation sent to: {{recipientEmail}}</p>
+    {{/if}}
+</div>
+
+<a href="{{orderUrl}}" class="button">View Order History</a>
+{{/if}}
+
+<div class="divider"></div>
+
+{{#if isRecipient}}
+<h3 style="color: #1e40af;">What You Need to Know</h3>
+<ul>
+    <li>You must accept the transfer to claim your tickets</li>
+    <li>The transfer link expires in {{expiryDays}} days</li>
+    <li>Once accepted, the tickets will appear in your account</li>
+    <li>You'll receive a new email with your ticket QR codes</li>
+    <li>Present your QR code at the venue for entry</li>
+</ul>
+
+{{#if message}}
+<div class="info-box">
+    <h3 style="margin-top: 0; color: #1e40af;">Message from {{senderName}}</h3>
+    <p style="font-style: italic;">"{{message}}"</p>
+</div>
+{{/if}}
+
+<p class="text-muted">
+    If you didn't expect this transfer, please contact <a href="mailto:{{senderEmail}}">{{senderEmail}}</a>
+    or our support team at <a href="mailto:{{supportEmail}}">{{supportEmail}}</a>.
+</p>
+
+{{else}}
+<h3 style="color: #1e40af;">Important Information</h3>
+<ul>
+    <li>You no longer have access to these tickets</li>
+    <li>{{recipientName}} must accept the transfer within {{expiryDays}} days</li>
+    <li>If not accepted, the tickets will be returned to you</li>
+    <li>You can view the transfer status in your account</li>
+    <li>The original order remains in your order history</li>
+</ul>
+
+<p class="text-muted">
+    Need to cancel this transfer? Contact our support team at
+    <a href="mailto:{{supportEmail}}">{{supportEmail}}</a> before the recipient accepts it.
+</p>
+{{/if}}
+
+<p class="text-muted" style="font-size: 12px;">
+    Transfer ID: {{transferId}}<br>
+    Transfer Date: {{transferDate}}
+</p>

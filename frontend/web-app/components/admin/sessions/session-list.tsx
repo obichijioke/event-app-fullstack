@@ -89,6 +89,53 @@ export function SessionList({ className }: SessionListProps) {
     }
   };
 
+  const handleCleanupSessions = async () => {
+    if (!accessToken) return;
+
+    const olderThanDays = prompt('Delete sessions older than how many days? (default: 30)');
+    const days = olderThanDays ? parseInt(olderThanDays, 10) : 30;
+
+    if (isNaN(days) || days < 0) {
+      alert('Please enter a valid number of days');
+      return;
+    }
+
+    const includeActive = confirm('Include active sessions in cleanup?');
+
+    if (!confirm(`This will delete ${includeActive ? 'ALL' : 'revoked'} sessions older than ${days} days. Continue?`)) {
+      return;
+    }
+
+    try {
+      const response = await adminApiService.cleanupSessions(accessToken, {
+        olderThanDays: days,
+        includeActive,
+      });
+
+      if (response.success && response.data) {
+        alert(`Successfully deleted ${response.data.deletedCount} sessions`);
+        loadSessions();
+      }
+    } catch (error) {
+      console.error('Failed to cleanup sessions:', error);
+      alert('Failed to cleanup sessions');
+    }
+  };
+
+  const handleRefreshStats = async () => {
+    if (!accessToken) return;
+
+    try {
+      const response = await adminApiService.refreshSessionStats(accessToken);
+      if (response.success) {
+        alert('Session stats refreshed. Check server logs for details.');
+      }
+    } catch (error) {
+      console.error('Failed to refresh session stats:', error);
+      alert('Failed to refresh session stats');
+    }
+  };
+
   const isExpired = (expiresAt: string) => new Date(expiresAt) < new Date();
 
   const columns = [
@@ -187,6 +234,20 @@ export function SessionList({ className }: SessionListProps) {
         <div>
           <h1 className="text-3xl font-bold text-foreground">Session Monitoring</h1>
           <p className="text-muted-foreground mt-1">Monitor and manage active user sessions</p>
+        </div>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={handleRefreshStats}
+            className="rounded-lg border border-border bg-background px-4 py-2 text-sm font-semibold transition hover:bg-muted"
+          >
+            Refresh Stats
+          </button>
+          <button
+            onClick={handleCleanupSessions}
+            className="rounded-lg bg-destructive px-4 py-2 text-sm font-semibold text-destructive-foreground transition hover:opacity-90"
+          >
+            Cleanup Sessions
+          </button>
         </div>
       </div>
 

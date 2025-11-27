@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { Job } from 'bullmq';
 import { BaseQueueProcessor } from '../base-queue.processor';
 import { RedisService } from '../../common/redis/redis.service';
+import { MailerService } from '../../common/mailer/mailer.service';
 
 export interface EmailJobData {
   to: string | string[];
@@ -21,7 +22,10 @@ export interface EmailJobData {
 
 @Injectable()
 export class EmailProcessor extends BaseQueueProcessor {
-  constructor(redisService: RedisService) {
+  constructor(
+    redisService: RedisService,
+    private mailerService: MailerService,
+  ) {
     super(redisService, 'email');
   }
 
@@ -38,49 +42,83 @@ export class EmailProcessor extends BaseQueueProcessor {
       attachments,
     } = job.data;
 
-    // In a real implementation, you would use an email service like SendGrid, Mailgun, or AWS SES
-    // For this example, we'll just log the email details
     this.logger.log(
-      `Sending email to: ${Array.isArray(to) ? to.join(', ') : to}`,
+      `Processing email job - To: ${Array.isArray(to) ? to.join(', ') : to}, Subject: ${subject}`,
     );
-    this.logger.log(`Subject: ${subject}`);
 
-    if (template) {
-      this.logger.log(`Using template: ${template}`);
-      if (context) {
-        this.logger.log(`Template context: ${JSON.stringify(context)}`);
+    try {
+      // Handle multiple recipients
+      const recipients = Array.isArray(to) ? to : [to];
+      const results: Array<{
+        recipient: string;
+        status: string;
+        success: boolean;
+        error?: string;
+      }> = [];
+
+      for (const recipient of recipients) {
+        try {
+          let result;
+
+          // Use template if provided
+          if (template && context) {
+            this.logger.log(`Sending templated email using template: ${template}`);
+            result = await this.mailerService.sendTemplatedMail({
+              to: recipient,
+              subject,
+              template,
+              context,
+            });
+          } else {
+            // Send regular email
+            this.logger.log(`Sending email with HTML/text content`);
+            result = await this.mailerService.sendMail({
+              to: recipient,
+              subject,
+              html,
+              text,
+            });
+          }
+
+          results.push({
+            recipient,
+            status: 'sent',
+            success: true,
+          });
+
+          this.logger.log(`Email sent successfully to ${recipient}`);
+        } catch (error) {
+          this.logger.error(
+            `Failed to send email to ${recipient}: ${error.message}`,
+            error.stack,
+          );
+
+          results.push({
+            recipient,
+            status: 'failed',
+            success: false,
+            error: error.message,
+          });
+        }
       }
+
+      // Return aggregated results
+      const successCount = results.filter((r) => r.success).length;
+      const failureCount = results.filter((r) => !r.success).length;
+
+      return {
+        totalRecipients: recipients.length,
+        successCount,
+        failureCount,
+        results,
+        subject,
+      };
+    } catch (error) {
+      this.logger.error(
+        `Email job processing failed: ${error.message}`,
+        error.stack,
+      );
+      throw error;
     }
-
-    if (html) {
-      this.logger.log(`HTML content provided`);
-    }
-
-    if (text) {
-      this.logger.log(`Text content provided`);
-    }
-
-    if (from) {
-      this.logger.log(`From: ${from}`);
-    }
-
-    if (replyTo) {
-      this.logger.log(`Reply to: ${replyTo}`);
-    }
-
-    if (attachments && attachments.length > 0) {
-      this.logger.log(`Attachments: ${attachments.length}`);
-    }
-
-    // Simulate email sending delay
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-
-    // In a real implementation, you would return the email service response
-    return {
-      messageId: `msg_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
-      status: 'sent',
-      to,
-      subject,
-    };
   }
 }

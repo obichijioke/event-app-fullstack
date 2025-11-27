@@ -153,6 +153,14 @@ export function PayoutAccountList({ onAddAccount }: PayoutAccountListProps) {
 
                   <div className="mt-4 text-sm text-muted-foreground">
                     <p>Added on {formatDate(account.createdAt)}</p>
+                    {account.provider === 'bank_transfer' && (
+                      <div className="mt-2 space-y-1">
+                        {account.bankName && <p>Bank: {account.bankName}</p>}
+                        {account.accountName && <p>Account Name: {account.accountName}</p>}
+                        {account.sortCode && <p>Sort Code: {account.sortCode}</p>}
+                        {account.bic && <p>BIC: {account.bic}</p>}
+                      </div>
+                    )}
                   </div>
                 </div>
 

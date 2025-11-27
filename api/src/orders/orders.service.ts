@@ -5,11 +5,13 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { PrismaService } from '../common/prisma/prisma.service';
+import { MailerService } from '../common/mailer/mailer.service';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { UpdateOrderDto } from './dto/update-order.dto';
 import { OrderStatus } from '@prisma/client';
 import { PaymentService } from './services/payment.service';
 import { PromotionsService } from '../promotions/promotions.service';
+import { orderEmailIncludes, OrderWithEmailData } from '../common/types/prisma-helpers';
 
 @Injectable()
 export class OrdersService {
@@ -17,6 +19,7 @@ export class OrdersService {
     private prisma: PrismaService,
     private paymentService: PaymentService,
     private promotionsService: PromotionsService,
+    private mailerService: MailerService,
   ) {}
 
   async createOrder(userId: string, createOrderDto: CreateOrderDto) {
@@ -782,6 +785,11 @@ export class OrdersService {
     return result;
   }
 
+  // Ensures tickets are issued for a paid order (used by webhooks/providers)
+  async ensureTicketsForOrder(orderId: string) {
+    await this.createTicketsForOrder(orderId);
+  }
+
   private async createTicketsForOrder(orderId: string) {
     const order = await this.prisma.order.findUnique({
       where: { id: orderId },
@@ -806,10 +814,8 @@ export class OrdersService {
       0,
     );
 
-    // If we already have all tickets, we're done
-    if (order.tickets && order.tickets.length === totalExpectedTickets) {
-      return;
-    }
+    // If we already have all tickets, we're done (but still send email if not sent before)
+    const ticketsAlreadyExisted = order.tickets && order.tickets.length === totalExpectedTickets;
 
     const existingQRCodes = new Set(order.tickets?.map((t) => t.qrCode) || []);
 
@@ -850,6 +856,14 @@ export class OrdersService {
         });
       }
     }
+
+    // Send ticket delivery email (only if tickets were just created)
+    if (!ticketsAlreadyExisted) {
+      await this.sendTicketDeliveryEmail(orderId).catch((error) => {
+        console.error('Failed to send ticket delivery email:', error);
+        // Don't fail the ticket creation if email fails
+      });
+    }
   }
 
   private generateQRCode(
@@ -873,6 +887,102 @@ export class OrdersService {
     // Generate a unique barcode
     const data = `${orderId}-${ticketTypeId}${seatId ? `-${seatId}` : ''}-${index}`;
     return data;
+  }
+
+  private async sendTicketDeliveryEmail(orderId: string) {
+    const order = await this.prisma.order.findUnique({
+      where: { id: orderId },
+      ...orderEmailIncludes,
+    }) as OrderWithEmailData | null;
+
+    if (!order?.event || !order.tickets || order.tickets.length === 0) {
+      return;
+    }
+
+    // Fetch buyer (user) separately
+    const user = await this.prisma.user.findUnique({
+      where: { id: order.buyerId },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+      },
+    });
+
+    if (!user) {
+      return;
+    }
+
+    // Format event date and time
+    const eventDate = order.occurrence?.startsAt || order.event.startAt;
+    const formattedDate = new Intl.DateTimeFormat('en-US', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      timeZone: 'UTC',
+    }).format(new Date(eventDate));
+
+    const formattedTime = new Intl.DateTimeFormat('en-US', {
+      hour: 'numeric',
+      minute: '2-digit',
+      timeZone: 'UTC',
+    }).format(new Date(eventDate));
+
+    // Format venue address (address is a JSON field)
+    let venueAddress = '';
+    if (order.event.venue?.address) {
+      const addr = order.event.venue.address as any;
+      venueAddress = typeof addr === 'string'
+        ? addr
+        : [addr.street, addr.city, addr.state, addr.country]
+            .filter(Boolean)
+            .join(', ');
+    }
+
+    // Format tickets with QR codes
+    const tickets = order.tickets.map((ticket, index) => {
+      let seatInfo = '';
+      if (ticket.seat) {
+        seatInfo = `Section ${ticket.seat.section}, Row ${ticket.seat.row}, Seat ${ticket.seat.number}`;
+      }
+
+      return {
+        ticketNumber: `${order.id.slice(0, 8).toUpperCase()}-${index + 1}`,
+        ticketType: ticket.ticketType?.name || 'General Admission',
+        seatInfo: seatInfo || null,
+        holderName: user.name || user.email.split('@')[0],
+        qrCodeUrl: ticket.qrCode ? this.generateQRCodeImageUrl(ticket.qrCode) : null,
+        ticketId: ticket.id,
+      };
+    });
+
+    await this.mailerService.sendTemplatedMail({
+      to: user.email,
+      subject: `Your Tickets for ${order.event.title}`,
+      template: 'ticket-delivery',
+      context: {
+        userName: user.name || user.email.split('@')[0],
+        eventName: order.event.title,
+        eventDate: formattedDate,
+        eventTime: formattedTime,
+        venueName: order.event.venue?.name,
+        venueAddress,
+        tickets,
+        ticketsUrl: `${process.env.FRONTEND_URL || 'http://localhost:3000'}/account/tickets?orderId=${order.id}`,
+        organizerEmail: order.event.org.supportEmail || 'noreply@eventflow.dev',
+        eventPolicies: order.event.policies,
+        transferEnabled: true,
+      },
+    });
+  }
+
+  private generateQRCodeImageUrl(qrCode: string): string {
+    // For now, return a data URL. In production, you might generate actual QR code images
+    // using a library like qrcode and upload to S3, or use a QR code API service
+    // For this implementation, we'll use an API service that generates QR codes
+    const baseUrl = process.env.QR_CODE_API_URL || 'https://api.qrserver.com/v1/create-qr-code/';
+    return `${baseUrl}?size=200x200&data=${encodeURIComponent(qrCode)}`;
   }
 
   async getOrderStats(

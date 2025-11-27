@@ -1,0 +1,54 @@
+<h2>Your Two-Factor Authentication Code</h2>
+
+<p>Hi {{userName}},</p>
+
+<p>You requested a two-factor authentication code to {{purpose}}. Use the code below to continue.</p>
+
+<div class="info-box">
+    <h3 style="margin-top: 0; color: #1e40af;">Your 2FA Code</h3>
+    <p style="text-align: center; font-size: 48px; font-weight: bold; letter-spacing: 12px; font-family: monospace; color: #1e40af; margin: 20px 0;">
+        {{twoFactorCode}}
+    </p>
+    <p class="text-muted" style="text-align: center;">This code expires in {{expiryMinutes}} minutes</p>
+</div>
+
+<div class="info-box" style="background-color: #dbeafe; border-left-color: #1e40af;">
+    <p style="margin: 0;"><strong>What to do:</strong></p>
+    <p style="margin: 5px 0 0 0;">Enter this code in the application where you requested it. Do not share this code with anyone.</p>
+</div>
+
+<div class="divider"></div>
+
+<div class="info-box" style="background-color: #fee2e2; border-left-color: #dc2626;">
+    <h3 style="margin-top: 0; color: #991b1b;">Security Alert</h3>
+    <p><strong>Didn't request this code?</strong></p>
+    <p>If you didn't request this two-factor authentication code, someone may be trying to access your account. Please take immediate action:</p>
+    <ul style="margin: 10px 0 0 0; padding-left: 20px;">
+        <li><strong>Do not share this code with anyone</strong></li>
+        <li>Change your password immediately</li>
+        <li>Review your recent account activity</li>
+        <li>Contact support at <a href="mailto:{{supportEmail}}">{{supportEmail}}</a></li>
+    </ul>
+</div>
+
+<h3 style="color: #1e40af;">About Two-Factor Authentication</h3>
+<p>Two-factor authentication (2FA) adds an extra layer of security to your account by requiring both your password and a verification code to sign in.</p>
+
+<ul>
+    <li>Codes are sent to your verified email address</li>
+    <li>Each code can only be used once</li>
+    <li>Codes expire after {{expiryMinutes}} minutes</li>
+    <li>Never share your 2FA codes with anyone</li>
+</ul>
+
+<p class="text-muted" style="font-size: 12px;">
+    This code was requested from:<br>
+    IP Address: {{ipAddress}}<br>
+    Device: {{userAgent}}<br>
+    Time: {{requestTime}}
+</p>
+
+<p class="text-muted">
+    Questions? Visit our <a href="{{helpUrl}}">Help Center</a> or contact
+    <a href="mailto:{{supportEmail}}">{{supportEmail}}</a>
+</p>

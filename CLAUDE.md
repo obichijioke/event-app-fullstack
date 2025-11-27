@@ -71,7 +71,7 @@ docker compose logs -f redis
 - **Health Monitoring**: Health check endpoints for system monitoring
 
 ### Core Module Structure
-- **auth/** - JWT authentication, API keys, session management
+- **auth/** - JWT authentication, API keys, session management (see [SESSION_MANAGEMENT.md](api/SESSION_MANAGEMENT.md) for details)
 - **organizations/** - Multi-tenant organization management with role-based permissions, verification documents, and appeals
 - **organizer/** - Organizer-specific functionality and dashboard operations
 - **events/** - Event management with occurrences, assets, policies, and seatmaps
