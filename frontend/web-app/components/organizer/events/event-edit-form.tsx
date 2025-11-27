@@ -2,10 +2,11 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Loader2, Save } from 'lucide-react';
+import { Loader2, Save, Upload, Image as ImageIcon, Link as LinkIcon, Sparkles, Shield } from 'lucide-react';
 import { useOrganizerStore } from '@/lib/stores/organizer-store';
 import { organizerApi } from '@/lib/api/organizer-api';
 import { EmptyState } from '../empty-state';
+import { categoriesApi } from '@/lib/api/categories-api';
 import toast from 'react-hot-toast';
 import type { UpdateEventDto } from '@/lib/types/organizer';
 
@@ -19,8 +20,10 @@ export function EventEditForm({ eventId }: EventEditFormProps) {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [venues, setVenues] = useState<any[]>([]);
+  const [categories, setCategories] = useState<{ id: string; name: string }[]>([]);
   const [formData, setFormData] = useState<any>({
     title: '',
+    shortDescription: '',
     descriptionMd: '',
     visibility: 'public',
     startAt: '',
@@ -30,6 +33,10 @@ export function EventEditForm({ eventId }: EventEditFormProps) {
     venueId: '',
     seatmapId: '',
     coverImageUrl: '',
+    ageRestriction: '',
+    refundPolicy: '',
+    transferAllowed: true,
+    transferCutoff: '',
   });
 
   useEffect(() => {
@@ -38,13 +45,15 @@ export function EventEditForm({ eventId }: EventEditFormProps) {
 
       try {
         setLoading(true);
-        const [eventData, venuesData] = await Promise.all([
+        const [eventData, venuesData, categoryData] = await Promise.all([
           organizerApi.events.get(eventId, currentOrganization.id),
           organizerApi.venues.list(currentOrganization.id).catch(() => []),
+          categoriesApi.getCategories().catch(() => []),
         ]);
         
         setFormData({
           title: eventData.title || '',
+          shortDescription: '', // Backend lacks explicit short field; keep local only
           descriptionMd: eventData.descriptionMd || '',
           visibility: eventData.visibility || 'public',
           startAt: eventData.startAt ? new Date(eventData.startAt).toISOString().slice(0, 16) : '',
@@ -54,8 +63,15 @@ export function EventEditForm({ eventId }: EventEditFormProps) {
           venueId: eventData.venueId || '',
           seatmapId: eventData.seatmapId || '',
           coverImageUrl: eventData.coverImageUrl || '',
+          ageRestriction: eventData.ageRestriction || '',
+          refundPolicy: (eventData as any)?.policies?.refundPolicy || '',
+          transferAllowed: (eventData as any)?.policies?.transferAllowed ?? true,
+          transferCutoff: (eventData as any)?.policies?.transferCutoff
+            ? new Date((eventData as any).policies.transferCutoff).toISOString().slice(0, 16)
+            : '',
         });
         setVenues(venuesData);
+        setCategories(categoryData || []);
       } catch (error) {
         console.error('Failed to load event:', error);
         toast.error('Failed to load event details');
@@ -100,7 +116,7 @@ export function EventEditForm({ eventId }: EventEditFormProps) {
 
       const updateData: UpdateEventDto = {
         title: formData.title,
-        descriptionMd: formData.descriptionMd,
+        descriptionMd: `${formData.shortDescription ? `${formData.shortDescription}\n\n` : ''}${formData.descriptionMd}`,
         visibility: formData.visibility,
         coverImageUrl: trimmedCoverImage || undefined,
       };
@@ -123,8 +139,19 @@ export function EventEditForm({ eventId }: EventEditFormProps) {
       if (formData.seatmapId) {
         updateData.seatmapId = formData.seatmapId;
       }
+      if (formData.ageRestriction) {
+        (updateData as any).ageRestriction = formData.ageRestriction;
+      }
 
       await organizerApi.events.update(eventId, updateData, currentOrganization.id);
+      await organizerApi.events.policies.createOrUpdate(eventId, {
+        refundPolicy: formData.refundPolicy || undefined,
+        transferAllowed: formData.transferAllowed,
+        transferCutoff: formData.transferCutoff
+          ? new Date(formData.transferCutoff).toISOString()
+          : undefined,
+        resaleAllowed: false,
+      }, currentOrganization.id);
       toast.success('Event updated successfully');
       router.push(`/organizer/events/${eventId}`);
     } catch (error) {
@@ -158,13 +185,89 @@ export function EventEditForm({ eventId }: EventEditFormProps) {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2">Edit Event</h1>
-        <p className="text-muted-foreground">Update your event details</p>
+      <div className="mb-8 flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold mb-2">Edit Event</h1>
+          <p className="text-muted-foreground">Update your event details and policies</p>
+        </div>
+        <div className="flex gap-3">
+          <button
+            type="button"
+            onClick={() => router.push(`/events/${eventId}`)}
+            className="px-4 py-2 rounded-lg border border-border text-sm hover:bg-muted transition"
+          >
+            View Public Page
+          </button>
+          <button
+            type="button"
+            onClick={() => router.push(`/organizer/events/${eventId}/tickets`)}
+            className="px-4 py-2 rounded-lg border border-border text-sm hover:bg-muted transition"
+          >
+            Manage Tickets
+          </button>
+          <button
+            type="button"
+            onClick={() => router.push(`/organizer/events/${eventId}/attendees`)}
+            className="px-4 py-2 rounded-lg border border-border text-sm hover:bg-muted transition"
+          >
+            Attendees
+          </button>
+        </div>
       </div>
 
-      <form onSubmit={handleSubmit} className="max-w-3xl">
+      <form onSubmit={handleSubmit} className="grid gap-6 lg:grid-cols-[2fr,1fr]">
         <div className="bg-card border border-border rounded-lg p-6 space-y-6">
+          {/* Cover */}
+          <div>
+            <div className="flex items-center justify-between mb-3">
+              <div>
+                <h2 className="text-xl font-semibold">Cover Image</h2>
+                <p className="text-sm text-muted-foreground">Upload or replace your event cover</p>
+              </div>
+              <label className="inline-flex items-center gap-2 px-3 py-2 text-sm border border-border rounded-lg cursor-pointer hover:bg-muted transition">
+                <Upload className="w-4 h-4" />
+                Replace
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (!file) return;
+                    const url = URL.createObjectURL(file);
+                    setFormData((prev: any) => ({ ...prev, coverImageUrl: url }));
+                    toast('Preview generated. Upload integration needed to persist.', { icon: 'ℹ️' });
+                  }}
+                />
+              </label>
+            </div>
+            <div className="relative aspect-[16/9] rounded-lg border border-border overflow-hidden bg-muted/50">
+              {formData.coverImageUrl ? (
+                <img
+                  src={formData.coverImageUrl}
+                  alt="Event cover"
+                  className="h-full w-full object-cover"
+                />
+              ) : (
+                <div className="h-full w-full flex flex-col items-center justify-center text-muted-foreground gap-2">
+                  <ImageIcon className="w-8 h-8" />
+                  <p className="text-sm">No cover image. Add one to make your event pop.</p>
+                </div>
+              )}
+              <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/60 to-transparent p-3 flex items-center gap-2 text-white text-sm">
+                <LinkIcon className="w-4 h-4" />
+                <input
+                  type="url"
+                  name="coverImageUrl"
+                  value={formData.coverImageUrl}
+                  onChange={handleChange}
+                  placeholder="https://example.com/cover.jpg"
+                  className="flex-1 bg-black/30 border border-white/20 rounded px-2 py-1 text-sm focus:outline-none"
+                />
+              </div>
+            </div>
+          </div>
+
           {/* Basic Information */}
           <div>
             <h2 className="text-xl font-semibold mb-4">Basic Information</h2>
@@ -183,6 +286,22 @@ export function EventEditForm({ eventId }: EventEditFormProps) {
                   className="w-full px-4 py-2 border border-border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
                   placeholder="Enter event title"
                 />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-2">
+                  Short Description
+                </label>
+                <textarea
+                  name="shortDescription"
+                  value={formData.shortDescription}
+                  onChange={handleChange}
+                  rows={2}
+                  maxLength={160}
+                  className="w-full px-4 py-2 border border-border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                  placeholder="One-liner that appears on listings (max 160 chars)"
+                />
+                <p className="text-xs text-muted-foreground text-right">{(formData.shortDescription || '').length}/160</p>
               </div>
 
               <div>
@@ -217,15 +336,34 @@ export function EventEditForm({ eventId }: EventEditFormProps) {
 
               <div>
                 <label className="block text-sm font-medium text-foreground mb-2">
-                  Cover Image URL
+                  Category
                 </label>
-                <input
-                  type="url"
-                  name="coverImageUrl"
-                  value={formData.coverImageUrl}
+                <select
+                  name="categoryId"
+                  value={formData.categoryId}
                   onChange={handleChange}
                   className="w-full px-4 py-2 border border-border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
-                  placeholder="https://example.com/image.jpg"
+                >
+                  <option value="">Select a category</option>
+                  {categories.map((cat) => (
+                    <option key={cat.id} value={cat.id}>
+                      {cat.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-2">
+                  Age Restriction (optional)
+                </label>
+                <input
+                  type="text"
+                  name="ageRestriction"
+                  value={formData.ageRestriction || ''}
+                  onChange={handleChange}
+                  className="w-full px-4 py-2 border border-border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                  placeholder="e.g., 18+"
                 />
               </div>
             </div>
@@ -302,6 +440,65 @@ export function EventEditForm({ eventId }: EventEditFormProps) {
               <p className="text-xs text-muted-foreground mt-2">
                 Select a venue for your event. You can manage venues in the Venues section.
               </p>
+            </div>
+          </div>
+
+          {/* Policies */}
+          <div className="border-t border-border pt-6">
+            <h2 className="text-xl font-semibold mb-2 flex items-center gap-2">
+              <Shield className="w-4 h-4" />
+              Event Policies
+            </h2>
+            <p className="text-sm text-muted-foreground mb-4">
+              Set refund and transfer rules for attendees.
+            </p>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-2">
+                  Refund Policy
+                </label>
+                <textarea
+                  name="refundPolicy"
+                  value={formData.refundPolicy}
+                  onChange={handleChange}
+                  rows={3}
+                  className="w-full px-4 py-2 border border-border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                  placeholder="Describe when and how refunds are issued"
+                />
+              </div>
+              <div className="flex items-center justify-between border border-border rounded-lg p-4">
+                <div>
+                  <p className="text-sm font-medium">Allow Transfers</p>
+                  <p className="text-xs text-muted-foreground">
+                    Attendees can transfer tickets to someone else before the cutoff.
+                  </p>
+                </div>
+                <label className="inline-flex items-center gap-2 text-sm">
+                  <input
+                    type="checkbox"
+                    checked={formData.transferAllowed}
+                    onChange={(e) =>
+                      setFormData((prev: any) => ({ ...prev, transferAllowed: e.target.checked }))
+                    }
+                  />
+                  Enabled
+                </label>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-2">
+                  Transfer Cutoff
+                </label>
+                <input
+                  type="datetime-local"
+                  name="transferCutoff"
+                  value={formData.transferCutoff}
+                  onChange={handleChange}
+                  className="w-full px-4 py-2 border border-border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                />
+                <p className="text-xs text-muted-foreground mt-1">
+                  Last date/time when transfers are allowed.
+                </p>
+              </div>
             </div>
           </div>
 

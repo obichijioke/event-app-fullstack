@@ -316,7 +316,10 @@ export const organizerApi = {
     // Policies
     policies: {
       createOrUpdate: (eventId: string, data: EventPolicies, orgId: string) => {
-        return apiClient.post<EventPolicies>(`/organizer/events/${eventId}/policies`, data);
+        return apiClient.post<EventPolicies>(`/organizer/events/${eventId}/policies`, {
+          ...data,
+          orgId,
+        });
       },
     },
   },
@@ -388,9 +391,10 @@ export const organizerApi = {
       );
     },
     getRecent: (eventId: string, orgId: string, limit?: number) => {
+      const params = new URLSearchParams({ orgId });
+      if (limit) params.set('limit', String(limit));
       return apiClient.get<RecentCheckin[]>(
-        `/organizer/events/${eventId}/recent-checkins`,
-        { orgId, limit }
+        `/organizer/events/${eventId}/recent-checkins?${params.toString()}`
       );
     },
   },
