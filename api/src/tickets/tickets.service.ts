@@ -450,6 +450,7 @@ export class TicketsService {
             title: true,
             startAt: true,
             endAt: true,
+            doorTime: true,
           },
         },
         ticketType: {
@@ -503,9 +504,23 @@ export class TicketsService {
       throw new BadRequestException('Event has already ended');
     }
 
-    // Check if event hasn't started yet
-    if (ticket.event.startAt > new Date()) {
-      throw new BadRequestException('Event has not started yet');
+    // Check if check-in is allowed based on door time or event start time
+    const now = new Date();
+    const checkinStartTime = ticket.event.doorTime || ticket.event.startAt;
+
+    if (now < checkinStartTime) {
+      const hoursUntil = Math.ceil((checkinStartTime.getTime() - now.getTime()) / (1000 * 60 * 60));
+      const minutesUntil = Math.ceil((checkinStartTime.getTime() - now.getTime()) / (1000 * 60));
+
+      if (ticket.event.doorTime) {
+        throw new BadRequestException(
+          `Check-in has not opened yet. Doors open at ${checkinStartTime.toLocaleTimeString()} (in ${hoursUntil > 0 ? hoursUntil + ' hour' + (hoursUntil !== 1 ? 's' : '') : minutesUntil + ' minute' + (minutesUntil !== 1 ? 's' : '')})`
+        );
+      } else {
+        throw new BadRequestException(
+          `Check-in has not opened yet. Event starts at ${checkinStartTime.toLocaleTimeString()} (in ${hoursUntil > 0 ? hoursUntil + ' hour' + (hoursUntil !== 1 ? 's' : '') : minutesUntil + ' minute' + (minutesUntil !== 1 ? 's' : '')})`
+        );
+      }
     }
 
     // Create check-in record

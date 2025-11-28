@@ -292,7 +292,7 @@ export function CheckinContent({ eventId }: CheckinContentProps) {
           <li>The system automatically decodes QR codes and validates tickets</li>
           <li>Each ticket can only be checked in once</li>
           <li>Check-in statistics update in real-time</li>
-          <li>Only tickets for events that have started can be checked in</li>
+          <li>Check-in opens at the configured door time, or when the event starts</li>
         </ul>
       </div>
     </div>
