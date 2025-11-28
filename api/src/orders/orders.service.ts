@@ -822,14 +822,18 @@ export class OrdersService {
     // Create tickets for each order item
     for (const item of order.items) {
       for (let i = 0; i < item.quantity; i++) {
-        const qrCode = this.generateQRCode(
+        // First check if ticket already exists by checking existing QR codes
+        // We need to generate a temporary QR to check
+        const tempQrCode = this.generateQRCode(
           order.id,
           item.ticketTypeId,
           item.seatId || undefined,
           i, // Pass index for uniqueness
+          undefined, // No ticket ID yet
         );
+
         // Skip if this specific ticket already exists
-        if (existingQRCodes.has(qrCode)) {
+        if (existingQRCodes.has(tempQrCode)) {
           continue;
         }
 
@@ -840,7 +844,8 @@ export class OrdersService {
           i, // Pass index for uniqueness
         );
 
-        await this.prisma.ticket.create({
+        // Create ticket first to get the ID
+        const ticket = await this.prisma.ticket.create({
           data: {
             orderId: order.id,
             eventId: order.eventId,
@@ -849,10 +854,25 @@ export class OrdersService {
             seatId: item.seatId,
             ownerId: order.buyerId,
             status: 'issued',
-            qrCode,
+            qrCode: '', // Temporary empty value
             barcode,
             issuedAt: new Date(),
           },
+        });
+
+        // Now generate QR code with the ticket ID
+        const qrCode = this.generateQRCode(
+          order.id,
+          item.ticketTypeId,
+          item.seatId || undefined,
+          i,
+          ticket.id, // Include ticket ID
+        );
+
+        // Update ticket with final QR code
+        await this.prisma.ticket.update({
+          where: { id: ticket.id },
+          data: { qrCode },
         });
       }
     }
@@ -871,10 +891,18 @@ export class OrdersService {
     ticketTypeId: string,
     seatId?: string,
     index: number = 0,
+    ticketId?: string,
   ): string {
-    // Generate a unique QR code
-    // Include index to ensure uniqueness for multiple tickets of same type
-    const data = `${orderId}-${ticketTypeId}${seatId ? `-${seatId}` : ''}-${index}`;
+    // Generate a unique QR code with ticket ID for check-in
+    // Format: ticketId|orderId|ticketTypeId|seatId|index
+    const parts = [
+      ticketId || 'PENDING',
+      orderId,
+      ticketTypeId,
+      seatId || 'GA',
+      index.toString(),
+    ];
+    const data = parts.join('|');
     return Buffer.from(data).toString('base64');
   }
 
