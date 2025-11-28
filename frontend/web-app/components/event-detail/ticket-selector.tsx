@@ -60,7 +60,13 @@ function TicketCard({ ticket, onGetTicket }: TicketCardProps) {
   const feeCents = Number(ticket.feeCents);
 
   const isAvailable = isTicketOnSale(ticket);
-  const isSoldOut = ticket.capacity !== null && ticket.capacity !== undefined && ticket.capacity <= 0;
+  const holdsCount = ticket._count?.holds || 0;
+  const soldCount = ticket._count?.tickets || 0;
+  const available =
+    ticket.capacity !== null && ticket.capacity !== undefined
+      ? Math.max(0, Number(ticket.capacity) - soldCount - holdsCount)
+      : null;
+  const isSoldOut = available !== null && available <= 0;
   const isUpcoming = ticket.salesStart && new Date(ticket.salesStart) > new Date();
   const isExpired = ticket.salesEnd && new Date(ticket.salesEnd) < new Date();
 
@@ -86,7 +92,7 @@ function TicketCard({ ticket, onGetTicket }: TicketCardProps) {
         </span>
       );
     }
-    if (ticket.capacity !== null && ticket.capacity !== undefined && ticket.capacity < 50) {
+    if (available !== null && available < 50 && available > 0) {
       return (
         <span className="text-xs font-medium text-amber-600 bg-amber-50 px-2 py-1 rounded">
           Limited
@@ -135,7 +141,7 @@ function TicketCard({ ticket, onGetTicket }: TicketCardProps) {
           </div>
 
           <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground mt-3">
-            {ticket.capacity !== null && !isSoldOut && <span>{ticket.capacity} remaining</span>}
+            {available !== null && !isSoldOut && <span>{available} remaining</span>}
             {ticket.salesEnd && !isExpired && (
               <span>Sales end: {formatDate(ticket.salesEnd, 'short')}</span>
             )}

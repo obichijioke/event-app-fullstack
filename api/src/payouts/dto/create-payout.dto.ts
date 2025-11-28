@@ -39,6 +39,22 @@ export class CreatePayoutAccountDto {
 
   @IsOptional()
   @IsString()
+  bankName?: string;
+
+  @IsOptional()
+  @IsString()
+  accountName?: string;
+
+  @IsOptional()
+  @IsString()
+  sortCode?: string;
+
+  @IsOptional()
+  @IsString()
+  bic?: string;
+
+  @IsOptional()
+  @IsString()
   accountType?: string;
 
   @IsOptional()

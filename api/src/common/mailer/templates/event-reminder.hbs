@@ -1,0 +1,68 @@
+<h2>{{eventName}} is Coming Up Soon!</h2>
+
+<p>Hi {{userName}},</p>
+
+<p>This is a friendly reminder that your event is happening soon!</p>
+
+<div class="info-box">
+    <h3 style="margin-top: 0; color: #1e40af;">Event Details</h3>
+    <p style="font-size: 18px;"><strong>{{eventName}}</strong></p>
+    <p><strong>Date:</strong> {{eventDate}}</p>
+    <p><strong>Time:</strong> {{eventTime}}</p>
+    {{#if doorsOpenTime}}
+    <p><strong>Doors Open:</strong> {{doorsOpenTime}}</p>
+    {{/if}}
+    {{#if venueName}}
+    <p><strong>Venue:</strong> {{venueName}}</p>
+    {{/if}}
+    {{#if venueAddress}}
+    <p><strong>Address:</strong> {{venueAddress}}</p>
+    {{/if}}
+</div>
+
+{{#if ticketCount}}
+<div class="info-box">
+    <h3 style="margin-top: 0; color: #7c3aed;">Your Tickets</h3>
+    <p>You have <strong>{{ticketCount}}</strong> ticket(s) for this event.</p>
+    <p>Order Number: {{orderNumber}}</p>
+</div>
+{{/if}}
+
+<a href="{{ticketsUrl}}" class="button">View Your Tickets</a>
+
+<div class="divider"></div>
+
+<h3 style="color: #1e40af;">Before You Go</h3>
+<ul>
+    <li>Make sure you have your tickets ready (digital or printed)</li>
+    <li>Arrive early to allow time for parking and entry</li>
+    <li>Check the weather and dress appropriately</li>
+    {{#if parkingInfo}}
+    <li>Parking: {{parkingInfo}}</li>
+    {{/if}}
+    {{#if publicTransit}}
+    <li>Public Transit: {{publicTransit}}</li>
+    {{/if}}
+    <li>Review the event policies before attending</li>
+</ul>
+
+{{#if eventUpdates}}
+<div class="info-box">
+    <h3 style="margin-top: 0; color: #f59e0b;">Important Updates</h3>
+    <p>{{eventUpdates}}</p>
+</div>
+{{/if}}
+
+{{#if venueMapUrl}}
+<p>
+    <a href="{{venueMapUrl}}" style="color: #1e40af; text-decoration: none; font-weight: 600;">
+        📍 Get Directions to the Venue
+    </a>
+</p>
+{{/if}}
+
+<p>See you at the event!</p>
+
+<p class="text-muted">
+    Have questions? Contact the organizer at <a href="mailto:{{organizerEmail}}">{{organizerEmail}}</a>
+</p>

@@ -12,6 +12,7 @@ import {
   Delete,
   Param,
   UnauthorizedException,
+  Query,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -20,6 +21,7 @@ import {
   ApiBearerAuth,
 } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
+import { SessionCleanupService } from './session-cleanup.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
@@ -35,6 +37,7 @@ import { VerifyEmailDto } from './dto/verify-email.dto';
 import { RequestPasswordResetDto } from './dto/request-password-reset.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { TwoFaCodeDto, RequestTwoFaCodeDto } from './dto/twofa.dto';
+import { PlatformRole } from '@prisma/client';
 
 @ApiTags('Authentication')
 @Controller('auth')
@@ -42,6 +45,7 @@ export class AuthController {
   constructor(
     private authService: AuthService,
     private userFollowsService: UserFollowsService,
+    private sessionCleanupService: SessionCleanupService,
   ) {}
 
   @Post('register')
@@ -345,5 +349,50 @@ export class AuthController {
   })
   getFollowing(@CurrentUser() user: any) {
     return this.userFollowsService.getFollowing(user.id);
+  }
+
+  // Admin Session Management Endpoints
+
+  @Post('admin/sessions/cleanup')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Manually trigger session cleanup (Admin only)' })
+  @ApiResponse({
+    status: 200,
+    description: 'Session cleanup completed successfully',
+  })
+  async adminCleanupSessions(
+    @CurrentUser() user: any,
+    @Query('olderThanDays') olderThanDays?: string,
+    @Query('includeActive') includeActive?: string,
+  ) {
+    // Check if user is admin
+    if (user.role !== PlatformRole.admin) {
+      throw new UnauthorizedException('Admin access required');
+    }
+
+    return this.sessionCleanupService.manualCleanup({
+      olderThanDays: olderThanDays ? parseInt(olderThanDays, 10) : 30,
+      includeActive: includeActive === 'true',
+    });
+  }
+
+  @Get('admin/sessions/stats')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Get session statistics (Admin only)' })
+  @ApiResponse({
+    status: 200,
+    description: 'Session statistics retrieved successfully',
+  })
+  async getSessionStats(@CurrentUser() user: any) {
+    // Check if user is admin
+    if (user.role !== PlatformRole.admin) {
+      throw new UnauthorizedException('Admin access required');
+    }
+
+    await this.sessionCleanupService.logSessionStats();
+    return { message: 'Session stats logged - check server logs' };
   }
 }

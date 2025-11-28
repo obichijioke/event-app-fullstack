@@ -192,16 +192,30 @@ export class StripeWebhookService {
       `Charge ${charge.id} refunded ${refundAmount} for payment ${payment.id}`,
     );
 
-    // Find and update refund record
-    const refund = await this.prisma.refund.findFirst({
-      where: {
-        orderId: payment.orderId,
-        status: 'pending',
-      },
-      orderBy: {
-        createdAt: 'desc',
-      },
-    });
+    // Prefer matching refund by provider reference if available
+    const providerRefundId = charge.refunds?.data?.[0]?.id;
+    let refund: any = null;
+
+    if (providerRefundId) {
+      refund = await this.prisma.refund.findFirst({
+        where: {
+          providerRef: providerRefundId,
+          orderId: payment.orderId,
+        },
+      });
+    }
+
+    if (!refund) {
+      refund = await this.prisma.refund.findFirst({
+        where: {
+          orderId: payment.orderId,
+          status: 'pending',
+        },
+        orderBy: {
+          createdAt: 'desc',
+        },
+      });
+    }
 
     if (refund) {
       await this.prisma.refund.update({
@@ -209,6 +223,7 @@ export class StripeWebhookService {
         data: {
           status: 'processed',
           processedAt: new Date(),
+          providerRef: providerRefundId ?? refund.providerRef,
         },
       });
 

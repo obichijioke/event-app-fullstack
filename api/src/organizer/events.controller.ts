@@ -9,7 +9,11 @@ import {
   Post,
   Query,
   UseGuards,
+  UseInterceptors,
+  UploadedFile,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { StorageService } from '../common/storage.service';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { EventsService } from '../events/events.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -32,7 +36,10 @@ import { AssignSeatmapDto } from './dto/organizer-seatmap.dto';
 @UseGuards(JwtAuthGuard)
 @ApiBearerAuth()
 export class OrganizerEventsController {
-  constructor(private readonly eventsService: EventsService) {}
+  constructor(
+    private readonly eventsService: EventsService,
+    private readonly storageService: StorageService,
+  ) {}
 
   @Get()
   @ApiOperation({ summary: 'List organization events' })
@@ -50,6 +57,26 @@ export class OrganizerEventsController {
     }
 
     return this.eventsService.findAll(user.id, filters);
+  }
+
+  @Post('upload')
+  @UseInterceptors(FileInterceptor('file'))
+  @ApiOperation({ summary: 'Upload an image' })
+  async uploadImage(
+    @CurrentUser() user: any,
+    @UploadedFile() file: any,
+  ) {
+    if (!file) {
+      throw new BadRequestException('File is required');
+    }
+    const result = await this.storageService.uploadFile(
+      file.buffer,
+      file.originalname,
+      file.mimetype,
+      'events',
+      true, // isPublic - event cover images should be publicly accessible
+    );
+    return { url: result.url };
   }
 
   @Post()

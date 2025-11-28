@@ -24,10 +24,13 @@ export function TicketSelector({
   const feeCents = Number(ticketType.feeCents);
   const totalCents = priceCents + feeCents;
 
+  const holdsCount = ticketType._count?.holds || 0;
+  const soldOrIssued = soldCount || ticketType._count?.tickets || 0;
   const hasCapacity = typeof ticketType.capacity === 'number';
-  const rawAvailable = hasCapacity && typeof ticketType.capacity === 'number'
-    ? Math.max(0, (ticketType.capacity as number) - soldCount)
-    : null;
+  const rawAvailable =
+    hasCapacity && typeof ticketType.capacity === 'number'
+      ? Math.max(0, (ticketType.capacity as number) - soldOrIssued - holdsCount)
+      : null;
   const maxPerOrder = ticketType.perOrderLimit || 10;
   const maxQuantity =
     rawAvailable === null ? maxPerOrder : Math.min(rawAvailable, maxPerOrder);

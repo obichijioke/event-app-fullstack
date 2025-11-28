@@ -4,6 +4,8 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { PrismaService } from '../../common/prisma/prisma.service';
+import { PaymentService } from '../../orders/services/payment.service';
+import { MailerService } from '../../common/mailer/mailer.service';
 import {
   RefundQueryDto,
   CreateRefundDto,
@@ -13,10 +15,15 @@ import {
   ProcessRefundDto,
 } from '../dto/refund.dto';
 import { Prisma, RefundStatus } from '@prisma/client';
+import { refundEmailIncludes, RefundWithEmailData } from '../../common/types/prisma-helpers';
 
 @Injectable()
 export class AdminRefundService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private paymentService: PaymentService,
+    private mailerService: MailerService,
+  ) {}
 
   async findAll(query: RefundQueryDto) {
     return this.getRefunds(query);
@@ -26,24 +33,28 @@ export class AdminRefundService {
     return this.getRefund(refundId);
   }
 
-  async create(dto: CreateRefundDto) {
-    return this.createRefund(dto);
+  async create(dto: CreateRefundDto, actorId?: string) {
+    return this.createRefund(dto, actorId);
   }
 
-  async updateStatus(refundId: string, dto: UpdateRefundStatusDto) {
-    return this.updateRefundStatus(refundId, dto);
+  async updateStatus(refundId: string, dto: UpdateRefundStatusDto, actorId?: string) {
+    return this.updateRefundStatus(refundId, dto, actorId);
   }
 
-  async approve(refundId: string, dto: ApproveRefundDto) {
-    return this.approveRefund(refundId, dto);
+  async approve(refundId: string, dto: ApproveRefundDto, actorId?: string) {
+    return this.approveRefund(refundId, dto, actorId);
   }
 
-  async reject(refundId: string, dto: RejectRefundDto) {
-    return this.rejectRefund(refundId, dto);
+  async reject(refundId: string, dto: RejectRefundDto, actorId?: string) {
+    return this.rejectRefund(refundId, dto, actorId);
   }
 
-  async process(refundId: string, dto: ProcessRefundDto) {
-    return this.processRefund(refundId, dto);
+  async process(refundId: string, dto: ProcessRefundDto, actorId?: string) {
+    return this.processRefund(refundId, dto, actorId);
+  }
+
+  async export(query: RefundQueryDto) {
+    return this.exportRefunds(query);
   }
 
   async getRefunds(query: RefundQueryDto) {
@@ -56,6 +67,8 @@ export class AdminRefundService {
       userId,
       dateFrom,
       dateTo,
+      amountMin,
+      amountMax,
       sortBy,
       sortOrder,
     } = query;
@@ -100,6 +113,16 @@ export class AdminRefundService {
       }
       if (dateTo) {
         where.createdAt.lte = new Date(dateTo);
+      }
+    }
+
+    if (amountMin !== undefined || amountMax !== undefined) {
+      where.amountCents = {};
+      if (amountMin !== undefined) {
+        where.amountCents.gte = BigInt(amountMin);
+      }
+      if (amountMax !== undefined) {
+        where.amountCents.lte = BigInt(amountMax);
       }
     }
 
@@ -208,6 +231,52 @@ export class AdminRefundService {
     };
   }
 
+  async exportRefunds(query: RefundQueryDto) {
+    // Use same filters/sorting without pagination cap
+    const result = await this.getRefunds({
+      ...query,
+      page: 1,
+      limit: 10000,
+    });
+
+    const headers = [
+      'id',
+      'orderId',
+      'amountCents',
+      'currency',
+      'status',
+      'reason',
+      'buyerName',
+      'buyerEmail',
+      'eventTitle',
+      'createdAt',
+      'processedAt',
+      'providerRef',
+    ];
+
+    const csv = [
+      headers.join(','),
+      ...result.data.map((row) =>
+        [
+          row.id,
+          row.orderId,
+          row.amountCents,
+          row.currency,
+          row.status,
+          JSON.stringify(row.reason || ''),
+          JSON.stringify(row.buyerName || ''),
+          JSON.stringify(row.buyerEmail || ''),
+          JSON.stringify(row.eventTitle || ''),
+          row.createdAt,
+          row.processedAt || '',
+          row.providerRef || '',
+        ].join(','),
+      ),
+    ].join('\n');
+
+    return csv;
+  }
+
   async getRefund(refundId: string) {
     const refund = await this.prisma.refund.findUnique({
       where: { id: refundId },
@@ -268,7 +337,7 @@ export class AdminRefundService {
     return refund;
   }
 
-  async createRefund(dto: CreateRefundDto) {
+  async createRefund(dto: CreateRefundDto, actorId?: string) {
     const { orderId, amountCents, currency, reason, createdBy } = dto;
 
     const order = await this.prisma.order.findUnique({
@@ -343,10 +412,25 @@ export class AdminRefundService {
       },
     });
 
+    await this.prisma.auditLog.create({
+      data: {
+        actorId: actorId || createdBy || null,
+        action: 'refund_create',
+        targetKind: 'Refund',
+        targetId: refund.id,
+        meta: {
+          orderId: refund.orderId,
+          amountCents,
+          currency,
+          reason,
+        },
+      },
+    });
+
     return refund;
   }
 
-  async updateRefundStatus(refundId: string, dto: UpdateRefundStatusDto) {
+  async updateRefundStatus(refundId: string, dto: UpdateRefundStatusDto, actorId?: string) {
     const { status, reason } = dto;
 
     const refund = await this.prisma.refund.findUnique({
@@ -373,12 +457,33 @@ export class AdminRefundService {
       },
     });
 
+    await this.prisma.auditLog.create({
+      data: {
+        actorId: actorId || null,
+        action: 'refund_status_update',
+        targetKind: 'Refund',
+        targetId: refundId,
+        meta: {
+          previousStatus: refund.status,
+          newStatus: status,
+          reason: reason || null,
+        },
+      },
+    });
+
     return updatedRefund;
   }
 
-  async approveRefund(refundId: string, dto: ApproveRefundDto) {
+  async approveRefund(refundId: string, dto: ApproveRefundDto, actorId?: string) {
     const refund = await this.prisma.refund.findUnique({
       where: { id: refundId },
+      include: {
+        order: {
+          include: {
+            buyer: true,
+          },
+        },
+      },
     });
 
     if (!refund) {
@@ -399,12 +504,48 @@ export class AdminRefundService {
       },
     });
 
+    if (refund.order?.buyerId) {
+      await this.prisma.notification.create({
+        data: {
+          userId: refund.order.buyerId,
+          type: 'info',
+          category: 'order',
+          title: 'Refund approved',
+          message: `Your refund for order ${refund.orderId} was approved.`,
+          channels: ['in_app', 'email'],
+          data: {
+            refundId,
+            orderId: refund.orderId,
+          },
+          actionUrl: `/account/refunds`,
+          actionText: 'View refund',
+        },
+      });
+    }
+
+    await this.prisma.auditLog.create({
+      data: {
+        actorId: actorId || null,
+        action: 'refund_approve',
+        targetKind: 'Refund',
+        targetId: refundId,
+        meta: { note: dto.note || null },
+      },
+    });
+
     return { message: 'Refund approved successfully' };
   }
 
-  async rejectRefund(refundId: string, dto: RejectRefundDto) {
+  async rejectRefund(refundId: string, dto: RejectRefundDto, actorId?: string) {
     const refund = await this.prisma.refund.findUnique({
       where: { id: refundId },
+      include: {
+        order: {
+          include: {
+            buyer: true,
+          },
+        },
+      },
     });
 
     if (!refund) {
@@ -425,10 +566,40 @@ export class AdminRefundService {
       },
     });
 
+    if (refund.order?.buyerId) {
+      await this.prisma.notification.create({
+        data: {
+          userId: refund.order.buyerId,
+          type: 'warning',
+          category: 'order',
+          title: 'Refund rejected',
+          message: `Your refund for order ${refund.orderId} was rejected.`,
+          channels: ['in_app', 'email'],
+          data: {
+            refundId,
+            orderId: refund.orderId,
+            reason: dto.reason,
+          },
+          actionUrl: `/account/refunds`,
+          actionText: 'View refund',
+        },
+      });
+    }
+
+    await this.prisma.auditLog.create({
+      data: {
+        actorId: actorId || null,
+        action: 'refund_reject',
+        targetKind: 'Refund',
+        targetId: refundId,
+        meta: { reason: dto.reason },
+      },
+    });
+
     return { message: 'Refund rejected successfully' };
   }
 
-  async processRefund(refundId: string, dto: ProcessRefundDto) {
+  async processRefund(refundId: string, dto: ProcessRefundDto, actorId?: string) {
     const refund = await this.prisma.refund.findUnique({
       where: { id: refundId },
       include: {
@@ -441,6 +612,7 @@ export class AdminRefundService {
               take: 1,
             },
             tickets: true,
+            buyer: true,
           },
         },
       },
@@ -462,13 +634,73 @@ export class AdminRefundService {
       throw new BadRequestException('No payment found for this order');
     }
 
-    const providerRef = `ref_${Date.now()}_${refundId.substring(0, 8)}`;
+    const payment = refund.order.payments[0];
+    let refundResult;
+    try {
+      refundResult = await this.paymentService.refundCapturedPayment(
+        payment.id,
+        Number(refund.amountCents),
+      );
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Refund provider error';
+      const normalized = message.toLowerCase();
+      const alreadyProcessed =
+        normalized.includes('refund already exist') ||
+        normalized.includes('already refund') ||
+        normalized.includes('already processed');
+
+      if (alreadyProcessed) {
+        await this.prisma.refund.update({
+          where: { id: refundId },
+          data: {
+            status: RefundStatus.processed,
+            processedAt: new Date(),
+          },
+        });
+
+        await this.prisma.auditLog.create({
+          data: {
+            actorId: actorId || null,
+            action: 'refund_process',
+            targetKind: 'Refund',
+            targetId: refundId,
+            meta: {
+              providerRef: refund.providerRef,
+              providerStatus: 'processed',
+              status: RefundStatus.processed,
+              note: 'Marked processed due to existing provider refund',
+            },
+          },
+        });
+
+        return {
+          message: 'Refund already processed at provider; marked as processed',
+          providerRef: refund.providerRef,
+          providerStatus: 'processed',
+        };
+      }
+
+      throw new BadRequestException(`Refund provider failed: ${message}`);
+    }
+
+    const providerRef = refundResult.providerReference
+      ? String(refundResult.providerReference)
+      : null;
+    const providerStatus = (refundResult.status || '').toLowerCase();
+    const processedStatuses = ['succeeded', 'processed', 'success'];
+    const failedStatuses = ['failed', 'canceled'];
+
+    const status = processedStatuses.includes(providerStatus)
+      ? RefundStatus.processed
+      : failedStatuses.includes(providerStatus)
+        ? RefundStatus.failed
+        : RefundStatus.pending;
 
     await this.prisma.refund.update({
       where: { id: refundId },
       data: {
-        status: RefundStatus.processed,
-        processedAt: new Date(),
+        status,
+        processedAt: status === RefundStatus.processed ? new Date() : null,
         providerRef,
       },
     });
@@ -476,7 +708,7 @@ export class AdminRefundService {
     const isFullRefund =
       Number(refund.amountCents) === Number(refund.order.totalCents);
 
-    if (isFullRefund) {
+    if (status === RefundStatus.processed && isFullRefund) {
       await this.prisma.order.update({
         where: { id: refund.orderId },
         data: {
@@ -492,9 +724,181 @@ export class AdminRefundService {
       });
     }
 
+    if (refund.order?.buyerId) {
+      await this.prisma.notification.create({
+        data: {
+          userId: refund.order.buyerId,
+          type: status === RefundStatus.processed ? 'success' : 'warning',
+          category: 'order',
+          title:
+            status === RefundStatus.processed
+              ? 'Refund processed'
+              : status === RefundStatus.failed
+                ? 'Refund failed'
+                : 'Refund initiated',
+          message: `Your refund for order ${refund.orderId} is now ${status}.`,
+          channels: ['in_app', 'email'],
+          data: {
+            refundId,
+            orderId: refund.orderId,
+            providerRef,
+            status,
+          },
+          actionUrl: `/account/refunds`,
+          actionText: 'View refund',
+        },
+      });
+
+      // Send refund confirmation email only if processed successfully
+      if (status === RefundStatus.processed) {
+        await this.sendRefundConfirmationEmail(refundId).catch((error) => {
+          console.error('Failed to send refund confirmation email:', error);
+          // Don't fail the refund if email fails
+        });
+      }
+    }
+
+    await this.prisma.auditLog.create({
+      data: {
+        actorId: actorId || null,
+        action: 'refund_process',
+        targetKind: 'Refund',
+        targetId: refundId,
+        meta: {
+          providerRef,
+          providerStatus,
+          status,
+        },
+      },
+    });
+
     return {
-      message: 'Refund processed successfully',
+      message:
+        status === RefundStatus.processed
+          ? 'Refund processed successfully'
+          : status === RefundStatus.failed
+            ? 'Refund failed at provider'
+            : 'Refund initiated; awaiting provider confirmation',
       providerRef,
+      providerStatus,
     };
+  }
+
+  private async sendRefundConfirmationEmail(refundId: string) {
+    const refund = await this.prisma.refund.findUnique({
+      where: { id: refundId },
+      ...refundEmailIncludes,
+    }) as RefundWithEmailData | null;
+
+    if (!refund?.order?.event) {
+      return;
+    }
+
+    const order = refund.order;
+
+    // Fetch buyer (user) separately
+    const user = await this.prisma.user.findUnique({
+      where: { id: order.buyerId },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+      },
+    });
+
+    if (!user) {
+      return;
+    }
+
+    // Format dates
+    const processedDate = refund.processedAt
+      ? new Intl.DateTimeFormat('en-US', {
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric',
+        }).format(new Date(refund.processedAt))
+      : new Date().toLocaleDateString();
+
+    // Calculate refund amount
+    const refundAmount = this.formatCurrency(refund.amountCents);
+    const originalTotal = this.formatCurrency(order.totalCents);
+    const isFullRefund = Number(refund.amountCents) === Number(order.totalCents);
+
+    // Get refunded tickets if any
+    const refundedTickets = order.items.map((item) => {
+      let seatInfo = '';
+      if (item.seat) {
+        seatInfo = `Section ${item.seat.section}, Row ${item.seat.row}, Seat ${item.seat.number}`;
+      }
+
+      return {
+        ticketType: item.ticketType?.name || 'General Admission',
+        seatInfo: seatInfo || null,
+        price: this.formatCurrency(item.unitPriceCents),
+      };
+    });
+
+    // Get payment method details
+    const payment = order.payments?.[0];
+    const paymentMethod = this.formatPaymentMethod(payment?.provider);
+
+    // Calculate fees if partial refund
+    let serviceFee: string | null = null;
+    let cancellationFee: string | null = null;
+
+    if (!isFullRefund) {
+      const refundedAmount = Number(refund.amountCents);
+      const originalAmount = Number(order.totalCents);
+      const deductedAmount = originalAmount - refundedAmount;
+
+      if (deductedAmount > 0) {
+        // For now, assume the difference is fees
+        cancellationFee = this.formatCurrency(BigInt(deductedAmount));
+      }
+    }
+
+    await this.mailerService.sendTemplatedMail({
+      to: user.email,
+      subject: `Refund Processed - ${order.event.title}`,
+      template: 'refund-confirmation',
+      context: {
+        userName: user.name || user.email.split('@')[0],
+        refundAmount,
+        orderNumber: order.id.slice(0, 8).toUpperCase(),
+        eventName: order.event.title,
+        processedDate,
+        refundId: refund.id,
+        paymentMethod,
+        last4: null,
+        refundDays: '5-7',
+        refundedTickets: refundedTickets.length > 0 ? refundedTickets : null,
+        partialRefund: !isFullRefund,
+        serviceFee,
+        cancellationFee: cancellationFee || null,
+        reason: refund.reason || null,
+        orderUrl: `${process.env.FRONTEND_URL || 'http://localhost:3000'}/account/orders/${order.id}`,
+        supportEmail: process.env.SUPPORT_EMAIL || 'support@eventflow.dev',
+        organizerEmail: order.event.org.supportEmail || 'noreply@eventflow.dev',
+      },
+    });
+  }
+
+  private formatCurrency(cents: bigint): string {
+    const dollars = Number(cents) / 100;
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+    }).format(dollars);
+  }
+
+  private formatPaymentMethod(provider?: string): string {
+    if (!provider) return 'Card';
+
+    const providerMap: Record<string, string> = {
+      stripe: 'Credit/Debit Card',
+      paystack: 'Card',
+    };
+
+    return providerMap[provider.toLowerCase()] || provider;
   }
 }

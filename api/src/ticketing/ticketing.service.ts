@@ -142,6 +142,7 @@ export class TicketingService {
         _count: {
           select: {
             holds: true,
+            tickets: true,
           },
         },
       },
@@ -184,6 +185,7 @@ export class TicketingService {
         _count: {
           select: {
             holds: true,
+            tickets: true,
           },
         },
       },

@@ -106,26 +106,39 @@ export class PaymentProcessor extends BaseQueueProcessor {
     // Create tickets for each order item
     for (const item of order.items) {
       for (let i = 0; i < item.quantity; i++) {
-        await this.prisma.ticket.create({
+        // Create ticket first to get the ID
+        const ticket = await this.prisma.ticket.create({
           data: {
             orderId: order.id,
-            eventId: order.eventId, // Add eventId
+            eventId: order.eventId,
             ticketTypeId: item.ticketTypeId,
             seatId: item.seatId,
             status: 'issued',
             issuedAt: new Date(),
-            ownerId: order.items[0]?.orderId || order.id, // Use orderId as fallback
-            qrCode: this.generateQRCode(
-              order.id,
-              item.ticketTypeId,
-              item.seatId || undefined,
-            ),
+            ownerId: order.buyerId || order.id, // Use buyerId
+            qrCode: '', // Temporary empty value
             barcode: this.generateBarcode(
               order.id,
               item.ticketTypeId,
               item.seatId || undefined,
+              i,
             ),
           },
+        });
+
+        // Now generate QR code with the ticket ID
+        const qrCode = this.generateQRCode(
+          order.id,
+          item.ticketTypeId,
+          item.seatId || undefined,
+          i,
+          ticket.id, // Include ticket ID
+        );
+
+        // Update ticket with final QR code
+        await this.prisma.ticket.update({
+          where: { id: ticket.id },
+          data: { qrCode },
         });
       }
     }
@@ -143,17 +156,29 @@ export class PaymentProcessor extends BaseQueueProcessor {
     orderId: string,
     ticketTypeId: string,
     seatId?: string,
+    index: number = 0,
+    ticketId?: string,
   ): string {
-    // In a real implementation, you would use a QR code library
-    return `qr_${orderId}_${ticketTypeId}_${seatId || 'ga'}_${Date.now()}`;
+    // Generate a unique QR code with ticket ID for check-in
+    // Format: ticketId|orderId|ticketTypeId|seatId|index
+    const parts = [
+      ticketId || 'PENDING',
+      orderId,
+      ticketTypeId,
+      seatId || 'GA',
+      index.toString(),
+    ];
+    const data = parts.join('|');
+    return Buffer.from(data).toString('base64');
   }
 
   private generateBarcode(
     orderId: string,
     ticketTypeId: string,
     seatId?: string,
+    index: number = 0,
   ): string {
     // In a real implementation, you would use a barcode library
-    return `bc_${orderId}_${ticketTypeId}_${seatId || 'ga'}_${Date.now()}`;
+    return `bc_${orderId}_${ticketTypeId}_${seatId || 'ga'}_${index}_${Date.now()}`;
   }
 }

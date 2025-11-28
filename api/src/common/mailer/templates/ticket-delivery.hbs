@@ -1,0 +1,64 @@
+<h2>Your Tickets Are Ready!</h2>
+
+<p>Hi {{userName}},</p>
+
+<p>Your tickets for <strong>{{eventName}}</strong> are ready! Please find your ticket details below.</p>
+
+<div class="info-box">
+    <h3 style="margin-top: 0; color: #1e40af;">Event Information</h3>
+    <p><strong>Event:</strong> {{eventName}}</p>
+    <p><strong>Date:</strong> {{eventDate}}</p>
+    <p><strong>Time:</strong> {{eventTime}}</p>
+    {{#if venueName}}
+    <p><strong>Venue:</strong> {{venueName}}</p>
+    {{/if}}
+    {{#if venueAddress}}
+    <p><strong>Address:</strong> {{venueAddress}}</p>
+    {{/if}}
+</div>
+
+{{#each tickets}}
+<div class="info-box">
+    <h3 style="margin-top: 0; color: #7c3aed;">Ticket #{{this.ticketNumber}}</h3>
+    <p><strong>Type:</strong> {{this.ticketType}}</p>
+    {{#if this.seatInfo}}
+    <p><strong>Seat:</strong> {{this.seatInfo}}</p>
+    {{/if}}
+    <p><strong>Ticket Holder:</strong> {{this.holderName}}</p>
+
+    {{#if this.qrCodeUrl}}
+    <div style="text-align: center; margin: 20px 0;">
+        <img src="{{this.qrCodeUrl}}" alt="QR Code" style="max-width: 200px; height: auto; border: 2px solid #e5e7eb; padding: 10px; border-radius: 8px;">
+        <p class="text-muted" style="margin-top: 10px;">Scan this QR code at the venue for entry</p>
+    </div>
+    {{/if}}
+
+    <p class="text-muted" style="font-size: 12px;">Ticket ID: {{this.ticketId}}</p>
+</div>
+{{/each}}
+
+<a href="{{ticketsUrl}}" class="button">View All Tickets</a>
+
+<div class="divider"></div>
+
+<h3 style="color: #1e40af;">Important Information</h3>
+<ul>
+    <li><strong>Save this email</strong> or download the tickets to your phone</li>
+    <li>Present the QR code at the venue entrance</li>
+    <li>Each ticket can only be scanned once for entry</li>
+    <li>Arrive early to allow time for entry and security checks</li>
+    {{#if transferEnabled}}
+    <li>You can transfer tickets to others from your account</li>
+    {{/if}}
+</ul>
+
+{{#if eventPolicies}}
+<div class="info-box">
+    <h3 style="margin-top: 0; color: #1e40af;">Event Policies</h3>
+    <p style="white-space: pre-line;">{{eventPolicies}}</p>
+</div>
+{{/if}}
+
+<p class="text-muted">
+    Questions? Contact the organizer at <a href="mailto:{{organizerEmail}}">{{organizerEmail}}</a>
+</p>

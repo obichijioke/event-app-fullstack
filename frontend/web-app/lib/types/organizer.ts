@@ -30,10 +30,18 @@ export interface DashboardMetrics {
 
 export interface DashboardOrganization {
   id: string;
-  name: string;
-  type: OrganizationType;
-  status: OrganizationStatus;
-  role: OrganizerRole;
+  totalCents: number;
+  currency: string;
+  createdAt: string;
+  buyer: {
+    id: string;
+    name: string;
+    email: string;
+  };
+  event: {
+    id: string;
+    title: string;
+  };
 }
 
 export interface DashboardEvent {
@@ -50,6 +58,8 @@ export interface DashboardEvent {
   venueId?: string;
   seatmapId?: string;
   coverImageUrl?: string;
+  shortDescription?: string;
+  ageRestriction?: string;
 }
 
 export interface DashboardOrder {
@@ -122,6 +132,8 @@ export interface CreateEventDto {
   venueId?: string;
   seatmapId?: string;
   coverImageUrl?: string;
+  shortDescription?: string;
+  ageRestriction?: string;
 }
 
 export interface UpdateEventDto {
@@ -745,6 +757,10 @@ export interface PayoutAccount {
   orgId: string;
   provider: string;
   externalId: string;
+  bankName?: string;
+  accountName?: string;
+  sortCode?: string;
+  bic?: string;
   defaultAccount: boolean;
   createdAt: string;
 }
@@ -752,6 +768,10 @@ export interface PayoutAccount {
 export interface CreatePayoutAccountDto {
   provider: string;
   externalId: string;
+  bankName?: string;
+  accountName?: string;
+  sortCode?: string;
+  bic?: string;
   defaultAccount?: boolean;
 }
 

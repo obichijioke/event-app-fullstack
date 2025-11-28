@@ -37,6 +37,7 @@ export class EventsService {
 
     const {
       title,
+      shortDescription,
       descriptionMd,
       status,
       visibility,
@@ -85,6 +86,7 @@ export class EventsService {
       data: {
         orgId,
         title,
+        shortDescription,
         descriptionMd,
         status,
         visibility,
@@ -475,6 +477,14 @@ export class EventsService {
         },
         orderBy: {
           sortOrder: 'asc',
+        },
+        include: {
+          _count: {
+            select: {
+              holds: true,
+              tickets: true,
+            },
+          },
         },
       },
       _count: {

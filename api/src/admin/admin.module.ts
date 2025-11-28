@@ -45,10 +45,11 @@ import {
   AdminDisputeController,
 } from './controllers';
 import { CommonModule } from '../common/common.module';
+import { OrdersModule } from '../orders/orders.module';
 import { QueuesModule } from '../queues/queues.module';
 
 @Module({
-  imports: [CommonModule, QueuesModule],
+  imports: [CommonModule, QueuesModule, OrdersModule],
   controllers: [
     AdminController,
     AdminSessionController,

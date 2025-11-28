@@ -304,15 +304,20 @@ export interface AdminOrder {
   buyerEmail: string;
   eventId: string;
   eventTitle: string;
+  eventStartAt?: string;
   orgId: string;
   orgName: string;
-  amountCents: number;
+  amountCents?: number;
+  totalCents?: number;
   currency: string;
   status: 'pending' | 'paid' | 'canceled' | 'refunded' | 'chargeback';
   paymentStatus: string;
   ticketCount: number;
   createdAt: string;
   paidAt?: string;
+  tickets?: { id: string; status: string }[];
+  items?: { ticketType?: { name?: string } }[];
+  payments?: { id: string; provider: string; status: string; amountCents: number; currency: string; createdAt: string }[];
 }
 
 export interface AdminOrderStats {
@@ -938,6 +943,8 @@ export class AdminApiService {
       userId?: string;
       dateFrom?: string;
       dateTo?: string;
+      amountMin?: number;
+      amountMax?: number;
       sortBy?: string;
       sortOrder?: "asc" | "desc";
     } = {}
@@ -1020,6 +1027,26 @@ export class AdminApiService {
     return apiClient.post<AdminApiResponse<null>>(
       `${this.baseUrl}/refunds/${refundId}/process`,
       { force },
+      token
+    );
+  }
+
+  async exportRefunds(
+    token: string,
+    options: {
+      search?: string;
+      status?: string;
+      orderId?: string;
+      userId?: string;
+      dateFrom?: string;
+      dateTo?: string;
+      amountMin?: number;
+      amountMax?: number;
+    } = {}
+  ): Promise<AdminApiResponse<string>> {
+    const queryString = buildQueryString(options);
+    return apiClient.get<AdminApiResponse<string>>(
+      `${this.baseUrl}/refunds/export${queryString ? `?${queryString}` : ''}`,
       token
     );
   }
@@ -1953,6 +1980,33 @@ export class AdminApiService {
   async getSessionStats(token: string): Promise<AdminApiResponse<AdminSessionStats>> {
     return apiClient.get<AdminApiResponse<AdminSessionStats>>(
       `${this.baseUrl}/sessions/stats`,
+      token
+    );
+  }
+
+  async cleanupSessions(
+    token: string,
+    options?: { olderThanDays?: number; includeActive?: boolean }
+  ): Promise<AdminApiResponse<{ deletedCount: number; timestamp: string }>> {
+    const params: Record<string, string> = {};
+    if (options?.olderThanDays) {
+      params.olderThanDays = options.olderThanDays.toString();
+    }
+    if (options?.includeActive !== undefined) {
+      params.includeActive = options.includeActive.toString();
+    }
+
+    const queryString = new URLSearchParams(params).toString();
+    return apiClient.post<AdminApiResponse<{ deletedCount: number; timestamp: string }>>(
+      `/api/auth/admin/sessions/cleanup${queryString ? `?${queryString}` : ''}`,
+      undefined,
+      token
+    );
+  }
+
+  async refreshSessionStats(token: string): Promise<AdminApiResponse<{ message: string }>> {
+    return apiClient.get<AdminApiResponse<{ message: string }>>(
+      `/api/auth/admin/sessions/stats`,
       token
     );
   }

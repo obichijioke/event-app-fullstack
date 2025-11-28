@@ -11,6 +11,7 @@ interface ImageUploadProps {
   maxSize?: number; // in MB
   acceptUrl?: boolean;
   placeholder?: string;
+  onUpload?: (file: File) => Promise<string>;
 }
 
 export function ImageUpload({
@@ -19,6 +20,7 @@ export function ImageUpload({
   maxSize = 5,
   acceptUrl = true,
   placeholder = 'Enter image URL or upload',
+  onUpload,
 }: ImageUploadProps) {
   const [mode, setMode] = useState<'upload' | 'url'>(value && value.startsWith('http') ? 'url' : 'upload');
   const [uploading, setUploading] = useState(false);
@@ -45,19 +47,26 @@ export function ImageUpload({
     setUploading(true);
 
     try {
-      // Create a data URL for preview (in production, you'd upload to a server)
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const dataUrl = reader.result as string;
-        onChange(dataUrl);
+      if (onUpload) {
+        const url = await onUpload(file);
+        onChange(url);
         setUploading(false);
-      };
-      reader.onerror = () => {
-        setError('Failed to read file');
-        setUploading(false);
-      };
-      reader.readAsDataURL(file);
+      } else {
+        // Create a data URL for preview (in production, you'd upload to a server)
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          const dataUrl = reader.result as string;
+          onChange(dataUrl);
+          setUploading(false);
+        };
+        reader.onerror = () => {
+          setError('Failed to read file');
+          setUploading(false);
+        };
+        reader.readAsDataURL(file);
+      }
     } catch (err) {
+      console.error(err);
       setError('Failed to upload image');
       setUploading(false);
     }

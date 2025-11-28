@@ -59,6 +59,20 @@ export class RefundQueryDto {
   @IsString()
   dateTo?: string;
 
+  @ApiPropertyOptional({ description: 'Minimum amount (cents)' })
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  @Min(0)
+  amountMin?: number;
+
+  @ApiPropertyOptional({ description: 'Maximum amount (cents)' })
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  @Min(0)
+  amountMax?: number;
+
   @ApiPropertyOptional({
     description: 'Sort by field',
     default: 'createdAt',

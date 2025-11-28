@@ -17,6 +17,10 @@ export class CreateEventDto {
 
   @IsString()
   @IsOptional()
+  shortDescription?: string;
+
+  @IsString()
+  @IsOptional()
   descriptionMd?: string;
 
   @IsEnum(EventStatus)
@@ -49,7 +53,7 @@ export class CreateEventDto {
   @IsOptional()
   ageRestriction?: string;
 
-  @IsUrl()
+  @IsString()
   @IsOptional()
   coverImageUrl?: string;
 

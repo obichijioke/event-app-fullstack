@@ -139,18 +139,18 @@ export class AuthService {
       throw new UnauthorizedException('User not found or inactive');
     }
 
+    // Extend the existing session instead of creating a new one
     await this.prisma.userSession.update({
       where: { id: session.id },
-      data: { revokedAt: new Date() },
+      data: {
+        expiresAt: this.buildSessionExpiryDate(),
+        // Optionally update metadata if changed
+        ...(metadata?.userAgent && { userAgent: metadata.userAgent }),
+        ...(metadata?.ipAddr && { ipAddr: metadata.ipAddr }),
+      },
     });
 
-    const newSession = await this.createSession(
-      user.id,
-      metadata?.userAgent ?? session.userAgent ?? undefined,
-      metadata?.ipAddr ?? session.ipAddr ?? undefined,
-    );
-
-    return this.generateTokens(user, newSession.id);
+    return this.generateTokens(user, session.id);
   }
 
   async logout(sessionId: string) {
@@ -395,6 +395,37 @@ export class AuthService {
     userAgent?: string,
     ipAddr?: string,
   ) {
+    // Enforce session limit: max 10 active sessions per user
+    const MAX_SESSIONS_PER_USER = 10;
+
+    const activeSessionCount = await this.prisma.userSession.count({
+      where: {
+        userId,
+        revokedAt: null,
+        expiresAt: { gt: new Date() },
+      },
+    });
+
+    // If at limit, revoke the oldest active session
+    if (activeSessionCount >= MAX_SESSIONS_PER_USER) {
+      const oldestSession = await this.prisma.userSession.findFirst({
+        where: {
+          userId,
+          revokedAt: null,
+        },
+        orderBy: {
+          createdAt: 'asc',
+        },
+      });
+
+      if (oldestSession) {
+        await this.prisma.userSession.update({
+          where: { id: oldestSession.id },
+          data: { revokedAt: new Date() },
+        });
+      }
+    }
+
     return this.prisma.userSession.create({
       data: {
         userId,
@@ -446,10 +477,22 @@ export class AuthService {
       },
     });
 
-    this.mailer.sendMail({
+    // Send templated email
+    const verificationUrl = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/auth/verify-email?token=${token}`;
+
+    await this.mailer.sendTemplatedMail({
       to: user.email,
-      subject: 'Verify your email',
-      text: `Use this token to verify your email: ${token}`,
+      subject: 'Verify Your Email Address - EventFlow',
+      template: 'email-verification',
+      context: {
+        userName: user.name || user.email.split('@')[0],
+        verificationCode: token.substring(0, 8).toUpperCase(),
+        verificationUrl,
+        expiryMinutes: '24 hours',
+      },
+    }).catch((error) => {
+      console.error('Failed to send verification email:', error);
+      // Don't fail the request if email fails
     });
 
     return {
@@ -502,10 +545,25 @@ export class AuthService {
       },
     });
 
-    this.mailer.sendMail({
+    // Send templated password reset email
+    const resetUrl = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/auth/reset-password?token=${token}`;
+
+    await this.mailer.sendTemplatedMail({
       to: user.email,
-      subject: 'Reset your password',
-      text: `Use this token to reset your password: ${token}`,
+      subject: 'Reset Your Password - EventFlow',
+      template: 'password-reset',
+      context: {
+        userName: user.name || user.email.split('@')[0],
+        resetCode: token.substring(0, 8).toUpperCase(),
+        resetUrl,
+        expiryMinutes: '60',
+        ipAddress: 'N/A', // Can be added if request object is passed
+        userAgent: 'Unknown', // Can be added if request object is passed
+        requestTime: new Date().toLocaleString(),
+      },
+    }).catch((error) => {
+      console.error('Failed to send password reset email:', error);
+      // Don't fail the request if email fails
     });
 
     return {
@@ -580,11 +638,25 @@ export class AuthService {
       },
     });
 
-    // Send via email for now
-    this.mailer.sendMail({
+    // Send templated 2FA code email
+    const purposeText = purpose === 'enable' ? 'enable two-factor authentication' : 'disable two-factor authentication';
+
+    await this.mailer.sendTemplatedMail({
       to: user.email,
-      subject: 'Your 2FA code',
-      text: `Code: ${code}`,
+      subject: 'Your Two-Factor Authentication Code - EventFlow',
+      template: 'two-factor-code',
+      context: {
+        userName: user.name || user.email.split('@')[0],
+        twoFactorCode: code,
+        purpose: purposeText,
+        expiryMinutes: '10',
+        ipAddress: 'N/A', // Can be added if request object is passed
+        userAgent: 'Unknown', // Can be added if request object is passed
+        requestTime: new Date().toLocaleString(),
+      },
+    }).catch((error) => {
+      console.error('Failed to send 2FA code email:', error);
+      // Don't fail the request if email fails
     });
 
     return { message: '2FA code sent' };

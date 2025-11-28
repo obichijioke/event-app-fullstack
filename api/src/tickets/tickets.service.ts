@@ -5,6 +5,7 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { PrismaService } from '../common/prisma/prisma.service';
+import { MailerService } from '../common/mailer/mailer.service';
 import {
   CreateTransferDto,
   AcceptTransferDto,
@@ -12,10 +13,14 @@ import {
   UpdateTicketStatusDto,
 } from './dto/create-ticket.dto';
 import { TicketStatus } from '@prisma/client';
+import { transferEmailIncludes, TransferWithEmailData } from '../common/types/prisma-helpers';
 
 @Injectable()
 export class TicketsService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private mailerService: MailerService,
+  ) {}
 
   async getUserTickets(
     userId: string,
@@ -265,15 +270,13 @@ export class TicketsService {
         toUserId: toUserIdResolved,
         initiatedAt: new Date(),
       },
-      include: {
-        toUser: {
-          select: {
-            id: true,
-            email: true,
-            name: true,
-          },
-        },
-      },
+      ...transferEmailIncludes,
+    }) as TransferWithEmailData;
+
+    // Send transfer notification emails
+    await this.sendTransferNotificationEmails(transfer).catch((error) => {
+      console.error('Failed to send transfer notification emails:', error);
+      // Don't fail the transfer if emails fail
     });
 
     return transfer;
@@ -426,7 +429,16 @@ export class TicketsService {
   }
 
   async checkInTicket(createCheckinDto: CreateCheckinDto, scannerId?: string) {
-    const { ticketId, gate } = createCheckinDto;
+    const { ticketId: ticketIdOrQRCode, gate } = createCheckinDto;
+
+    // Try to decode QR code first, fall back to direct ticket ID lookup
+    let ticketId: string;
+    try {
+      ticketId = this.decodeQRCode(ticketIdOrQRCode);
+    } catch (error) {
+      // If decoding fails, assume it's a direct ticket ID
+      ticketId = ticketIdOrQRCode;
+    }
 
     // Get ticket
     const ticket = await this.prisma.ticket.findUnique({
@@ -698,8 +710,9 @@ export class TicketsService {
       throw new ForbiddenException('You do not own this ticket');
     }
 
-    // Generate new QR code
+    // Generate new QR code with ticket ID
     const qrCode = this.generateQRCode(
+      ticketId,
       ticket.orderId,
       ticket.ticketTypeId,
       ticket.seatId || undefined,
@@ -715,13 +728,38 @@ export class TicketsService {
   }
 
   private generateQRCode(
+    ticketId: string,
     orderId: string,
     ticketTypeId: string,
     seatId?: string,
   ): string {
-    // Generate a unique QR code
-    const data = `${orderId}-${ticketTypeId}${seatId ? `-${seatId}` : ''}`;
+    // Generate a unique QR code with ticket ID for check-in
+    // Format: ticketId|orderId|ticketTypeId|seatId
+    const parts = [
+      ticketId,
+      orderId,
+      ticketTypeId,
+      seatId || 'GA',
+    ];
+    const data = parts.join('|');
     return Buffer.from(data).toString('base64');
+  }
+
+  private decodeQRCode(qrCode: string): string {
+    // Decode base64 QR code and extract ticket ID
+    // Format: ticketId|orderId|ticketTypeId|seatId
+    try {
+      const decoded = Buffer.from(qrCode, 'base64').toString('utf-8');
+      const parts = decoded.split('|');
+
+      if (parts.length >= 1 && parts[0] !== 'PENDING') {
+        return parts[0]; // Return ticket ID
+      }
+
+      throw new BadRequestException('Invalid QR code format');
+    } catch (error) {
+      throw new BadRequestException('Invalid QR code: Unable to decode');
+    }
   }
 
   async getTicketStats(eventId: string, userId?: string) {
@@ -763,5 +801,94 @@ export class TicketsService {
     });
 
     return stats;
+  }
+
+  private async sendTransferNotificationEmails(transfer: any) {
+    const { ticket, fromUser, toUser } = transfer;
+    const event = ticket.event;
+
+    // Format event date and time
+    const eventDate = new Intl.DateTimeFormat('en-US', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      timeZone: 'UTC',
+    }).format(new Date(event.startAt));
+
+    const eventTime = new Intl.DateTimeFormat('en-US', {
+      hour: 'numeric',
+      minute: '2-digit',
+      timeZone: 'UTC',
+    }).format(new Date(event.startAt));
+
+    // Format venue address (address is a JSON field)
+    let venueAddress = '';
+    if (event.venue?.address) {
+      const addr = event.venue.address as any;
+      venueAddress = typeof addr === 'string'
+        ? addr
+        : [addr.street, addr.city, addr.state, addr.country]
+            .filter(Boolean)
+            .join(', ');
+    }
+
+    // Format seat info if available
+    let seatInfo = '';
+    if (ticket.seat) {
+      seatInfo = `Section ${ticket.seat.section}, Row ${ticket.seat.row}, Seat ${ticket.seat.number}`;
+    }
+
+    // Prepare ticket data
+    const ticketData = {
+      ticketNumber: ticket.id.substring(0, 8).toUpperCase(),
+      ticketType: ticket.ticketType?.name || 'General Admission',
+      seatInfo: seatInfo || null,
+      ticketId: ticket.id,
+    };
+
+    const baseContext = {
+      eventName: event.title,
+      eventDate,
+      eventTime,
+      venueName: event.venue?.name,
+      venueAddress,
+      tickets: [ticketData],
+      ticketCount: 1,
+      senderName: fromUser.name || fromUser.email.split('@')[0],
+      senderEmail: fromUser.email,
+      recipientName: toUser.name || toUser.email.split('@')[0],
+      recipientEmail: toUser.email,
+      transferId: transfer.id,
+      transferDate: new Date().toLocaleDateString(),
+      expiryDays: '7',
+      supportEmail: process.env.SUPPORT_EMAIL || 'support@eventflow.dev',
+    };
+
+    // Send email to recipient
+    await this.mailerService.sendTemplatedMail({
+      to: toUser.email,
+      subject: `You've Received Tickets for ${event.title}`,
+      template: 'ticket-transfer',
+      context: {
+        ...baseContext,
+        isRecipient: true,
+        hasAccount: true, // Assuming user exists
+        acceptUrl: `${process.env.FRONTEND_URL || 'http://localhost:3000'}/account/transfers/${transfer.id}/accept`,
+        message: null, // Could be added if transfer has a message field
+      },
+    });
+
+    // Send confirmation email to sender
+    await this.mailerService.sendTemplatedMail({
+      to: fromUser.email,
+      subject: `Ticket Transfer Initiated - ${event.title}`,
+      template: 'ticket-transfer',
+      context: {
+        ...baseContext,
+        isRecipient: false,
+        orderUrl: `${process.env.FRONTEND_URL || 'http://localhost:3000'}/account/orders`,
+      },
+    });
   }
 }

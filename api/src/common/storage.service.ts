@@ -95,11 +95,12 @@ export class StorageService {
     filename: string,
     mimeType: string,
     folder: string = 'uploads',
+    isPublic: boolean = false,
   ): Promise<UploadResult> {
     const key = `${folder}/${Date.now()}-${filename}`;
 
     if (this.config.provider === 's3' && this.s3Client && this.config.s3) {
-      return this.uploadToS3(buffer, key, mimeType);
+      return this.uploadToS3(buffer, key, mimeType, isPublic);
     } else {
       return this.uploadToLocal(buffer, key, filename);
     }
@@ -112,6 +113,7 @@ export class StorageService {
     buffer: Buffer,
     key: string,
     mimeType: string,
+    isPublic: boolean = false,
   ): Promise<UploadResult> {
     if (!this.s3Client || !this.config.s3) {
       throw new Error('S3 client not configured');
@@ -123,26 +125,32 @@ export class StorageService {
         Key: key,
         Body: buffer,
         ContentType: mimeType,
-        ACL: 'private', // Documents should be private
+        ACL: isPublic ? 'public-read' : 'private',
       });
 
       await this.s3Client.send(command);
 
-      // Generate a signed URL for access
-      const getCommand = new GetObjectCommand({
-        Bucket: this.config.s3.bucket,
-        Key: key,
-      });
+      let url: string;
+      if (isPublic) {
+        url = `https://${this.config.s3.bucket}.s3.${this.config.s3.region}.amazonaws.com/${key}`;
+      } else {
+        // Generate a signed URL for access
+        const getCommand = new GetObjectCommand({
+          Bucket: this.config.s3.bucket,
+          Key: key,
+        });
 
-      const signedUrl = await getSignedUrl(this.s3Client, getCommand, {
-        expiresIn: 3600,
-      }); // 1 hour
+        const signedUrl = await getSignedUrl(this.s3Client, getCommand, {
+          expiresIn: 3600,
+        }); // 1 hour
+        url = signedUrl;
+      }
 
       this.logger.log(`File uploaded to S3: ${key}`);
 
       return {
         key,
-        url: signedUrl,
+        url,
         bucket: this.config.s3.bucket,
         provider: 's3',
       };

@@ -2,6 +2,7 @@ import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { PaystackPaymentProvider } from '../../orders/providers/paystack/paystack.service';
 import { PaymentStatus } from '@prisma/client';
+import { OrdersService } from '../../orders/orders.service';
 
 @Injectable()
 export class PaystackWebhookService {
@@ -10,6 +11,7 @@ export class PaystackWebhookService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly paystackProvider: PaystackPaymentProvider,
+    private readonly ordersService: OrdersService,
   ) {}
 
   async handleEvent(signature: string | undefined, payload: any) {
@@ -22,7 +24,7 @@ export class PaystackWebhookService {
       throw new BadRequestException('Invalid Paystack webhook signature');
     }
 
-    const reference = payload?.data?.reference;
+    const reference = payload?.data?.reference || payload?.data?.transaction_reference;
     const event = payload?.event;
 
     if (!reference || !event) {
@@ -49,6 +51,8 @@ export class PaystackWebhookService {
       ['charge.failed', 'charge.reversed', 'charge.chargeback'].includes(event)
     ) {
       await this.markPaymentFailed(payment.id, payload);
+    } else if (event.startsWith('refund')) {
+      await this.handleRefundEvent(payment.orderId, payload);
     } else {
       this.logger.debug(`Ignoring unsupported Paystack event ${event}`);
     }
@@ -79,6 +83,9 @@ export class PaystackWebhookService {
         },
       }),
     ]);
+
+    // Issue tickets after capture
+    await this.ordersService.ensureTicketsForOrder(orderId);
   }
 
   private async markPaymentFailed(paymentId: string, payload: any) {
@@ -90,6 +97,66 @@ export class PaystackWebhookService {
         status: PaymentStatus.failed,
         failureCode: null,
         failureMessage: failureReason,
+      },
+    });
+  }
+
+  private async handleRefundEvent(orderId: string, payload: any) {
+    const refundRef =
+      payload?.data?.reference ||
+      payload?.data?.transaction_reference ||
+      payload?.data?.refund?.reference ||
+      payload?.data?.refund?.id;
+    const status = (payload?.data?.status || '').toLowerCase();
+
+    let refund = await this.prisma.refund.findFirst({
+      where: {
+        orderId,
+        OR: [
+          refundRef ? { providerRef: refundRef } : undefined,
+          { status: 'pending' },
+        ].filter(Boolean) as any,
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+    });
+
+    if (!refund) {
+      const recentRefunds = await this.prisma.refund.findMany({
+        where: { orderId },
+        orderBy: { createdAt: 'desc' },
+        take: 5,
+        select: { id: true, providerRef: true, status: true, createdAt: true },
+      });
+
+      this.logger.debug(
+        `Paystack refund webhook received but no matching refund found for order ${orderId}. payload.ref=${
+          refundRef || 'none'
+        } status=${status} recent=${JSON.stringify(recentRefunds)}`,
+      );
+      // Fallback: if a processed refund exists, don't error; otherwise stop.
+      const processed = recentRefunds.find((r) => r.status === 'processed');
+      if (!processed) {
+        return;
+      }
+      // Use the most recent processed refund as target
+      refund = processed as any;
+    }
+
+    const isProcessed = ['success', 'processed', 'completed'].includes(status);
+    const isFailed = ['failed', 'reversed'].includes(status);
+
+    await this.prisma.refund.update({
+      where: { id: refund!.id },
+      data: {
+        status: isProcessed
+          ? 'processed'
+          : isFailed
+            ? 'failed'
+            : 'pending',
+        processedAt: isProcessed ? new Date() : refund!.processedAt,
+        providerRef: refundRef ?? refund!.providerRef,
       },
     });
   }

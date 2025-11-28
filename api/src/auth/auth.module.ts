@@ -6,6 +6,7 @@ import { AuthService } from './auth.service';
 import { AuthController } from './auth.controller';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { JwtRefreshStrategy } from './strategies/jwt-refresh.strategy';
+import { SessionCleanupService } from './session-cleanup.service';
 import { CommonModule } from '../common/common.module';
 import { OrganizationsModule } from '../organizations/organizations.module';
 
@@ -31,8 +32,8 @@ import { OrganizationsModule } from '../organizations/organizations.module';
       inject: [ConfigService],
     }),
   ],
-  providers: [AuthService, JwtStrategy, JwtRefreshStrategy],
+  providers: [AuthService, JwtStrategy, JwtRefreshStrategy, SessionCleanupService],
   controllers: [AuthController],
-  exports: [AuthService],
+  exports: [AuthService, SessionCleanupService],
 })
 export class AuthModule {}

@@ -7,6 +7,10 @@ export class UpdatePayoutAccountDto extends PartialType(
   class {
     provider?: string;
     externalId?: string;
+    bankName?: string;
+    accountName?: string;
+    sortCode?: string;
+    bic?: string;
     accountType?: string;
     accountHolderName?: string;
     email?: string;

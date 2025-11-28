@@ -19,11 +19,20 @@ export function AddPayoutAccountModal({ onSuccess, onCancel }: AddPayoutAccountM
     provider: 'stripe',
     externalId: '',
     defaultAccount: false,
+    bankName: '',
+    accountName: '',
+    sortCode: '',
+    bic: '',
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!currentOrganization) return;
+
+    if (formData.provider === 'bank_transfer' && (!formData.bankName || !formData.accountName)) {
+      toast.error('Bank name and account name are required for bank transfers');
+      return;
+    }
 
     setLoading(true);
     try {
@@ -122,6 +131,80 @@ export function AddPayoutAccountModal({ onSuccess, onCancel }: AddPayoutAccountM
               {formData.provider === 'bank_transfer' && 'Your bank account number or IBAN'}
             </p>
           </div>
+
+          {/* Bank Transfer Specific Fields */}
+          {formData.provider === 'bank_transfer' && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium mb-2">
+                  Bank Name <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={formData.bankName}
+                  onChange={(e) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      bankName: e.target.value,
+                    }))
+                  }
+                  required
+                  className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+                  placeholder="Bank of Example"
+                />
+              </div>
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium mb-2">
+                  Account Name <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={formData.accountName}
+                  onChange={(e) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      accountName: e.target.value,
+                    }))
+                  }
+                  required
+                  className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+                  placeholder="Event Co Ltd"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-2">Sort Code</label>
+                <input
+                  type="text"
+                  value={formData.sortCode}
+                  onChange={(e) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      sortCode: e.target.value,
+                    }))
+                  }
+                  className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+                  placeholder="12-34-56"
+                />
+                <p className="text-xs text-muted-foreground mt-1">Optional (for UK bank accounts)</p>
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-2">BIC / SWIFT</label>
+                <input
+                  type="text"
+                  value={formData.bic}
+                  onChange={(e) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      bic: e.target.value,
+                    }))
+                  }
+                  className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+                  placeholder="ABCDEF12"
+                />
+                <p className="text-xs text-muted-foreground mt-1">Optional (for international transfers)</p>
+              </div>
+            </div>
+          )}
 
           {/* Default Account Toggle */}
           <div className="flex items-center justify-between p-4 bg-secondary/30 rounded-lg border border-border">

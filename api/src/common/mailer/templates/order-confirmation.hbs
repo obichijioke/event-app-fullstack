@@ -1,0 +1,59 @@
+<h2>Order Confirmed!</h2>
+
+<p>Hi {{userName}},</p>
+
+<p>Thank you for your order! Your tickets have been confirmed and are ready to use.</p>
+
+<div class="info-box">
+    <h3 style="margin-top: 0; color: #1e40af;">Order Details</h3>
+    <p><strong>Order Number:</strong> {{orderNumber}}</p>
+    <p><strong>Event:</strong> {{eventName}}</p>
+    <p><strong>Date:</strong> {{eventDate}}</p>
+    <p><strong>Time:</strong> {{eventTime}}</p>
+    {{#if venueName}}
+    <p><strong>Venue:</strong> {{venueName}}</p>
+    {{/if}}
+    {{#if venueAddress}}
+    <p><strong>Location:</strong> {{venueAddress}}</p>
+    {{/if}}
+</div>
+
+<div class="info-box">
+    <h3 style="margin-top: 0; color: #1e40af;">Ticket Information</h3>
+    <p><strong>Number of Tickets:</strong> {{ticketCount}}</p>
+    {{#each ticketTypes}}
+    <p>• {{this.name}}: {{this.quantity}} ticket(s) @ {{this.price}}</p>
+    {{/each}}
+</div>
+
+<div class="info-box">
+    <h3 style="margin-top: 0; color: #1e40af;">Payment Summary</h3>
+    <p><strong>Subtotal:</strong> {{subtotal}}</p>
+    {{#if fees}}
+    <p><strong>Service Fee:</strong> {{fees}}</p>
+    {{/if}}
+    {{#if tax}}
+    <p><strong>Tax:</strong> {{tax}}</p>
+    {{/if}}
+    <p><strong style="font-size: 18px;">Total Paid:</strong> <strong style="font-size: 18px;">{{totalAmount}}</strong></p>
+    <p class="text-muted">Payment Method: {{paymentMethod}}</p>
+</div>
+
+<a href="{{ticketsUrl}}" class="button">View Your Tickets</a>
+
+<div class="divider"></div>
+
+<h3 style="color: #1e40af;">What's Next?</h3>
+<ul>
+    <li>Your tickets have been sent in a separate email</li>
+    <li>You can access your tickets anytime from your account</li>
+    <li>Present the QR code at the venue for entry</li>
+    {{#if eventReminderEnabled}}
+    <li>You'll receive a reminder before the event</li>
+    {{/if}}
+</ul>
+
+<p class="text-muted">
+    Need help? Contact the event organizer at <a href="mailto:{{organizerEmail}}">{{organizerEmail}}</a>
+    or visit our <a href="{{helpUrl}}">Help Center</a>.
+</p>

@@ -1,0 +1,76 @@
+<h2>Refund Processed</h2>
+
+<p>Hi {{userName}},</p>
+
+<p>Your refund request has been processed. Here are the details:</p>
+
+<div class="info-box">
+    <h3 style="margin-top: 0; color: #1e40af;">Refund Details</h3>
+    <p><strong>Refund Amount:</strong> {{refundAmount}}</p>
+    <p><strong>Order Number:</strong> {{orderNumber}}</p>
+    <p><strong>Event:</strong> {{eventName}}</p>
+    <p><strong>Processing Date:</strong> {{processedDate}}</p>
+    <p><strong>Refund ID:</strong> <span style="font-family: monospace; font-size: 12px;">{{refundId}}</span></p>
+</div>
+
+<div class="info-box">
+    <h3 style="margin-top: 0; color: #7c3aed;">Payment Information</h3>
+    <p><strong>Original Payment Method:</strong> {{paymentMethod}}</p>
+    {{#if last4}}
+    <p><strong>Card Ending In:</strong> ••••{{last4}}</p>
+    {{/if}}
+    <p class="text-muted">The refund will be credited to your original payment method within {{refundDays}} business days.</p>
+</div>
+
+{{#if refundedTickets}}
+<div class="info-box">
+    <h3 style="margin-top: 0; color: #1e40af;">Refunded Tickets</h3>
+    {{#each refundedTickets}}
+    <p>• {{this.ticketType}}{{#if this.seatInfo}} - {{this.seatInfo}}{{/if}}: {{this.price}}</p>
+    {{/each}}
+</div>
+{{/if}}
+
+{{#if partialRefund}}
+<div class="info-box" style="background-color: #fef3c7; border-left-color: #f59e0b;">
+    <h3 style="margin-top: 0; color: #92400e;">Partial Refund Notice</h3>
+    <p>This is a partial refund. The following fees were deducted:</p>
+    {{#if serviceFee}}
+    <p>• Service Fee: {{serviceFee}}</p>
+    {{/if}}
+    {{#if cancellationFee}}
+    <p>• Cancellation Fee: {{cancellationFee}}</p>
+    {{/if}}
+    <p><strong>Net Refund:</strong> {{refundAmount}}</p>
+</div>
+{{/if}}
+
+{{#if reason}}
+<div class="info-box">
+    <h3 style="margin-top: 0; color: #1e40af;">Refund Reason</h3>
+    <p>{{reason}}</p>
+</div>
+{{/if}}
+
+<a href="{{orderUrl}}" class="button">View Order Details</a>
+
+<div class="divider"></div>
+
+<h3 style="color: #1e40af;">What Happens Next?</h3>
+<ul>
+    <li>Your tickets have been canceled and can no longer be used</li>
+    <li>The refund will appear on your statement within {{refundDays}} business days</li>
+    <li>You'll receive a notification once the refund is complete</li>
+    <li>You can view your refund status in your account</li>
+</ul>
+
+<p class="text-muted">
+    If you have questions about this refund, please contact our support team at
+    <a href="mailto:{{supportEmail}}">{{supportEmail}}</a> or the event organizer at
+    <a href="mailto:{{organizerEmail}}">{{organizerEmail}}</a>.
+</p>
+
+<p class="text-muted" style="font-size: 12px;">
+    Note: Depending on your bank or card issuer, it may take an additional 5-10 business days
+    for the refund to appear in your account.
+</p>
