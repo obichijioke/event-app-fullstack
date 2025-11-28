@@ -47,37 +47,63 @@ Base64: Y2x4eHgxMjM0NTY3ODl8Y2x5eXl5OTg3NjU0MzIxfGNsenp6MTExMjIyMzMzfEEtMTItNQ==
 - `api/src/queues/processors/payment.processor.ts`
 - `api/src/tickets/tickets.service.ts`
 
-**New Logic:**
+**New Logic with Barcode-Based Deduplication:**
 ```typescript
-// Step 1: Create ticket first (to get ID)
-const ticket = await prisma.ticket.create({
-  data: {
-    orderId,
-    eventId,
-    ticketTypeId,
-    seatId,
-    ownerId,
-    status: 'issued',
-    qrCode: '',  // Temporary empty
-    barcode,
-    issuedAt: new Date(),
-  },
-});
+// Use barcode (stable before ticket creation) for idempotency checks
+const existingBarcodes = new Set(order.tickets?.map((t) => t.barcode) || []);
 
-// Step 2: Generate QR code with ticket ID
-const qrCode = generateQRCode(
-  ticket.id,      // Now includes ticket ID!
-  orderId,
-  ticketTypeId,
-  seatId,
-);
+for (const item of order.items) {
+  for (let i = 0; i < item.quantity; i++) {
+    // Generate deterministic barcode
+    const barcode = generateBarcode(orderId, ticketTypeId, seatId, i);
 
-// Step 3: Update ticket with final QR code
-await prisma.ticket.update({
-  where: { id: ticket.id },
-  data: { qrCode },
-});
+    // Skip if ticket already exists (webhook retry protection)
+    if (existingBarcodes.has(barcode)) {
+      continue;
+    }
+
+    // Step 1: Create ticket first (to get ID)
+    const ticket = await prisma.ticket.create({
+      data: {
+        orderId,
+        eventId,
+        ticketTypeId,
+        seatId,
+        ownerId,
+        status: 'issued',
+        qrCode: '',  // Temporary empty
+        barcode,
+        issuedAt: new Date(),
+      },
+    });
+
+    // Step 2: Generate QR code with ticket ID
+    const qrCode = generateQRCode(
+      ticket.id,      // Now includes ticket ID!
+      orderId,
+      ticketTypeId,
+      seatId,
+      i,
+    );
+
+    // Step 3: Update ticket with final QR code
+    await prisma.ticket.update({
+      where: { id: ticket.id },
+      data: { qrCode },
+    });
+
+    // Step 4: Track created ticket to prevent duplicates in same call
+    existingBarcodes.add(barcode);
+  }
+}
 ```
+
+**Key Improvement - Barcode-Based Deduplication:**
+- Barcodes are deterministic: `${orderId}-${ticketTypeId}-${seatId}-${index}`
+- Generated BEFORE ticket creation (no chicken-egg problem)
+- Prevents duplicate tickets on webhook retries
+- O(1) lookup performance with Set
+- Works correctly even if QR code format changes
 
 ### 3. Added QR Code Decoder
 
@@ -162,7 +188,8 @@ async checkInTicket(createCheckinDto: CreateCheckinDto, scannerId?: string) {
 
 ## Testing
 
-Run the test script to verify:
+### Test 1: QR Code Generation and Decoding
+Run the test script to verify QR code logic:
 ```bash
 cd api
 node test-checkin-qr.js
@@ -175,6 +202,28 @@ Match: ✓ PASS
 Match: ✓ PASS
 ✓ Both methods work correctly!
 ```
+
+### Test 2: Ticket Deduplication
+Run the test script to verify webhook retry protection:
+```bash
+cd api
+node test-ticket-deduplication.js
+```
+
+Expected output:
+```
+=== Ticket Deduplication Test ===
+Duplicates prevented: ✓ PASS
+No new tickets created: ✓ PASS
+Total matches expected: ✓ PASS
+✓ Deduplication logic working correctly!
+```
+
+**What this verifies:**
+- Barcode-based deduplication prevents duplicate tickets
+- Webhook retries don't create extra tickets
+- All tickets are correctly skipped on retry
+- Final ticket count matches expected count
 
 ---
 
@@ -248,7 +297,8 @@ async function migrateExistingTickets() {
 
 ### Documentation/Testing
 5. `api/test-checkin-qr.js` - Test script to verify QR code generation and decoding
-6. `api/CHECKIN_QR_FIX.md` - This documentation
+6. `api/test-ticket-deduplication.js` - Test script to verify webhook retry protection
+7. `api/CHECKIN_QR_FIX.md` - This documentation
 
 ---
 
@@ -257,7 +307,35 @@ async function migrateExistingTickets() {
 ✅ QR codes now include ticket ID as the first field
 ✅ Check-in endpoint can decode QR codes automatically
 ✅ Backward compatible with direct ticket ID entry
-✅ Tested and verified with test script
+✅ Barcode-based deduplication prevents duplicate tickets on webhook retries
+✅ Two-step ticket creation: create ticket → generate QR with ID → update ticket
+✅ Tested and verified with comprehensive test scripts
 ✅ Ready for deployment
 
-The check-in feature now works correctly with both QR code scanning and manual ticket ID entry.
+The check-in feature now works correctly with both QR code scanning and manual ticket ID entry, with robust protection against duplicate ticket creation.
+
+---
+
+## Important Notes
+
+### Deduplication Strategy
+
+The system uses **barcode-based deduplication** instead of QR code-based:
+
+**Why barcodes?**
+- Deterministic (same inputs = same barcode)
+- Generated before ticket creation (no circular dependency)
+- Stable across webhook retries
+
+**Why not QR codes?**
+- QR codes include ticket ID (only available AFTER ticket creation)
+- Creates chicken-and-egg problem for deduplication
+- Would require temporary QR codes that don't match final QR codes
+
+**Format:**
+```
+Barcode: orderId-ticketTypeId-seatId-index
+Example: order_123-vip_001-A-12-0
+```
+
+This ensures webhook retries safely skip already-created tickets while allowing QR codes to include the ticket ID for check-in functionality.
