@@ -2,6 +2,7 @@ import Image from 'next/image';
 import { resolveImageUrl } from '@/lib/utils/image';
 import Link from 'next/link';
 import { Badge, Text, buttonVariants } from '@/components/ui';
+import { SaveButton } from '@/components/events/save-button';
 import { EventSummary } from '@/lib/homepage';
 import { formatDate, truncate, cn } from '@/lib/utils';
 
@@ -61,6 +62,14 @@ export function EventCard({ event, compact }: EventCardProps) {
             {event.pricing.label}
           </span>
         )}
+        <div className="absolute right-4 top-4 z-10">
+          <SaveButton 
+            eventId={event.id} 
+            size="icon"
+            className="h-8 w-8 rounded-full border-white/40 bg-black/20 backdrop-blur-sm hover:bg-black/40 p-0"
+            iconClassName="text-white"
+          />
+        </div>
       </div>
 
       <div className="flex flex-1 flex-col p-5">

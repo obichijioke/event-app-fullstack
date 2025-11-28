@@ -29,12 +29,16 @@ import { CurrencyModule } from './currency/currency.module';
 import { AccountModule } from './account/account.module';
 import { AnnouncementsModule } from './announcements/announcements.module';
 import { FaqsModule } from './faqs/faqs.module';
+import { SavedEventsModule } from './saved-events/saved-events.module';
+import { ScheduleModule } from '@nestjs/schedule';
+
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
       envFilePath: '.env',
     }),
+    ScheduleModule.forRoot(),
     CommonModule,
     AuthModule,
     OrganizationsModule,
@@ -62,6 +66,7 @@ import { FaqsModule } from './faqs/faqs.module';
     AccountModule,
     AnnouncementsModule,
     FaqsModule,
+    SavedEventsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
