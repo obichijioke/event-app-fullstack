@@ -60,9 +60,9 @@ async function checkDrafts() {
       });
       console.log('');
 
-      // Find drafts that would appear on dashboard (draft or abandoned)
+      // Find drafts that would appear on dashboard (draft or archived)
       const dashboardDrafts = allDrafts.filter(
-        (d) => d.status === 'draft' || d.status === 'abandoned'
+        (d) => d.status === 'draft' || d.status === 'archived'
       );
 
       console.log(`📋 Drafts visible on dashboard: ${dashboardDrafts.length}`);

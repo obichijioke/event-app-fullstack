@@ -21,7 +21,7 @@ SELECT
 FROM event_creator_drafts
 ORDER BY updated_at DESC;
 
--- See only drafts that appear on dashboard (draft or abandoned status)
+-- See only drafts that appear on dashboard (draft or archived status)
 SELECT
   id,
   title,
@@ -30,7 +30,7 @@ SELECT
   active_section,
   updated_at
 FROM event_creator_drafts
-WHERE status IN ('draft', 'abandoned')
+WHERE status IN ('draft', 'archived')
 ORDER BY updated_at DESC;
 
 -- Count drafts by organization
@@ -112,9 +112,10 @@ If you don't have any drafts yet:
 The system tracks drafts with these statuses:
 
 - **`draft`**: Actively being worked on (shows on dashboard)
-- **`abandoned`**: Not edited for a while (shows on dashboard)
-- **`published`**: Event was successfully published (hidden from dashboard)
+- **`ready`**: Draft is ready but not yet published
+- **`archived`**: Old/archived drafts (shows on dashboard)
 - **`scheduled`**: Event scheduled for future publish (hidden from dashboard)
+- **`published`**: Event was successfully published (hidden from dashboard)
 
 ## Troubleshooting
 
@@ -134,7 +135,7 @@ This could mean:
 psql -U your_username -d your_database_name
 
 # Run query
-SELECT COUNT(*) FROM event_creator_drafts WHERE status IN ('draft', 'abandoned');
+SELECT COUNT(*) FROM event_creator_drafts WHERE status IN ('draft', 'archived');
 ```
 
 **Option 2: Use API directly**
@@ -154,7 +155,7 @@ curl -H "Authorization: Bearer $TOKEN" \
 
 The new implementation:
 - Queries `event_creator_drafts` table in the dashboard service
-- Filters by status: `draft` or `abandoned`
+- Filters by status: `draft` or `archived`
 - Orders by `updated_at` DESC (most recent first)
 - Returns up to 10 drafts on dashboard overview
 - Returns all drafts via dedicated endpoint

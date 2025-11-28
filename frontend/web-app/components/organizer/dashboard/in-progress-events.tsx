@@ -83,9 +83,9 @@ export function InProgressEvents({ drafts, orgId, onDraftDeleted }: InProgressEv
                   <h3 className="font-medium text-foreground truncate">
                     {draft.title || 'Untitled Event'}
                   </h3>
-                  {draft.status === 'abandoned' && (
+                  {draft.status === 'archived' && (
                     <span className="px-2 py-0.5 text-xs font-medium bg-yellow-100 text-yellow-800 rounded-full">
-                      Abandoned
+                      Archived
                     </span>
                   )}
                 </div>
