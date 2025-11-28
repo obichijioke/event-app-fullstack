@@ -1,6 +1,7 @@
 import { apiClient } from './client';
 import type {
   // Dashboard Overview
+  CreatorDraftItem,
   DashboardOverviewResponse,
   // Events
   EventListParams,
@@ -231,6 +232,14 @@ export const organizerApi = {
   dashboard: {
     getOverview: (orgId: string) => {
       return apiClient.get<DashboardOverviewResponse>('/organizer/dashboard', { orgId });
+    },
+
+    getCreatorDrafts: (orgId: string) => {
+      return apiClient.get<CreatorDraftItem[]>('/organizer/dashboard/creator-drafts', { orgId });
+    },
+
+    deleteCreatorDraft: (draftId: string, orgId: string) => {
+      return apiClient.delete(`/organizer/dashboard/creator-drafts/${draftId}`, { orgId });
     },
   },
 

@@ -79,8 +79,25 @@ export interface DashboardOrder {
   };
 }
 
+export interface CreatorDraftItem {
+  id: string;
+  title: string | null;
+  status: 'draft' | 'published' | 'scheduled' | 'abandoned';
+  completionPercent: number;
+  activeSection: string | null;
+  lastAutosavedAt: string | null;
+  updatedAt: string;
+  createdAt: string;
+  owner: {
+    id: string;
+    name: string;
+    email: string;
+  };
+}
+
 export interface DashboardTasks {
   drafts: DashboardEvent[];
+  inProgressDrafts: CreatorDraftItem[];
   moderationAlerts: number;
   unsettledPayouts: {
     count: number;

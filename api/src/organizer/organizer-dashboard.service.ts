@@ -1,6 +1,7 @@
 import { Injectable, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../common/prisma/prisma.service';
 import {
+  EventCreatorDraftStatus,
   EventStatus,
   ModerationStatus,
   OrderStatus,
@@ -53,6 +54,7 @@ export class OrganizerDashboardService {
       ticketQuantity,
       unsettledPayouts,
       draftEvents,
+      creatorDrafts,
       moderationAlerts,
       recentOrders,
       venueStats,
@@ -137,6 +139,39 @@ export class OrganizerDashboardService {
           updatedAt: 'desc',
         },
         take: 5,
+      }),
+      // Creator V2 in-progress drafts
+      this.prisma.eventCreatorDraft.findMany({
+        where: {
+          organizationId: orgId,
+          status: {
+            in: [
+              EventCreatorDraftStatus.draft,
+              EventCreatorDraftStatus.abandoned,
+            ],
+          },
+        },
+        select: {
+          id: true,
+          title: true,
+          status: true,
+          completionPercent: true,
+          activeSection: true,
+          lastAutosavedAt: true,
+          updatedAt: true,
+          createdAt: true,
+          owner: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+            },
+          },
+        },
+        orderBy: {
+          updatedAt: 'desc',
+        },
+        take: 10,
       }),
       this.prisma.flag.count({
         where: {
@@ -223,6 +258,7 @@ export class OrganizerDashboardService {
 
     const tasks = {
       drafts: draftEvents,
+      inProgressDrafts: creatorDrafts,
       moderationAlerts,
       unsettledPayouts: {
         count: unsettledPayouts._count._all,
@@ -253,5 +289,108 @@ export class OrganizerDashboardService {
       recentVenues,
       tasks,
     };
+  }
+
+  async getCreatorDrafts(orgId: string, userId: string) {
+    const membership = await this.prisma.orgMember.findUnique({
+      where: {
+        orgId_userId: {
+          orgId,
+          userId,
+        },
+      },
+    });
+
+    if (!membership) {
+      throw new ForbiddenException(
+        'You do not have access to this organization',
+      );
+    }
+
+    const drafts = await this.prisma.eventCreatorDraft.findMany({
+      where: {
+        organizationId: orgId,
+        status: {
+          in: [
+            EventCreatorDraftStatus.draft,
+            EventCreatorDraftStatus.abandoned,
+          ],
+        },
+      },
+      select: {
+        id: true,
+        title: true,
+        status: true,
+        completionPercent: true,
+        activeSection: true,
+        lastAutosavedAt: true,
+        updatedAt: true,
+        createdAt: true,
+        owner: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
+      },
+      orderBy: {
+        updatedAt: 'desc',
+      },
+    });
+
+    return drafts;
+  }
+
+  async deleteCreatorDraft(
+    draftId: string,
+    orgId: string,
+    userId: string,
+  ): Promise<void> {
+    const membership = await this.prisma.orgMember.findUnique({
+      where: {
+        orgId_userId: {
+          orgId,
+          userId,
+        },
+      },
+    });
+
+    if (!membership) {
+      throw new ForbiddenException(
+        'You do not have access to this organization',
+      );
+    }
+
+    const draft = await this.prisma.eventCreatorDraft.findUnique({
+      where: { id: draftId },
+      select: { organizationId: true, ownerUserId: true },
+    });
+
+    if (!draft) {
+      throw new ForbiddenException('Draft not found');
+    }
+
+    if (draft.organizationId !== orgId) {
+      throw new ForbiddenException('Draft does not belong to this organization');
+    }
+
+    // Only owner or org owner/manager can delete
+    const allowedRoles: OrgMemberRole[] = [
+      OrgMemberRole.owner,
+      OrgMemberRole.manager,
+    ];
+    const isOwner = draft.ownerUserId === userId;
+    const hasOrgPermission = allowedRoles.includes(membership.role);
+
+    if (!isOwner && !hasOrgPermission) {
+      throw new ForbiddenException(
+        'You do not have permission to delete this draft',
+      );
+    }
+
+    await this.prisma.eventCreatorDraft.delete({
+      where: { id: draftId },
+    });
   }
 }

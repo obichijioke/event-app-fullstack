@@ -9,6 +9,7 @@ import { StatCard } from '../stat-card';
 import { EmptyState } from '../empty-state';
 import { OrderItem } from '../order-item';
 import { EventItem } from '../event-item';
+import { InProgressEvents } from './in-progress-events';
 import { CurrencyDisplay } from '@/components/common/currency-display';
 import { Calendar, DollarSign, Ticket, ShoppingCart, AlertCircle, FileText, MapPin } from 'lucide-react';
 import type { DashboardOverviewResponse } from '@/lib/types/organizer';
@@ -19,24 +20,25 @@ export function DashboardContent() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    async function loadDashboard() {
-      if (!currentOrganization) return;
+  const loadDashboard = async () => {
+    if (!currentOrganization) return;
 
-      try {
-        setLoading(true);
-        setError(null);
-        const data = await organizerApi.dashboard.getOverview(currentOrganization.id);
-        setDashboard(data);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to load dashboard');
-        console.error('Dashboard error:', err);
-      } finally {
-        setLoading(false);
-      }
+    try {
+      setLoading(true);
+      setError(null);
+      const data = await organizerApi.dashboard.getOverview(currentOrganization.id);
+      setDashboard(data);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load dashboard');
+      console.error('Dashboard error:', err);
+    } finally {
+      setLoading(false);
     }
+  };
 
+  useEffect(() => {
     loadDashboard();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentOrganization]);
 
   if (!currentOrganization) {
@@ -123,6 +125,17 @@ export function DashboardContent() {
         />
       </div>
 
+      {/* In Progress Events Section */}
+      {dashboard && dashboard.tasks.inProgressDrafts && dashboard.tasks.inProgressDrafts.length > 0 && (
+        <div className="mb-8">
+          <InProgressEvents
+            drafts={dashboard.tasks.inProgressDrafts}
+            orgId={currentOrganization.id}
+            onDraftDeleted={loadDashboard}
+          />
+        </div>
+      )}
+
       {/* Tasks Section */}
       {dashboard && (dashboard.tasks.drafts.length > 0 || dashboard.tasks.moderationAlerts > 0 || dashboard.tasks.unsettledPayouts.count > 0) && (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
@@ -131,7 +144,7 @@ export function DashboardContent() {
             <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
               <div className="flex items-center gap-2 mb-2">
                 <FileText className="w-5 h-5 text-yellow-600" />
-                <h3 className="font-semibold text-yellow-900">Draft Events</h3>
+                <h3 className="font-semibold text-yellow-900">Draft Events (Legacy)</h3>
               </div>
               <p className="text-sm text-yellow-700 mb-3">
                 {dashboard.tasks.drafts.length} event(s) waiting to be published
