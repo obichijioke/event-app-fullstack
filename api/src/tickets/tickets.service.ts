@@ -429,7 +429,16 @@ export class TicketsService {
   }
 
   async checkInTicket(createCheckinDto: CreateCheckinDto, scannerId?: string) {
-    const { ticketId, gate } = createCheckinDto;
+    const { ticketId: ticketIdOrQRCode, gate } = createCheckinDto;
+
+    // Try to decode QR code first, fall back to direct ticket ID lookup
+    let ticketId: string;
+    try {
+      ticketId = this.decodeQRCode(ticketIdOrQRCode);
+    } catch (error) {
+      // If decoding fails, assume it's a direct ticket ID
+      ticketId = ticketIdOrQRCode;
+    }
 
     // Get ticket
     const ticket = await this.prisma.ticket.findUnique({
@@ -441,6 +450,7 @@ export class TicketsService {
             title: true,
             startAt: true,
             endAt: true,
+            doorTime: true,
           },
         },
         ticketType: {
@@ -494,9 +504,23 @@ export class TicketsService {
       throw new BadRequestException('Event has already ended');
     }
 
-    // Check if event hasn't started yet
-    if (ticket.event.startAt > new Date()) {
-      throw new BadRequestException('Event has not started yet');
+    // Check if check-in is allowed based on door time or event start time
+    const now = new Date();
+    const checkinStartTime = ticket.event.doorTime || ticket.event.startAt;
+
+    if (now < checkinStartTime) {
+      const hoursUntil = Math.ceil((checkinStartTime.getTime() - now.getTime()) / (1000 * 60 * 60));
+      const minutesUntil = Math.ceil((checkinStartTime.getTime() - now.getTime()) / (1000 * 60));
+
+      if (ticket.event.doorTime) {
+        throw new BadRequestException(
+          `Check-in has not opened yet. Doors open at ${checkinStartTime.toLocaleTimeString()} (in ${hoursUntil > 0 ? hoursUntil + ' hour' + (hoursUntil !== 1 ? 's' : '') : minutesUntil + ' minute' + (minutesUntil !== 1 ? 's' : '')})`
+        );
+      } else {
+        throw new BadRequestException(
+          `Check-in has not opened yet. Event starts at ${checkinStartTime.toLocaleTimeString()} (in ${hoursUntil > 0 ? hoursUntil + ' hour' + (hoursUntil !== 1 ? 's' : '') : minutesUntil + ' minute' + (minutesUntil !== 1 ? 's' : '')})`
+        );
+      }
     }
 
     // Create check-in record
@@ -701,8 +725,9 @@ export class TicketsService {
       throw new ForbiddenException('You do not own this ticket');
     }
 
-    // Generate new QR code
+    // Generate new QR code with ticket ID
     const qrCode = this.generateQRCode(
+      ticketId,
       ticket.orderId,
       ticket.ticketTypeId,
       ticket.seatId || undefined,
@@ -718,13 +743,38 @@ export class TicketsService {
   }
 
   private generateQRCode(
+    ticketId: string,
     orderId: string,
     ticketTypeId: string,
     seatId?: string,
   ): string {
-    // Generate a unique QR code
-    const data = `${orderId}-${ticketTypeId}${seatId ? `-${seatId}` : ''}`;
+    // Generate a unique QR code with ticket ID for check-in
+    // Format: ticketId|orderId|ticketTypeId|seatId
+    const parts = [
+      ticketId,
+      orderId,
+      ticketTypeId,
+      seatId || 'GA',
+    ];
+    const data = parts.join('|');
     return Buffer.from(data).toString('base64');
+  }
+
+  private decodeQRCode(qrCode: string): string {
+    // Decode base64 QR code and extract ticket ID
+    // Format: ticketId|orderId|ticketTypeId|seatId
+    try {
+      const decoded = Buffer.from(qrCode, 'base64').toString('utf-8');
+      const parts = decoded.split('|');
+
+      if (parts.length >= 1 && parts[0] !== 'PENDING') {
+        return parts[0]; // Return ticket ID
+      }
+
+      throw new BadRequestException('Invalid QR code format');
+    } catch (error) {
+      throw new BadRequestException('Invalid QR code: Unable to decode');
+    }
   }
 
   async getTicketStats(eventId: string, userId?: string) {
