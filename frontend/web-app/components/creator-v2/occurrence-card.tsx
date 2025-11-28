@@ -90,6 +90,54 @@ export function OccurrenceCard({
   const selectedVenue = venues.find(v => v.id === venueId);
   const venueName = selectedVenue?.name || defaultVenueName;
 
+  // Door time preset logic
+  const getDoorTimePreset = (): string => {
+    if (!startsAt) return 'at_start';
+    if (!doorTime) return 'at_start';
+
+    const start = new Date(startsAt);
+    const door = new Date(doorTime);
+    const diffHours = Math.round((start.getTime() - door.getTime()) / (1000 * 60 * 60));
+
+    if (diffHours === 0) return 'at_start';
+    if (diffHours === 1) return '1hr';
+    if (diffHours === 2) return '2hr';
+    if (diffHours === 3) return '3hr';
+    if (diffHours === 4) return '4hr';
+
+    return 'custom';
+  };
+
+  const handleDoorTimePresetChange = (preset: string) => {
+    if (!startsAt) return;
+
+    const start = new Date(startsAt);
+
+    switch (preset) {
+      case 'at_start':
+        onDoorTimeChange(undefined); // No door time = starts at event time
+        break;
+      case '1hr':
+        onDoorTimeChange(new Date(start.getTime() - 1 * 60 * 60 * 1000).toISOString());
+        break;
+      case '2hr':
+        onDoorTimeChange(new Date(start.getTime() - 2 * 60 * 60 * 1000).toISOString());
+        break;
+      case '3hr':
+        onDoorTimeChange(new Date(start.getTime() - 3 * 60 * 60 * 1000).toISOString());
+        break;
+      case '4hr':
+        onDoorTimeChange(new Date(start.getTime() - 4 * 60 * 60 * 1000).toISOString());
+        break;
+      case 'custom':
+        // Keep current door time or set to 1 hour before as default
+        if (!doorTime) {
+          onDoorTimeChange(new Date(start.getTime() - 1 * 60 * 60 * 1000).toISOString());
+        }
+        break;
+    }
+  };
+
   return (
     <div
       className={`rounded-xl border ${
@@ -215,16 +263,31 @@ export function OccurrenceCard({
             <div className="space-y-1.5">
               <label className="text-xs font-medium flex items-center gap-1.5">
                 <DoorOpen className="h-3.5 w-3.5 text-muted-foreground" />
-                Door time
+                Check-in opens
               </label>
-              <Input
-                type="datetime-local"
-                disabled={isCanceled}
-                value={toLocalInput(doorTime)}
-                onChange={(e) => onDoorTimeChange(fromLocalInput(e.target.value))}
+              <Select
+                disabled={isCanceled || !startsAt}
+                value={getDoorTimePreset()}
+                onChange={(e) => handleDoorTimePresetChange(e.target.value)}
                 className="text-sm"
-              />
-              <p className="text-xs text-muted-foreground">When doors open (usually 30-60 min before)</p>
+              >
+                <option value="at_start">When event starts</option>
+                <option value="1hr">1 hour before event</option>
+                <option value="2hr">2 hours before event</option>
+                <option value="3hr">3 hours before event</option>
+                <option value="4hr">4 hours before event</option>
+                <option value="custom">Custom time</option>
+              </Select>
+              {getDoorTimePreset() === 'custom' && (
+                <Input
+                  type="datetime-local"
+                  disabled={isCanceled}
+                  value={toLocalInput(doorTime)}
+                  onChange={(e) => onDoorTimeChange(fromLocalInput(e.target.value))}
+                  className="text-sm mt-2"
+                />
+              )}
+              <p className="text-xs text-muted-foreground">When attendees can start checking in</p>
             </div>
 
             <div className="space-y-1.5">

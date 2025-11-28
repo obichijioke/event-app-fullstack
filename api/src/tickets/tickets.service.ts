@@ -436,8 +436,13 @@ export class TicketsService {
     try {
       ticketId = this.decodeQRCode(ticketIdOrQRCode);
     } catch (error) {
-      // If decoding fails, assume it's a direct ticket ID
-      ticketId = ticketIdOrQRCode;
+      // If it's not a QR code, use input as direct ticket ID
+      if (error instanceof Error && error.message === 'Not a QR code') {
+        ticketId = ticketIdOrQRCode;
+      } else {
+        // Invalid QR code format - re-throw the error
+        throw error;
+      }
     }
 
     // Get ticket
@@ -450,6 +455,7 @@ export class TicketsService {
             title: true,
             startAt: true,
             endAt: true,
+            doorTime: true,
           },
         },
         ticketType: {
@@ -503,9 +509,23 @@ export class TicketsService {
       throw new BadRequestException('Event has already ended');
     }
 
-    // Check if event hasn't started yet
-    if (ticket.event.startAt > new Date()) {
-      throw new BadRequestException('Event has not started yet');
+    // Check if check-in is allowed based on door time or event start time
+    const now = new Date();
+    const checkinStartTime = ticket.event.doorTime || ticket.event.startAt;
+
+    if (now < checkinStartTime) {
+      const hoursUntil = Math.ceil((checkinStartTime.getTime() - now.getTime()) / (1000 * 60 * 60));
+      const minutesUntil = Math.ceil((checkinStartTime.getTime() - now.getTime()) / (1000 * 60));
+
+      if (ticket.event.doorTime) {
+        throw new BadRequestException(
+          `Check-in has not opened yet. Doors open at ${checkinStartTime.toLocaleTimeString()} (in ${hoursUntil > 0 ? hoursUntil + ' hour' + (hoursUntil !== 1 ? 's' : '') : minutesUntil + ' minute' + (minutesUntil !== 1 ? 's' : '')})`
+        );
+      } else {
+        throw new BadRequestException(
+          `Check-in has not opened yet. Event starts at ${checkinStartTime.toLocaleTimeString()} (in ${hoursUntil > 0 ? hoursUntil + ' hour' + (hoursUntil !== 1 ? 's' : '') : minutesUntil + ' minute' + (minutesUntil !== 1 ? 's' : '')})`
+        );
+      }
     }
 
     // Create check-in record
@@ -749,7 +769,23 @@ export class TicketsService {
     // Decode base64 QR code and extract ticket ID
     // Format: ticketId|orderId|ticketTypeId|seatId
     try {
+      // First, check if this looks like a base64-encoded QR code
+      // Base64 only contains: A-Z, a-z, 0-9, +, /, and optional padding =
+      const base64Regex = /^[A-Za-z0-9+/]+=*$/;
+
+      if (!base64Regex.test(qrCode)) {
+        // Not base64, so it's likely a direct ticket ID
+        throw new Error('Not a QR code');
+      }
+
       const decoded = Buffer.from(qrCode, 'base64').toString('utf-8');
+
+      // Check if decoded string contains our expected format (pipe-separated)
+      if (!decoded.includes('|')) {
+        // Not our QR format, likely a direct ticket ID that happened to be base64-like
+        throw new Error('Not a QR code');
+      }
+
       const parts = decoded.split('|');
 
       if (parts.length >= 4 && parts[0] !== 'PENDING') {
@@ -758,6 +794,10 @@ export class TicketsService {
 
       throw new BadRequestException('Invalid QR code format');
     } catch (error) {
+      // If it's our custom error, re-throw to indicate it's not a QR code
+      if (error instanceof Error && error.message === 'Not a QR code') {
+        throw error;
+      }
       throw new BadRequestException('Invalid QR code: Unable to decode');
     }
   }

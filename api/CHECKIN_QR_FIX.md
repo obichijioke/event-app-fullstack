@@ -105,26 +105,50 @@ for (const item of order.items) {
 - O(1) lookup performance with Set
 - Works correctly even if QR code format changes
 
-### 3. Added QR Code Decoder
+### 3. Added QR Code Decoder with Validation
 
 **File:** `api/src/tickets/tickets.service.ts`
+
+**Critical Fix**: The decoder now validates inputs to distinguish between QR codes and direct ticket IDs
 
 ```typescript
 private decodeQRCode(qrCode: string): string {
   try {
+    // First, check if this looks like a base64-encoded QR code
+    const base64Regex = /^[A-Za-z0-9+/]+=*$/;
+
+    if (!base64Regex.test(qrCode)) {
+      throw new Error('Not a QR code');
+    }
+
     const decoded = Buffer.from(qrCode, 'base64').toString('utf-8');
+
+    // Check if decoded string contains our expected format (pipe-separated)
+    if (!decoded.includes('|')) {
+      throw new Error('Not a QR code');
+    }
+
     const parts = decoded.split('|');
 
-    if (parts.length >= 1 && parts[0] !== 'PENDING') {
+    if (parts.length >= 4 && parts[0] !== 'PENDING') {
       return parts[0]; // Return ticket ID
     }
 
     throw new BadRequestException('Invalid QR code format');
   } catch (error) {
+    if (error instanceof Error && error.message === 'Not a QR code') {
+      throw error;
+    }
     throw new BadRequestException('Invalid QR code: Unable to decode');
   }
 }
 ```
+
+**Validation Steps:**
+1. ✅ Check if input matches base64 character set
+2. ✅ Verify decoded string contains pipe separator
+3. ✅ Ensure QR has all required fields (≥4 parts)
+4. ✅ Throw specific error for non-QR inputs
 
 ### 4. Updated Check-in Logic
 
@@ -139,8 +163,13 @@ async checkInTicket(createCheckinDto: CreateCheckinDto, scannerId?: string) {
   try {
     ticketId = this.decodeQRCode(ticketIdOrQRCode);
   } catch (error) {
-    // If decoding fails, assume it's a direct ticket ID
-    ticketId = ticketIdOrQRCode;
+    // If it's not a QR code, use input as direct ticket ID
+    if (error instanceof Error && error.message === 'Not a QR code') {
+      ticketId = ticketIdOrQRCode;
+    } else {
+      // Invalid QR code format - re-throw the error
+      throw error;
+    }
   }
 
   // Now proceed with check-in using the extracted ticket ID
@@ -164,14 +193,26 @@ async checkInTicket(createCheckinDto: CreateCheckinDto, scannerId?: string) {
 5. ✓ Check-in successful
 ```
 
-### Scenario 2: Manual Entry
+### Scenario 2: Manual Entry (Direct Ticket ID)
 ```
 1. Staff enters ticket ID: clxxx123456789
 2. Frontend sends: POST /tickets/checkin { ticketId: "clxxx123456789" }
-3. Backend tries to decode (fails - not base64)
-4. Backend falls back to using as direct ticket ID
-5. Backend looks up ticket by ID → validates → creates check-in record
-6. ✓ Check-in successful
+3. Backend validates format:
+   - Contains non-base64 characters (no underscores in base64) → "Not a QR code"
+   - Falls back to using as direct ticket ID
+4. Backend looks up ticket by ID → validates → creates check-in record
+5. ✓ Check-in successful
+```
+
+### Scenario 3: Manual Entry (Ticket ID with Special Characters)
+```
+1. Staff enters ticket ID: ti_123abc
+2. Frontend sends: POST /tickets/checkin { ticketId: "ti_123abc" }
+3. Backend validates format:
+   - Contains underscore → fails base64 regex → "Not a QR code"
+   - Falls back to using as direct ticket ID
+4. Backend looks up ticket by ID → validates → creates check-in record
+5. ✓ Check-in successful
 ```
 
 ---
@@ -224,6 +265,33 @@ Total matches expected: ✓ PASS
 - Webhook retries don't create extra tickets
 - All tickets are correctly skipped on retry
 - Final ticket count matches expected count
+
+### Test 3: QR Code vs Direct ID Validation
+Run the test script to verify input validation:
+```bash
+cd api
+node test-qr-decode-validation.js
+```
+
+Expected output:
+```
+=== QR Code Validation Test ===
+Test 1: Valid QR Code - ✓ PASS
+Test 2: Direct Ticket ID (ti_123abc) - ✓ PASS
+Test 3: Direct Ticket ID (CUID) - ✓ PASS
+Test 4: Direct Ticket ID (with dashes) - ✓ PASS
+Test 5: Invalid QR Code (base64 without pipes) - ✓ PASS
+Test 6: Valid QR Code (GA ticket) - ✓ PASS
+Test 7: Malformed QR Code - ✓ PASS
+✓ System handles both QR codes and manual ticket ID entry
+```
+
+**What this verifies:**
+- Valid QR codes are properly decoded to extract ticket ID
+- Direct ticket IDs pass through without modification
+- Base64-like strings without pipe separators are treated as ticket IDs
+- Manual check-in works correctly for all ticket ID formats
+- No false positives (direct IDs aren't mistaken for QR codes)
 
 ---
 
