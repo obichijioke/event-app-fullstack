@@ -106,6 +106,25 @@ export class PaymentProcessor extends BaseQueueProcessor {
     // Create tickets for each order item
     for (const item of order.items) {
       for (let i = 0; i < item.quantity; i++) {
+        const barcode = this.generateBarcode(
+          order.id,
+          item.ticketTypeId,
+          item.seatId || undefined,
+          i,
+        );
+
+        // Skip creation if this barcode already exists for the order (handles retries)
+        const existingTicket = await this.prisma.ticket.findFirst({
+          where: {
+            orderId: order.id,
+            barcode,
+          },
+        });
+
+        if (existingTicket) {
+          continue;
+        }
+
         // Create ticket first to get the ID
         const ticket = await this.prisma.ticket.create({
           data: {
@@ -117,12 +136,7 @@ export class PaymentProcessor extends BaseQueueProcessor {
             issuedAt: new Date(),
             ownerId: order.buyerId || order.id, // Use buyerId
             qrCode: '', // Temporary empty value
-            barcode: this.generateBarcode(
-              order.id,
-              item.ticketTypeId,
-              item.seatId || undefined,
-              i,
-            ),
+            barcode,
           },
         });
 
@@ -179,6 +193,6 @@ export class PaymentProcessor extends BaseQueueProcessor {
     index: number = 0,
   ): string {
     // In a real implementation, you would use a barcode library
-    return `bc_${orderId}_${ticketTypeId}_${seatId || 'ga'}_${index}_${Date.now()}`;
+    return `bc_${orderId}_${ticketTypeId}_${seatId || 'ga'}_${index}`;
   }
 }

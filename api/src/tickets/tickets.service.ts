@@ -752,7 +752,7 @@ export class TicketsService {
       const decoded = Buffer.from(qrCode, 'base64').toString('utf-8');
       const parts = decoded.split('|');
 
-      if (parts.length >= 1 && parts[0] !== 'PENDING') {
+      if (parts.length >= 4 && parts[0] !== 'PENDING') {
         return parts[0]; // Return ticket ID
       }
 
