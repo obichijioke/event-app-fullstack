@@ -2,6 +2,17 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Table of Contents
+- [Project Overview](#project-overview)
+- [Development Commands](#development-commands)
+- [Architecture Overview](#architecture-overview)
+- [Frontend Application](#frontend-application)
+- [Simplified User Onboarding](#simplified-user-onboarding)
+- [Development Workflow](#development-workflow)
+- [Best Practices](#best-practices)
+- [Troubleshooting](#troubleshooting)
+- [Quick Reference](#quick-reference)
+
 ## Project Overview
 
 This is an event management platform backend built with NestJS, similar to Eventbrite/Ticketmaster. The system supports multi-tenant organizations, event creation, ticketing, payments (Stripe/Paystack), and comprehensive order management.
@@ -57,54 +68,67 @@ docker compose logs -f redis
 
 ### Key Features
 - **Multi-tenant SaaS**: Organization-based isolation with role-based access control
-- **Event Management**: Complete event lifecycle from draft to completion
-- **Ticketing System**: GA and seated tickets with advanced pricing tiers
+- **Event Management**: Complete event lifecycle from draft to completion with announcements and FAQs
+- **Ticketing System**: GA and seated tickets with advanced pricing tiers and seatmap management
 - **Payment Processing**: Dual payment providers (Stripe + Paystack) with webhook handling
 - **Order Management**: Full order lifecycle with refunds, disputes, and chargebacks
-- **Creator Interface**: Multi-step event creation with autosave and templates
-- **Verification System**: Document upload and review for organization verification
-- **Review System**: Separate reviews for events and organizers
-- **Notification System**: Multi-channel notifications (in-app, email, push, SMS)
-- **Analytics**: Creator usage analytics and audit logging
-- **File Storage**: AWS S3 integration for document and media storage
-- **Background Jobs**: Queue-based processing for async operations
-- **Health Monitoring**: Health check endpoints for system monitoring
+- **Creator Interface**: Multi-step event creation wizard (v2) with autosave, templates, and guided workflow
+- **Verification System**: Document upload and review for organization verification with appeal process
+- **Review System**: Separate reviews for events and organizers with moderation
+- **Notification System**: Multi-channel notifications (in-app, email, push, SMS) with real-time WebSocket support
+- **Real-time Updates**: WebSocket gateway for live notifications and event updates
+- **User Account Management**: Comprehensive profile, preferences, and account settings
+- **Multi-currency Support**: Currency conversion and localization utilities
+- **Analytics**: Creator usage analytics, audit logging, and behavioral tracking
+- **File Storage**: AWS S3 integration for document and media storage with presigned URLs
+- **Background Jobs**: Queue-based processing for async operations (BullMQ + Redis)
+- **Health Monitoring**: Health check endpoints for database, Redis, and service monitoring
 
 ### Core Module Structure
-- **auth/** - JWT authentication, API keys, session management (see [SESSION_MANAGEMENT.md](api/SESSION_MANAGEMENT.md) for details)
+- **account/** - User account management and profile settings
+- **admin/** - Platform administration endpoints for system management
+- **announcements/** - Event announcements and updates system
+- **auth/** - JWT authentication, API keys, session management, and 2FA
+- **categories/** - Event categorization and taxonomy
+- **common/** - Shared utilities, guards, decorators, and pipes
+- **currency/** - Multi-currency support and conversion utilities
+- **event-creator-v2/** - Step-by-step event creation wizard with autosave and templates
+- **events/** - Event management with occurrences, assets, policies, and seatmaps
+- **faqs/** - Event FAQ management system
+- **health/** - Health check endpoints for system monitoring
+- **homepage/** - Public homepage API with featured events and categories
+- **moderation/** - Content moderation and flagging system
+- **notifications/** - Multi-channel notification delivery (in-app, email, push, SMS)
+- **orders/** - Order processing, payment integration, and lifecycle management
 - **organizations/** - Multi-tenant organization management with role-based permissions, verification documents, and appeals
 - **organizer/** - Organizer-specific functionality and dashboard operations
-- **events/** - Event management with occurrences, assets, policies, and seatmaps
-- **ticketing/** - Ticket types, price tiers, holds, and inventory management
-- **orders/** - Order processing, payment integration, and lifecycle management
-- **tickets/** - Ticket generation, transfers, check-ins, and QR codes
+- **payouts/** - Organizer payout management and financial tracking
 - **promotions/** - Promo codes with various discount types and redemption tracking
-- **venues/** & **seatmaps/** - Venue management and seating arrangements
-- **webhooks/** - Event-driven integrations with retry logic
 - **queues/** - Background job processing (BullMQ + Redis)
-- **homepage/** - Public homepage API with featured events and categories
 - **reviews/** - Event reviews and organizer ratings system
-- **creator-v2/** - Step-by-step event creation wizard with autosave and templates
-- **categories/** - Event categorization and taxonomy
-- **admin/** - Platform administration endpoints
-- **moderation/** - Content moderation and flagging system
-- **payouts/** - Organizer payout management
-- **common/** - Shared utilities, guards, decorators, and pipes
-- **health/** - Health check endpoints for monitoring
+- **seatmaps/** - Seating chart management for seated events
+- **ticketing/** - Ticket types, price tiers, holds, and inventory management
+- **tickets/** - Ticket generation, transfers, check-ins, and QR codes
+- **venues/** - Venue management and location information
+- **webhooks/** - Event-driven integrations with retry logic
+- **websockets/** - Real-time WebSocket connections for live notifications
 
 ### Key Dependencies
-- **Framework**: NestJS 11 with Express
+- **Framework**: NestJS 11 with Express and Socket.IO
 - **Database**: PostgreSQL with Prisma ORM 6.18.0
 - **Cache/Queue**: Redis with BullMQ 5.61.0 and IORedis 5.8.2
+- **WebSockets**: @nestjs/websockets 11.1.8 with Socket.IO 4.8.1
 - **Payments**: Stripe 19.1.0 (international) + Paystack (Africa-focused)
 - **Authentication**: JWT with Passport (passport-jwt 4.0.1, bcrypt 6.0.0)
 - **Validation**: class-validator 0.14.2 + class-transformer 0.5.1
 - **Documentation**: Swagger/OpenAPI (@nestjs/swagger 11.2.1)
 - **Logging**: Pino 10.1.0 with pino-pretty 13.1.2
-- **Scheduling**: @nestjs/schedule 6.0.1
+- **Scheduling**: @nestjs/schedule 6.0.1 with RRule 2.8.1 for recurring events
 - **Health Checks**: @nestjs/terminus 11.0.0
 - **File Storage**: AWS S3 SDK 3.919.0 with presigned URLs
 - **HTTP Client**: Axios 1.12.2
+- **Email**: Nodemailer 6.9.16 for email delivery
+- **Utilities**: cookie-parser 1.4.7, dotenv 17.2.3
 
 ### Multi-Tenancy Pattern
 The system uses organization-based multi-tenancy where:
@@ -192,6 +216,16 @@ Multi-channel notification system with comprehensive features:
   - Support multiple delivery channels simultaneously
   - Indexed queries for efficient retrieval
   - Timestamp tracking (createdAt, updatedAt, readAt)
+  - Real-time delivery via WebSocket gateway
+
+### Real-time WebSocket Features
+WebSocket gateway for live updates and real-time communication:
+- **Authentication**: JWT-based WebSocket authentication
+- **Notification Gateway**: Real-time notification delivery to connected clients
+- **Event-driven**: Subscribe to specific event types (orders, tickets, announcements)
+- **Room-based**: Organize users into rooms (organization, event-specific)
+- **Connection Management**: Automatic reconnection and session handling
+- **Scalable**: Redis adapter support for horizontal scaling (planned)
 
 ### Environment Configuration
 - Copy `.env.example` to `.env`
@@ -284,10 +318,13 @@ NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_...
 ```
 
 #### Integration with Backend
-- API calls to NestJS backend at `/api/*` endpoints
-- Authentication via JWT tokens
-- Payment integration with Stripe/Paystack
-- Real-time updates via WebSocket (planned)
+- **API Communication**: REST API calls to NestJS backend at `/api/*` endpoints
+- **Authentication**: JWT token-based authentication with refresh tokens
+- **Payment Integration**: Stripe and Paystack client-side SDKs for payment processing
+- **Real-time Updates**: WebSocket connection for live notifications and updates
+- **State Management**: Zustand stores synced with backend state
+- **Form Validation**: Client-side validation with Zod schemas matching backend DTOs
+- **Error Handling**: Standardized error responses and user-friendly error messages
 
 ### Mobile Application
 Currently planned in `frontend/mobile/` (empty directory) - likely React Native or Flutter implementation.
@@ -393,11 +430,240 @@ The system uses comprehensive enumerations for type safety:
 - **Creator Steps**: basic_info, date_time, location, seating, ticket_types, price_tiers, policies, media, review
 - **Creator Session Status**: in_progress, completed, abandoned, published
 
+## Best Practices
+
+### API Design Guidelines
+- **RESTful conventions**: Use standard HTTP methods (GET, POST, PUT, PATCH, DELETE)
+- **Versioning**: API endpoints use versioning when breaking changes are introduced
+- **DTOs**: All request/response objects use Data Transfer Objects for validation
+- **Error handling**: Consistent error responses with appropriate HTTP status codes
+- **Pagination**: Use cursor or offset-based pagination for list endpoints
+- **Filtering**: Support query parameters for filtering, sorting, and searching
+- **Rate limiting**: Implement rate limiting for public endpoints (planned)
+
+### Security Best Practices
+- **Authentication**: JWT tokens with short expiration times and refresh token rotation
+- **Authorization**: Role-based access control (RBAC) with organization-level permissions
+- **Input validation**: All inputs validated using class-validator decorators
+- **SQL injection prevention**: Parameterized queries via Prisma ORM
+- **XSS protection**: Content sanitization for user-generated content
+- **CORS**: Configured CORS policies for frontend domains
+- **Environment secrets**: All sensitive data stored in environment variables
+- **File uploads**: File type validation and size limits enforced
+
+### Performance Optimization
+- **Database indexing**: Strategic indexes on frequently queried fields
+- **Query optimization**: Use Prisma's select and include for efficient queries
+- **Caching**: Redis caching for frequently accessed data
+- **Background jobs**: Long-running tasks processed via BullMQ queues
+- **Connection pooling**: Database connection pooling via Prisma
+- **Lazy loading**: Load related data only when needed
+- **Pagination**: Always paginate large result sets
+
+### Code Organization
+- **Module structure**: Each feature has its own module with controller, service, and DTOs
+- **Dependency injection**: Use NestJS DI container for loose coupling
+- **Service layer**: Business logic in services, controllers handle HTTP concerns
+- **Reusability**: Common functionality in shared modules (common/)
+- **Type safety**: Full TypeScript coverage with strict mode enabled
+- **Testing**: Unit tests for services, E2E tests for critical workflows
+
+### Development Tips
+- **Hot reload**: Use `npm run start:dev` for automatic code reloading
+- **Debugging**: Use `npm run start:debug` and attach debugger on port 9229
+- **Prisma Studio**: Visual database browser at http://localhost:5555
+- **API documentation**: Swagger UI available at http://localhost:3000/api (when configured)
+- **Logging**: Structured logging with Pino for better debugging
+- **Error tracking**: Log errors with context for easier troubleshooting
+
+## Troubleshooting
+
 ### Common Issues
-- If Prisma client is not found, run `npx prisma generate`
-- If migrations fail, ensure Docker containers are running: `docker compose ps`
-- For port conflicts, check if services are already running on ports 3000, 5432, or 6379
-- Frontend and backend both use port 3000 by default - run them separately or update PORT in .env
-- On Windows, ensure Docker Desktop is running before starting services
-- If uploads fail, verify UPLOAD_DIR exists and has write permissions
-- For S3 uploads, ensure AWS credentials are properly configured
+
+#### Database Issues
+- **Prisma client not found**: Run `npx prisma generate` to generate the Prisma client
+- **Migration failures**: Ensure Docker containers are running with `docker compose ps`
+- **Connection refused**: Check DATABASE_URL in .env and verify PostgreSQL is running
+- **Schema out of sync**: Run `npx prisma db push` to sync schema with database
+- **Seed script fails**: Ensure database is empty or use `npx prisma migrate reset` to reset
+
+#### Development Server Issues
+- **Port conflicts**: Check if services are already running on ports 3000, 5432, or 6379
+- **Frontend and backend collision**: Both use port 3000 by default - run separately or update PORT in .env
+- **Hot reload not working**: Restart the dev server with `npm run start:dev`
+- **Module not found errors**: Run `npm install` to ensure all dependencies are installed
+- **TypeScript errors**: Check tsconfig.json and ensure all types are properly defined
+
+#### Redis and Queue Issues
+- **Redis connection refused**: Ensure Redis is running via Docker: `docker compose ps`
+- **Jobs not processing**: Check Redis connection and ensure queue workers are running
+- **Queue stuck**: Use Redis CLI to inspect queue status: `redis-cli`
+- **BullMQ errors**: Verify REDIS_URL environment variable is set correctly
+
+#### Authentication Issues
+- **JWT errors**: Verify JWT_SECRET and JWT_REFRESH_SECRET are set in .env
+- **Token expired**: Tokens have expiration times - use refresh token flow
+- **Unauthorized errors**: Ensure Authorization header is set with valid JWT token
+- **CORS errors**: Configure CORS settings for frontend domain
+
+#### File Upload Issues
+- **Upload fails**: Verify UPLOAD_DIR exists and has write permissions
+- **S3 upload errors**: Ensure AWS credentials (AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_REGION) are configured
+- **File size exceeded**: Check MAX_FILE_SIZE setting in environment variables
+- **Invalid file type**: Verify file type validation in upload endpoints
+
+#### Payment Integration Issues
+- **Stripe webhook failures**: Verify STRIPE_WEBHOOK_SECRET matches Stripe dashboard
+- **Payment intent errors**: Check STRIPE_SECRET_KEY is set correctly
+- **Webhook signature mismatch**: Ensure webhook endpoint is publicly accessible for testing
+- **Paystack issues**: Verify PAYSTACK_SECRET_KEY and webhook configuration
+
+#### Windows-specific Issues
+- **Docker not running**: Ensure Docker Desktop is running before starting services
+- **Path issues**: Use forward slashes in paths or escape backslashes properly
+- **Permission errors**: Run terminal as administrator for certain operations
+- **Line ending issues**: Configure Git to use LF line endings: `git config core.autocrlf false`
+
+## Quick Reference
+
+### Common Commands Cheatsheet
+```bash
+# Start everything
+docker compose up -d && cd api && npm run start:dev
+
+# Reset database
+cd api && npx prisma migrate reset && npm run db:seed
+
+# Check logs
+docker compose logs -f postgres
+docker compose logs -f redis
+
+# Prisma operations
+npx prisma studio                    # Open database GUI
+npx prisma generate                  # Regenerate client
+npx prisma db push                   # Push schema changes
+npx prisma migrate dev --name NAME   # Create migration
+
+# Clean install
+rm -rf node_modules package-lock.json && npm install
+
+# Build production
+npm run build && npm run start:prod
+```
+
+### Important Endpoints
+- **Backend API**: http://localhost:3000
+- **Swagger Docs**: http://localhost:3000/api (if configured)
+- **Prisma Studio**: http://localhost:5555
+- **Frontend**: http://localhost:3000 (separate process)
+- **PostgreSQL**: localhost:5432
+- **Redis**: localhost:6379
+
+### Environment Variables Template
+```bash
+# Required
+DATABASE_URL="postgresql://user:pass@localhost:5432/eventflow"
+REDIS_URL="redis://localhost:6379"
+JWT_SECRET="your-secret-key-min-32-chars"
+JWT_REFRESH_SECRET="your-refresh-secret-key"
+
+# Optional but recommended
+PORT=3000
+NODE_ENV=development
+UPLOAD_DIR=./uploads
+MAX_FILE_SIZE=10485760
+
+# Payment providers (for production)
+STRIPE_SECRET_KEY=sk_test_...
+STRIPE_WEBHOOK_SECRET=whsec_...
+PAYSTACK_SECRET_KEY=sk_test_...
+
+# AWS S3 (for file storage)
+AWS_ACCESS_KEY_ID=your-key
+AWS_SECRET_ACCESS_KEY=your-secret
+AWS_REGION=us-east-1
+AWS_S3_BUCKET=your-bucket
+
+# Email (optional)
+EMAIL_HOST=smtp.example.com
+EMAIL_PORT=587
+EMAIL_USER=your-email@example.com
+EMAIL_PASS=your-password
+```
+
+### Key Conventions
+- **Module naming**: kebab-case for folders, PascalCase for classes
+- **File naming**: feature.module.ts, feature.controller.ts, feature.service.ts
+- **DTO naming**: CreateFeatureDto, UpdateFeatureDto, FeatureResponseDto
+- **Enum naming**: PascalCase for enum names, lowercase for values
+- **API routes**: /api/resource, /api/resource/:id
+- **Test files**: feature.service.spec.ts, feature.e2e-spec.ts
+
+## Project Status & Roadmap
+
+### Completed Features
+- ✅ Multi-tenant organization management with verification
+- ✅ Event creation wizard (v2) with autosave and templates
+- ✅ Ticketing system with GA and seated tickets
+- ✅ Order and payment processing (Stripe + Paystack)
+- ✅ Real-time notifications via WebSocket
+- ✅ Review system for events and organizers
+- ✅ Event announcements and FAQs
+- ✅ Admin and moderator tools
+- ✅ File upload and S3 integration
+- ✅ Background job processing with queues
+- ✅ User account management
+- ✅ Health monitoring endpoints
+
+### In Progress / Planned Features
+- 🚧 Rate limiting for API endpoints
+- 🚧 Advanced analytics and reporting
+- 🚧 Redis adapter for WebSocket horizontal scaling
+- 🚧 Mobile application (React Native/Flutter)
+- 🚧 Advanced search with Elasticsearch (planned)
+- 🚧 Email template system improvements
+- 🚧 Push notification service integration
+- 🚧 SMS notification delivery
+- 🚧 Two-factor authentication (2FA)
+- 🚧 Social media integrations
+- 🚧 Advanced fraud detection
+
+### Known Limitations
+- Frontend and backend share default port 3000 (configuration needed for concurrent run)
+- WebSocket scaling requires Redis adapter implementation
+- Some email features require external SMTP configuration
+- S3 storage requires AWS credentials setup
+- Limited test coverage in some modules
+
+## Additional Resources
+
+### Documentation
+- **NestJS Docs**: https://docs.nestjs.com
+- **Prisma Docs**: https://www.prisma.io/docs
+- **Stripe API**: https://stripe.com/docs/api
+- **Socket.IO Docs**: https://socket.io/docs
+- **Next.js Docs**: https://nextjs.org/docs
+
+### Related Files
+- `tables.md` - Comprehensive database schema documentation
+- `001_schema_improvements.sql` - Schema enhancement scripts
+- `.env.example` - Environment variables template
+- `docker-compose.yml` - Infrastructure services configuration
+- `api/prisma/schema.prisma` - Prisma database schema
+- `api/prisma/seed.ts` - Database seeding script
+
+### Support and Contribution
+This is an active development project. When making changes:
+1. Follow the established code conventions and patterns
+2. Write tests for new features
+3. Update this CLAUDE.md file when adding new modules or major features
+4. Keep the Prisma schema in sync with database changes
+5. Document API endpoints with Swagger decorators
+6. Ensure environment variables are documented in .env.example
+
+---
+
+**Last Updated**: 2025-01-26
+**Project Version**: 0.0.1 (Active Development)
+**NestJS Version**: 11.x
+**Node Version**: 22.x (recommended)
