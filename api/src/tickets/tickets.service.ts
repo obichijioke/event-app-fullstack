@@ -171,7 +171,7 @@ export class TicketsService {
   }
 
   async initiateTransfer(userId: string, createTransferDto: CreateTransferDto) {
-    const { ticketId, toUserId } = createTransferDto;
+    const { ticketId, toUserId, recipientEmail } = createTransferDto;
 
     // Get ticket
     const ticket = await this.prisma.ticket.findUnique({
@@ -230,13 +230,31 @@ export class TicketsService {
       throw new BadRequestException('Ticket is already being transferred');
     }
 
-    // Get recipient user
-    const toUser = await this.prisma.user.findUnique({
-      where: { id: toUserId },
-    });
+    // Resolve recipient (email preferred, fallback to ID for compatibility)
+    let toUserIdResolved: string | undefined = toUserId;
+    if (recipientEmail) {
+      const toUser = await this.prisma.user.findFirst({
+        where: {
+          email: {
+            equals: recipientEmail,
+            mode: 'insensitive',
+          },
+        },
+        select: { id: true },
+      });
 
-    if (!toUser) {
-      throw new NotFoundException('Recipient user not found');
+      if (!toUser) {
+        throw new NotFoundException('Recipient user not found');
+      }
+      toUserIdResolved = toUser.id;
+    }
+
+    if (!toUserIdResolved) {
+      throw new BadRequestException('Recipient is required');
+    }
+
+    if (toUserIdResolved === userId) {
+      throw new BadRequestException('You cannot transfer a ticket to yourself');
     }
 
     // Create transfer
@@ -244,7 +262,7 @@ export class TicketsService {
       data: {
         ticketId,
         fromUserId: userId,
-        toUserId,
+        toUserId: toUserIdResolved,
         initiatedAt: new Date(),
       },
       include: {

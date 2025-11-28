@@ -95,6 +95,19 @@ export default function PaymentPage({ params }: Props) {
         ticketsApi.getTicketTypes(eventId),
         ordersApi.getOrder(orderId),
       ]);
+      const isFreeOrder =
+        typeof orderData.totalCents === 'bigint'
+          ? orderData.totalCents === BigInt(0)
+          : Number(orderData.totalCents) === 0;
+
+      if (isFreeOrder || (orderData as any).isFreeOrder) {
+        setLoading(false);
+        router.push(
+          `/events/${eventId}/checkout/confirmation?orderId=${orderId}`,
+        );
+        return;
+      }
+
       setEvent(eventData);
       setTicketTypes(ticketTypesData);
       setOrder(orderData);
@@ -118,6 +131,17 @@ export default function PaymentPage({ params }: Props) {
   // Initialize payment when provider is selected
   useEffect(() => {
     if (!order || initializingPayment) return;
+
+    const isFreeOrder =
+      typeof order.totalCents === 'bigint'
+        ? order.totalCents === BigInt(0)
+        : Number(order.totalCents) === 0;
+    if (isFreeOrder || (order as any).isFreeOrder) {
+      router.push(
+        `/events/${eventId}/checkout/confirmation?orderId=${order.id}`,
+      );
+      return;
+    }
 
     const initializePayment = async () => {
       try {

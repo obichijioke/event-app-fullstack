@@ -186,16 +186,32 @@ export class OrdersService {
     const taxCents = (taxableAmount * BigInt(7)) / BigInt(100); // 7% tax rate
 
     // Calculate fees
-    const { totalFeeCents, feeLines } = await this.calculateFees(
-      event.orgId,
-      subtotalCents,
-      items.reduce((acc, item) => acc + item.quantity, 0),
-    );
+    const isFreeOrder = subtotalCents === BigInt(0);
 
-    // Add ticket-specific fees
-    feesCents += totalFeeCents;
+    if (isFreeOrder) {
+      feesCents = BigInt(0);
+    }
+
+    let feeLines:
+      | {
+          name: string;
+          amountCents: bigint;
+          beneficiary: string;
+        }[] = [];
+
+    if (!isFreeOrder) {
+      const totalTickets = items.reduce((acc, item) => acc + item.quantity, 0);
+      const calculatedFees = await this.calculateFees(
+        event.orgId,
+        subtotalCents,
+        totalTickets,
+      );
+      feesCents += calculatedFees.totalFeeCents;
+      feeLines = calculatedFees.feeLines;
+    }
 
     const totalCents = subtotalCents + feesCents + taxCents - discountCents;
+    const isZeroTotalOrder = totalCents <= BigInt(0);
 
     // Create order
     const order = await this.prisma.order.create({
@@ -204,12 +220,13 @@ export class OrdersService {
         orgId: event.orgId,
         eventId,
         occurrenceId,
-        status: OrderStatus.pending,
+        status: isZeroTotalOrder ? OrderStatus.paid : OrderStatus.pending,
         subtotalCents,
         feesCents,
         taxCents,
         totalCents: totalCents > 0 ? totalCents : BigInt(0),
         currency: orderItems[0]?.currency || 'USD',
+        paidAt: isZeroTotalOrder ? new Date() : null,
       },
       include: {
         buyer: {
@@ -243,14 +260,16 @@ export class OrdersService {
     });
 
     // Create tax and fee lines
-    await this.prisma.orderTaxLine.create({
-      data: {
-        orderId: order.id,
-        name: 'Sales Tax',
-        rate: 0.07,
-        amountCents: taxCents,
-      },
-    });
+    if (!isFreeOrder && taxCents > BigInt(0)) {
+      await this.prisma.orderTaxLine.create({
+        data: {
+          orderId: order.id,
+          name: 'Sales Tax',
+          rate: 0.07,
+          amountCents: taxCents,
+        },
+      });
+    }
 
     // Create fee lines
     if (feeLines.length > 0) {
@@ -269,9 +288,15 @@ export class OrdersService {
       await this.promotionsService.usePromoCode(promoCodeId, userId, order.id);
     }
 
+    // Immediately issue tickets for zero-total orders (no payment step)
+    if (isZeroTotalOrder) {
+      await this.createTicketsForOrder(order.id);
+    }
+
     return {
       ...order,
       discountCents,
+      isFreeOrder: isFreeOrder || isZeroTotalOrder,
     };
   }
 
@@ -710,6 +735,15 @@ export class OrdersService {
       );
     }
 
+    if (order.status === OrderStatus.paid || order.totalCents === BigInt(0)) {
+      // Free orders are automatically treated as paid
+      return {
+        success: true,
+        alreadyPaid: true,
+        message: 'Payment not required for free order',
+      };
+    }
+
     if (order.status !== OrderStatus.pending) {
       throw new BadRequestException('Order is not in pending status');
     }
@@ -732,6 +766,10 @@ export class OrdersService {
       throw new ForbiddenException(
         'You do not have permission to pay for this order',
       );
+    }
+
+    if (order.status === OrderStatus.paid || order.totalCents === BigInt(0)) {
+      return { success: true, alreadyPaid: true };
     }
 
     const result = await this.paymentService.processPayment(processPaymentDto);

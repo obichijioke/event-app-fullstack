@@ -222,3 +222,13 @@ body {
   font-size: clamp(1rem, 1.5vw, 1.125rem);
   color: #4b5563;
 }
+
+/* Hide scrollbar for carousel */
+.hide-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}

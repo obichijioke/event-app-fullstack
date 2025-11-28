@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState, useRef } from 'react';
 import { RRule, RRuleSet, Weekday } from 'rrule';
 import { addMinutes } from 'date-fns';
 import { Input } from '@/components/ui/input';
@@ -37,6 +37,7 @@ interface RecurrenceBuilderProps {
 
 export function RecurrenceBuilder({ config, timezone, onChange }: RecurrenceBuilderProps) {
   const [local, setLocal] = useState<RecurrenceConfig>(config);
+  const prevResultRef = useRef<string>('');
 
   useEffect(() => {
     setLocal(config);
@@ -79,7 +80,13 @@ export function RecurrenceBuilder({ config, timezone, onChange }: RecurrenceBuil
   }, [rruleString, local.start, local.end, local.exceptions]);
 
   useEffect(() => {
-    onChange(rruleString, local.exceptions || [], preview);
+    // Create a stable signature to avoid calling onChange when values haven't actually changed
+    const currentResult = JSON.stringify({ rruleString, exceptions: local.exceptions, preview });
+
+    if (currentResult !== prevResultRef.current) {
+      prevResultRef.current = currentResult;
+      onChange(rruleString, local.exceptions || [], preview);
+    }
   }, [rruleString, local.exceptions, preview, onChange]);
 
   return (

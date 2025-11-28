@@ -5,15 +5,16 @@ import { useEffect, useMemo, useState } from 'react';
 import { useForm, useFieldArray, Controller } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
-import { Select } from '@/components/ui/select';
-import { Switch } from '@/components/ui';
 import { debounce } from '@/lib/utils/debounce';
 import { useEventCreatorDraft } from '@/components/creator-v2/event-creator-provider';
 import type { EventCreatorDraftSection } from '@/lib/types/event-creator-v2';
 import { RichTextEditor } from '@/components/ui/rich-text-editor';
+import { AgendaItemCard } from '@/components/creator-v2/agenda-item-card';
+import { SpeakerCard } from '@/components/creator-v2/speaker-card';
+import { PolicySection } from '@/components/creator-v2/policy-section';
+import { EmptyState } from '@/components/creator-v2/empty-state';
+import { Calendar, Users, Plus } from 'lucide-react';
 
 const speakerSchema = z.object({
   name: z.string().min(1, 'Name required'),
@@ -132,6 +133,9 @@ export function StorySection() {
       <form className="space-y-8" onSubmit={(e) => e.preventDefault()}>
         <div className="space-y-3">
           <label className="text-sm font-medium">Long description</label>
+          <p className="text-xs text-muted-foreground">
+            Describe what attendees can expect. Use the toolbar to format your text.
+          </p>
           <Controller
             control={form.control}
             name="description"
@@ -144,6 +148,8 @@ export function StorySection() {
                   debouncedSave({ ...form.getValues(), description: value });
                 }}
                 placeholder="Tell attendees what to expect..."
+                maxLength={5000}
+                showCharCount={true}
               />
             )}
           />
@@ -152,161 +158,127 @@ export function StorySection() {
           )}
         </div>
 
+        {/* Agenda Section */}
         <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <h3 className="text-lg font-semibold">Agenda</h3>
-            <Button type="button" variant="outline" onClick={() => agendaAppend({ time: '', title: '' })}>
+            <div>
+              <h3 className="text-lg font-semibold flex items-center gap-2">
+                <Calendar className="h-5 w-5" />
+                Agenda
+              </h3>
+              <p className="text-xs text-muted-foreground mt-1">
+                {agendaFields.length === 0
+                  ? 'Add a schedule for your event'
+                  : `${agendaFields.length} ${agendaFields.length === 1 ? 'item' : 'items'}`}
+              </p>
+            </div>
+            <Button
+              type="button"
+              onClick={() => agendaAppend({ time: '', title: '' })}
+              className="gap-2"
+            >
+              <Plus className="h-4 w-4" />
               Add item
             </Button>
           </div>
-          <div className="space-y-3">
-            {agendaFields.map((field, index) => (
-              <div key={field.id} className="grid gap-3 md:grid-cols-6">
-                <Input
-                  placeholder="10:00 AM"
-                  className="md:col-span-2"
-                  {...form.register(`agenda.${index}.time` as const)}
+
+          {agendaFields.length === 0 ? (
+            <EmptyState
+              icon={Calendar}
+              title="No agenda items yet"
+              description="Add a schedule to help attendees know what to expect"
+              actionLabel="Add first item"
+              onAction={() => agendaAppend({ time: '', title: '' })}
+            />
+          ) : (
+            <div className="space-y-3">
+              {agendaFields.map((field, index) => (
+                <AgendaItemCard
+                  key={field.id}
+                  index={index}
+                  time={form.watch(`agenda.${index}.time` as const) as string}
+                  title={form.watch(`agenda.${index}.title` as const) as string}
+                  onTimeChange={(value) => form.setValue(`agenda.${index}.time` as const, value)}
+                  onTitleChange={(value) => form.setValue(`agenda.${index}.title` as const, value)}
+                  onRemove={() => agendaRemove(index)}
+                  error={form.formState.errors.agenda?.[index]?.title?.message as string}
                 />
-                <Input
-                  placeholder="Registration opens"
-                  className="md:col-span-3"
-                  {...form.register(`agenda.${index}.title` as const)}
-                />
-                <Button type="button" variant="outline" onClick={() => agendaRemove(index)}>
-                  Remove
-                </Button>
-                {form.formState.errors.agenda?.[index]?.title && (
-                  <p className="md:col-span-6 text-xs text-error">
-                    {form.formState.errors.agenda[index]?.title?.message as string}
-                  </p>
-                )}
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
 
+        {/* Speakers Section */}
         <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <h3 className="text-lg font-semibold">Speakers</h3>
-            <Button type="button" variant="outline" onClick={() => speakerAppend({ name: '', role: '', photoUrl: '', bio: '' })}>
+            <div>
+              <h3 className="text-lg font-semibold flex items-center gap-2">
+                <Users className="h-5 w-5" />
+                Speakers
+              </h3>
+              <p className="text-xs text-muted-foreground mt-1">
+                {speakerFields.length === 0
+                  ? 'Optional: Showcase speakers or performers'
+                  : `${speakerFields.length} ${speakerFields.length === 1 ? 'speaker' : 'speakers'}`}
+              </p>
+            </div>
+            <Button
+              type="button"
+              onClick={() => speakerAppend({ name: '', role: '', photoUrl: '', bio: '' })}
+              className="gap-2"
+            >
+              <Plus className="h-4 w-4" />
               Add speaker
             </Button>
           </div>
-          <div className="space-y-4">
-            {speakerFields.map((field, index) => (
-              <div key={field.id} className="rounded-xl border border-border p-4 space-y-3">
-                <div className="grid gap-3 md:grid-cols-2">
-                  <Input placeholder="Name" {...form.register(`speakers.${index}.name` as const)} />
-                  <Input placeholder="Role / Title" {...form.register(`speakers.${index}.role` as const)} />
-                </div>
-                <Input placeholder="Photo URL" {...form.register(`speakers.${index}.photoUrl` as const)} />
-                <Textarea rows={3} placeholder="Short bio" {...form.register(`speakers.${index}.bio` as const)} />
-                <div className="flex justify-end">
-                  <Button type="button" variant="outline" onClick={() => speakerRemove(index)}>
-                    Remove
-                  </Button>
-                </div>
-                {form.formState.errors.speakers?.[index]?.name && (
-                  <p className="text-xs text-error">{form.formState.errors.speakers[index]?.name?.message as string}</p>
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
 
-        {/* Policies & Accessibility */}
-        <div className="grid gap-5 md:grid-cols-3">
-          {/* Refund policy with templates */}
-          <div className="space-y-3 md:col-span-1 rounded-xl border border-border p-4 bg-card">
-            <label className="text-sm font-medium">Refund policy</label>
-            <Select
-              onChange={(e) => {
-                const v = e.target.value;
-                const map: Record<string, string> = {
-                  no_refunds: 'All sales are final. No refunds.',
-                  '24h': 'Full refund available up to 24 hours before the event.',
-                  '48h': 'Full refund available up to 48 hours before the event.',
-                  '7d': 'Full refund available up to 7 days before the event.',
-                  flexible:
-                    'Refunds subject to approval. Requests must include order number and reason.',
-                };
-                const text = map[v] ?? '';
-                form.setValue('refundPolicy', text, { shouldDirty: true, shouldValidate: true });
-              }}
-            >
-              <option value="">Select a template…</option>
-              <option value="no_refunds">No refunds</option>
-              <option value="24h">Full refund up to 24 hours before</option>
-              <option value="48h">Full refund up to 48 hours before</option>
-              <option value="7d">Full refund up to 7 days before</option>
-              <option value="flexible">Flexible (subject to approval)</option>
-            </Select>
-            <Textarea
-              rows={3}
-              placeholder="e.g., Full refund up to 7 days before"
-              {...form.register('refundPolicy')}
+          {speakerFields.length === 0 ? (
+            <EmptyState
+              icon={Users}
+              title="No speakers added"
+              description="Highlight speakers, performers, or key people at your event"
+              actionLabel="Add first speaker"
+              onAction={() => speakerAppend({ name: '', role: '', photoUrl: '', bio: '' })}
             />
-          </div>
-
-          {/* Transfer policy: toggle + cutoff select when enabled */}
-          <div className="space-y-3 md:col-span-1 rounded-xl border border-border p-4 bg-card">
-            <label className="text-sm font-medium">Transfer policy</label>
-            <div className="flex items-center justify-between">
-              <Switch
-                checked={!!form.watch('transferEnabled')}
-                onCheckedChange={(checked) => {
-                  form.setValue('transferEnabled', checked, { shouldDirty: true });
-                  if (!checked) form.setValue('transferCutoff', undefined, { shouldDirty: true });
-                }}
-                label={form.watch('transferEnabled') ? 'Transfers enabled' : 'Transfers disabled'}
-              />
-            </div>
-            {form.watch('transferEnabled') && (
-              <div className="space-y-2">
-                <Select
-                  value={form.watch('transferCutoff') ?? ''}
-                  onChange={(e) => form.setValue('transferCutoff', e.target.value as any, { shouldDirty: true })}
-                >
-                  <option value="">Select cutoff…</option>
-                  <option value="2h">Up to 2 hours before start</option>
-                  <option value="24h">Up to 24 hours before start</option>
-                  <option value="48h">Up to 48 hours before start</option>
-                  <option value="72h">Up to 72 hours before start</option>
-                  <option value="7d">Up to 7 days before start</option>
-                  <option value="at_start">Until the event starts</option>
-                </Select>
-                <p className="text-xs text-muted-foreground">
-                  Attendees can transfer tickets to another person until the cutoff.
-                </p>
-              </div>
-            )}
-          </div>
-
-          {/* Accessibility notes and resale toggle */}
-          <div className="space-y-3 md:col-span-1 rounded-xl border border-border p-4 bg-card">
-            <label className="text-sm font-medium">Accessibility notes</label>
-            <Textarea
-              rows={3}
-              placeholder="Parking, wheelchair access, ASL, etc."
-              {...form.register('accessibilityNotes')}
-            />
-            <div className="pt-2 border-t border-border">
-              <div className="flex items-center justify-between">
-                <Switch
-                  checked={!!form.watch('resaleEnabled')}
-                  onCheckedChange={(checked) => form.setValue('resaleEnabled', checked, { shouldDirty: true })}
-                  label={form.watch('resaleEnabled') ? 'Ticket resale enabled' : 'Ticket resale disabled'}
+          ) : (
+            <div className="space-y-4">
+              {speakerFields.map((field, index) => (
+                <SpeakerCard
+                  key={field.id}
+                  index={index}
+                  name={form.watch(`speakers.${index}.name` as const) as string}
+                  role={form.watch(`speakers.${index}.role` as const) as string}
+                  photoUrl={form.watch(`speakers.${index}.photoUrl` as const) as string}
+                  bio={form.watch(`speakers.${index}.bio` as const) as string}
+                  onNameChange={(value) => form.setValue(`speakers.${index}.name` as const, value)}
+                  onRoleChange={(value) => form.setValue(`speakers.${index}.role` as const, value)}
+                  onPhotoUrlChange={(value) => form.setValue(`speakers.${index}.photoUrl` as const, value)}
+                  onBioChange={(value) => form.setValue(`speakers.${index}.bio` as const, value)}
+                  onRemove={() => speakerRemove(index)}
+                  nameError={form.formState.errors.speakers?.[index]?.name?.message as string}
+                  photoError={form.formState.errors.speakers?.[index]?.photoUrl?.message as string}
                 />
-              </div>
-              {form.watch('resaleEnabled') && (
-                <p className="mt-2 text-xs text-muted-foreground">
-                  When enabled, attendees may list tickets for resale through your platform rules.
-                  Organizer fees and payout timelines apply.
-                </p>
-              )}
+              ))}
             </div>
-          </div>
+          )}
         </div>
+
+        {/* Policies Section */}
+        <PolicySection
+          refundPolicy={form.watch('refundPolicy') || ''}
+          onRefundPolicyChange={(value) => form.setValue('refundPolicy', value, { shouldDirty: true })}
+          transferEnabled={form.watch('transferEnabled') || false}
+          transferCutoff={form.watch('transferCutoff')}
+          onTransferEnabledChange={(enabled) => {
+            form.setValue('transferEnabled', enabled, { shouldDirty: true });
+            if (!enabled) form.setValue('transferCutoff', undefined, { shouldDirty: true });
+          }}
+          onTransferCutoffChange={(cutoff) => form.setValue('transferCutoff', cutoff as any, { shouldDirty: true })}
+          resaleEnabled={form.watch('resaleEnabled') || false}
+          onResaleEnabledChange={(enabled) => form.setValue('resaleEnabled', enabled, { shouldDirty: true })}
+          accessibilityNotes={form.watch('accessibilityNotes') || ''}
+          onAccessibilityNotesChange={(value) => form.setValue('accessibilityNotes', value, { shouldDirty: true })}
+        />
 
         <div className="flex items-center gap-3">
           <Button type="submit" disabled={isSaving}>{isSaving ? 'Saving…' : 'Save details'}</Button>
