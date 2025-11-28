@@ -130,6 +130,15 @@ export interface AdminPayout {
   createdAt: string;
 }
 
+export interface PayoutAnalytics {
+  pending: number;
+  inReview: number;
+  paid: number;
+  failed: number;
+  canceled: number;
+  totalAmount: number;
+}
+
 export interface AdminActivityLog {
   id: string;
   actorId?: string;
@@ -905,6 +914,53 @@ export class AdminApiService {
     return apiClient.post<AdminApiResponse<null>>(
       `${this.baseUrl}/payouts/${payoutId}/approve`,
       {},
+      token
+    );
+  }
+
+  async processPayout(
+    token: string,
+    payoutId: string,
+    payload: { force?: boolean } = {}
+  ): Promise<AdminApiResponse<{ message: string }>> {
+    return apiClient.post<AdminApiResponse<{ message: string }>>(
+      `${this.baseUrl}/payouts/${payoutId}/process`,
+      payload,
+      token
+    );
+  }
+
+  async rejectPayout(
+    token: string,
+    payoutId: string,
+    payload: { reason: string }
+  ): Promise<AdminApiResponse<null>> {
+    return apiClient.post<AdminApiResponse<null>>(
+      `${this.baseUrl}/payouts/${payoutId}/reject`,
+      payload,
+      token
+    );
+  }
+
+  async retryPayout(
+    token: string,
+    payoutId: string,
+    payload: { reason?: string } = {}
+  ): Promise<AdminApiResponse<{ message: string }>> {
+    return apiClient.post<AdminApiResponse<{ message: string }>>(
+      `${this.baseUrl}/payouts/${payoutId}/retry`,
+      payload,
+      token
+    );
+  }
+
+  async getPayoutAnalytics(
+    token: string,
+    options: { orgId?: string; dateFrom?: string; dateTo?: string } = {}
+  ): Promise<AdminApiResponse<PayoutAnalytics>> {
+    const queryString = buildQueryString(options);
+    return apiClient.get<AdminApiResponse<PayoutAnalytics>>(
+      `${this.baseUrl}/payouts/analytics${queryString ? `?${queryString}` : ''}`,
       token
     );
   }

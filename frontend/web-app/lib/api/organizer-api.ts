@@ -44,6 +44,7 @@ import type {
   PayoutAccount,
   CalculatePayoutsParams,
   CalculatePayoutsResponse,
+  PayoutStats,
   // Tickets & Inventory
   TicketType,
   CreateTicketTypeDto,
@@ -366,7 +367,9 @@ export const organizerApi = {
     },
 
     refund: (orderId: string, data: RefundDto, orgId: string) => {
-      return apiClient.post<RefundResponse>(`/organizer/orders/${orderId}/refund`, { ...data, orgId });
+      return apiClient.post<RefundResponse>(`/organizer/orders/${orderId}/refund?orgId=${orgId}`, {
+        ...data,
+      });
     },
   },
 
@@ -701,6 +704,10 @@ export const organizerApi = {
 
     retry: (payoutId: string, orgId: string) => {
       return apiClient.post<Payout>(`/organizer/payouts/${payoutId}/retry`, { orgId });
+    },
+
+    stats: (orgId: string, params?: { startDate?: string; endDate?: string }) => {
+      return apiClient.get<PayoutStats>('/organizer/payouts/stats', { orgId, ...params });
     },
   },
 

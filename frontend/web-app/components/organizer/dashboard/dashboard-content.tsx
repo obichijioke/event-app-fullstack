@@ -12,11 +12,12 @@ import { EventItem } from '../event-item';
 import { InProgressEvents } from './in-progress-events';
 import { CurrencyDisplay } from '@/components/common/currency-display';
 import { Calendar, DollarSign, Ticket, ShoppingCart, AlertCircle, FileText, MapPin } from 'lucide-react';
-import type { DashboardOverviewResponse } from '@/lib/types/organizer';
+import type { DashboardOverviewResponse, PayoutStats } from '@/lib/types/organizer';
 
 export function DashboardContent() {
   const { currentOrganization } = useOrganizerStore();
   const [dashboard, setDashboard] = useState<DashboardOverviewResponse | null>(null);
+  const [payoutStats, setPayoutStats] = useState<PayoutStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -26,8 +27,15 @@ export function DashboardContent() {
     try {
       setLoading(true);
       setError(null);
-      const data = await organizerApi.dashboard.getOverview(currentOrganization.id);
+      const [data, stats] = await Promise.all([
+        organizerApi.dashboard.getOverview(currentOrganization.id),
+        organizerApi.payouts.stats(currentOrganization.id).catch((err) => {
+          console.error('Failed to load payout stats:', err);
+          return null;
+        }),
+      ]);
       setDashboard(data);
+      if (stats) setPayoutStats(stats);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load dashboard');
       console.error('Dashboard error:', err);
@@ -206,6 +214,43 @@ export function DashboardContent() {
       <div className="grid lg:grid-cols-3 gap-8">
         {/* Main Content */}
         <div className="lg:col-span-2 space-y-6">
+          {/* Payout Stats */}
+          {payoutStats && (
+            <StatCard
+              title="Payouts Overview"
+              action={
+                <Link href="/organizer/payouts" className="text-sm text-primary hover:underline">
+                  View Payouts
+                </Link>
+              }
+            >
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                {[
+                  { label: 'Pending', value: payoutStats.pending, tone: 'text-yellow-700' },
+                  { label: 'In Review', value: payoutStats.inReview, tone: 'text-blue-700' },
+                  { label: 'Paid', value: payoutStats.paid, tone: 'text-green-700' },
+                  { label: 'Failed', value: payoutStats.failed, tone: 'text-red-700' },
+                  { label: 'Canceled', value: payoutStats.canceled, tone: 'text-muted-foreground' },
+                ].map((item) => (
+                  <div key={item.label} className="p-3 border border-border rounded-lg bg-card/40">
+                    <p className="text-sm text-muted-foreground">{item.label}</p>
+                    <p className={`text-2xl font-semibold ${item.tone}`}>{item.value}</p>
+                  </div>
+                ))}
+                <div className="p-3 border border-border rounded-lg bg-card/60 md:col-span-3">
+                  <p className="text-sm text-muted-foreground">Total Volume</p>
+                  <p className="text-xl font-semibold flex items-center gap-2">
+                    <CurrencyDisplay
+                      amountCents={payoutStats.totalAmount}
+                      currency={currency}
+                      showFree={false}
+                    />
+                  </p>
+                </div>
+              </div>
+            </StatCard>
+          )}
+
           {/* Recent Orders */}
           <StatCard
             title="Recent Orders"

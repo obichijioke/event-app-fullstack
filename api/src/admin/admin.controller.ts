@@ -44,6 +44,11 @@ import {
   CategoryQueryDto,
 } from './dto/category.dto';
 import { UpdateEventDto } from './dto/update-event.dto';
+import {
+  ProcessPayoutDto,
+  RejectPayoutDto,
+  RetryPayoutDto,
+} from './dto/payout.dto';
 
 @ApiTags('Admin')
 @Controller('admin')
@@ -166,6 +171,24 @@ export class AdminController {
     };
   }
 
+  @Get('payouts/analytics')
+  @ApiOperation({ summary: 'Payout analytics' })
+  async getPayoutAnalytics(
+    @Query('orgId') orgId?: string,
+    @Query('dateFrom') dateFrom?: string,
+    @Query('dateTo') dateTo?: string,
+  ) {
+    const result = await this.payoutService.getAnalytics({
+      orgId,
+      dateFrom,
+      dateTo,
+    });
+    return {
+      success: true,
+      data: result,
+    };
+  }
+
   @Post('payouts/:id/approve')
   @ApiOperation({ summary: 'Approve payout request' })
   @ApiResponse({ status: 200, description: 'Payout approved successfully' })
@@ -175,6 +198,48 @@ export class AdminController {
     return {
       success: true,
       data: payout,
+    };
+  }
+
+  @Post('payouts/:id/process')
+  @ApiOperation({ summary: 'Process payout' })
+  @ApiResponse({ status: 200, description: 'Payout processing started' })
+  async processPayout(
+    @Param('id') id: string,
+    @Body() dto: ProcessPayoutDto,
+  ) {
+    const result = await this.payoutService.process(id, dto);
+    return {
+      success: true,
+      data: result,
+    };
+  }
+
+  @Post('payouts/:id/reject')
+  @ApiOperation({ summary: 'Reject payout' })
+  @ApiResponse({ status: 200, description: 'Payout rejected' })
+  async rejectPayout(
+    @Param('id') id: string,
+    @Body() dto: RejectPayoutDto,
+  ) {
+    const payout = await this.payoutService.reject(id, dto);
+    return {
+      success: true,
+      data: payout,
+    };
+  }
+
+  @Post('payouts/:id/retry')
+  @ApiOperation({ summary: 'Retry failed payout' })
+  @ApiResponse({ status: 200, description: 'Payout retry enqueued' })
+  async retryPayout(
+    @Param('id') id: string,
+    @Body() dto: RetryPayoutDto,
+  ) {
+    const result = await this.payoutService.retry(id, dto);
+    return {
+      success: true,
+      data: result,
     };
   }
 

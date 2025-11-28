@@ -37,6 +37,80 @@ export class PayoutsService {
     const { amountCents, currency, scheduledFor, provider, providerRef, notes } =
       createPayoutDto;
 
+    if (!amountCents || amountCents <= 0) {
+      throw new BadRequestException('Payout amount must be greater than zero');
+    }
+
+    // Block if there is already an in-flight payout for this org
+    const inflight = await this.prisma.payout.findFirst({
+      where: {
+        orgId,
+        status: {
+          in: [PayoutStatus.pending, PayoutStatus.in_review],
+        },
+      },
+    });
+
+    if (inflight) {
+      throw new BadRequestException(
+        'There is already a payout pending review or processing for this organization',
+      );
+    }
+
+    // Validate available balance before creating a payout
+    const [ordersAggregate, refundsAggregate, payoutsAggregate] =
+      await this.prisma.$transaction([
+        this.prisma.order.aggregate({
+          where: {
+            orgId,
+            status: 'paid',
+          },
+          _sum: {
+            totalCents: true,
+            feesCents: true,
+          },
+        }),
+        this.prisma.refund.aggregate({
+          where: {
+            order: {
+              orgId,
+              status: 'paid',
+            },
+          },
+          _sum: {
+            amountCents: true,
+          },
+        }),
+        this.prisma.payout.aggregate({
+          where: {
+            orgId,
+            status: {
+              in: [
+                PayoutStatus.pending,
+                PayoutStatus.in_review,
+                PayoutStatus.paid,
+              ],
+            },
+          },
+          _sum: {
+            amountCents: true,
+          },
+        }),
+      ]);
+
+    const gross = ordersAggregate._sum.totalCents || BigInt(0);
+    const fees = ordersAggregate._sum.feesCents || BigInt(0);
+    const refunds = refundsAggregate._sum.amountCents || BigInt(0);
+    const alreadyPayout = payoutsAggregate._sum.amountCents || BigInt(0);
+
+    const available = gross - fees - refunds - alreadyPayout;
+
+    if (BigInt(amountCents) > available) {
+      throw new BadRequestException(
+        'Insufficient available balance to create payout',
+      );
+    }
+
     // Create payout
     const payout = await this.prisma.payout.create({
       data: {
@@ -608,6 +682,33 @@ export class PayoutsService {
       },
     });
 
-    return stats;
+    const totals: Record<string, { count: number; amountCents: number }> = {
+      pending: { count: 0, amountCents: 0 },
+      in_review: { count: 0, amountCents: 0 },
+      paid: { count: 0, amountCents: 0 },
+      failed: { count: 0, amountCents: 0 },
+      canceled: { count: 0, amountCents: 0 },
+    };
+
+    for (const row of stats) {
+      totals[row.status] = {
+        count: row._count.id,
+        amountCents: Number(row._sum.amountCents || 0),
+      };
+    }
+
+    const totalAmount = Object.values(totals).reduce(
+      (sum, entry) => sum + entry.amountCents,
+      0,
+    );
+
+    return {
+      pending: totals.pending.count,
+      inReview: totals.in_review.count,
+      paid: totals.paid.count,
+      failed: totals.failed.count,
+      canceled: totals.canceled.count,
+      totalAmount,
+    };
   }
 }

@@ -127,14 +127,14 @@ describe('PaymentService', () => {
       response: { id: 'refund_1' },
     });
 
-    await paymentService.refundPayment('payment_1');
+    await paymentService.refundPayment('payment_1', undefined, 'user_1');
 
     expect(provider.refundPayment).toHaveBeenCalledWith(
       expect.objectContaining({ id: 'payment_1' }),
       undefined,
     );
     expect(mockPrisma.refund.create).toHaveBeenCalledWith({
-      data: expect.objectContaining({ providerRef: 'refund_1' }),
+      data: expect.objectContaining({ providerRef: 'refund_1', createdBy: 'user_1' }),
     });
   });
 });

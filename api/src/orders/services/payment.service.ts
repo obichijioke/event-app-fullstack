@@ -105,7 +105,11 @@ export class PaymentService {
     return result.response;
   }
 
-  async refundPayment(paymentId: string, amountCents?: number) {
+  async refundPayment(
+    paymentId: string,
+    amountCents?: number,
+    createdBy?: string | null,
+  ) {
     const payment = await this.prisma.payment.findUnique({
       where: { id: paymentId },
     });
@@ -127,10 +131,13 @@ export class PaymentService {
         amountCents: result.amountCents,
         currency: result.currency,
         status: 'pending',
-        providerRef: result.providerReference,
-        createdBy: 'system',
-      },
-    });
+        providerRef:
+          typeof result.providerReference === 'string'
+            ? result.providerReference
+            : String(result.providerReference),
+      createdBy: createdBy ?? null,
+    },
+  });
 
     return result.response;
   }

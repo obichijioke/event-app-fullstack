@@ -245,6 +245,7 @@ export class OrganizerOrdersService {
     const refund = await this.paymentService.refundPayment(
       capturedPayment.id,
       dto.amountCents,
+      userId,
     );
 
     await this.prisma.order.update({
@@ -263,7 +264,7 @@ export class OrganizerOrdersService {
       await this.prisma.refund.updateMany({
         where: {
           orderId: order.id,
-          providerRef: refund.id,
+          providerRef: refund.id ? String(refund.id) : refund.id,
         },
         data: {
           reason: dto.reason,

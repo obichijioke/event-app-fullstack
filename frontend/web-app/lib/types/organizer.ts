@@ -7,7 +7,7 @@ export type OrganizationStatus = 'pending' | 'submitted' | 'under_review' | 'app
 export type EventStatus = 'draft' | 'pending' | 'approved' | 'live' | 'paused' | 'canceled' | 'completed';
 export type OrderStatus = 'pending' | 'paid' | 'refunded' | 'canceled' | 'chargeback';
 export type TicketStatus = 'issued' | 'transferred' | 'refunded' | 'checked_in' | 'canceled';
-export type PayoutStatus = 'pending' | 'in_review' | 'approved' | 'failed' | 'completed';
+export type PayoutStatus = 'pending' | 'in_review' | 'paid' | 'failed' | 'canceled';
 export type FlagStatus = 'open' | 'resolved' | 'dismissed';
 export type TicketKind = 'GA' | 'SEATED' | 'VIP' | 'EARLY_BIRD';
 
@@ -818,9 +818,9 @@ export interface CalculatePayoutsResponse {
 export interface PayoutStats {
   pending: number;
   inReview: number;
-  approved: number;
+  paid: number;
   failed: number;
-  completed: number;
+  canceled: number;
   totalAmount: number;
 }
 

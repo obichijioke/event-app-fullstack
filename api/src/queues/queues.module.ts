@@ -4,6 +4,7 @@ import { CommonModule } from '../common/common.module';
 import { EmailProcessor } from './processors/email.processor';
 import { WebhookProcessor } from './processors/webhook.processor';
 import { PaymentProcessor } from './processors/payment.processor';
+import { PayoutProcessor } from './processors/payout.processor';
 import { NotificationProcessor } from './processors/notification.processor';
 import { ReportProcessor } from './processors/report.processor';
 import { CleanupProcessor } from './processors/cleanup.processor';
@@ -18,6 +19,7 @@ import { WebsocketsModule } from '../websockets/websockets.module';
     EmailProcessor,
     WebhookProcessor,
     PaymentProcessor,
+    PayoutProcessor,
     NotificationProcessor,
     ReportProcessor,
     CleanupProcessor,

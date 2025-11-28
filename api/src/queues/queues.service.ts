@@ -5,6 +5,7 @@ import { RedisService } from '../common/redis/redis.service';
 export enum QueueName {
   EMAIL = 'email',
   PAYMENT = 'payment',
+  PAYOUT = 'payout',
   WEBHOOK = 'webhook',
   NOTIFICATION = 'notification',
   REPORT = 'report',

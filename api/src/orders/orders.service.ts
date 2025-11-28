@@ -695,7 +695,7 @@ export class OrdersService {
       // Need to process refund
       const payment = order.payments[0];
       if (payment && payment.status === 'captured') {
-        await this.paymentService.refundPayment(payment.id);
+        await this.paymentService.refundPayment(payment.id, undefined, userId);
       }
     }
 
