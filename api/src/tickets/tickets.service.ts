@@ -436,8 +436,13 @@ export class TicketsService {
     try {
       ticketId = this.decodeQRCode(ticketIdOrQRCode);
     } catch (error) {
-      // If decoding fails, assume it's a direct ticket ID
-      ticketId = ticketIdOrQRCode;
+      // If it's not a QR code, use input as direct ticket ID
+      if (error instanceof Error && error.message === 'Not a QR code') {
+        ticketId = ticketIdOrQRCode;
+      } else {
+        // Invalid QR code format - re-throw the error
+        throw error;
+      }
     }
 
     // Get ticket
@@ -764,15 +769,35 @@ export class TicketsService {
     // Decode base64 QR code and extract ticket ID
     // Format: ticketId|orderId|ticketTypeId|seatId
     try {
+      // First, check if this looks like a base64-encoded QR code
+      // Base64 only contains: A-Z, a-z, 0-9, +, /, and optional padding =
+      const base64Regex = /^[A-Za-z0-9+/]+=*$/;
+
+      if (!base64Regex.test(qrCode)) {
+        // Not base64, so it's likely a direct ticket ID
+        throw new Error('Not a QR code');
+      }
+
       const decoded = Buffer.from(qrCode, 'base64').toString('utf-8');
+
+      // Check if decoded string contains our expected format (pipe-separated)
+      if (!decoded.includes('|')) {
+        // Not our QR format, likely a direct ticket ID that happened to be base64-like
+        throw new Error('Not a QR code');
+      }
+
       const parts = decoded.split('|');
 
-      if (parts.length >= 1 && parts[0] !== 'PENDING') {
+      if (parts.length >= 4 && parts[0] !== 'PENDING') {
         return parts[0]; // Return ticket ID
       }
 
       throw new BadRequestException('Invalid QR code format');
     } catch (error) {
+      // If it's our custom error, re-throw to indicate it's not a QR code
+      if (error instanceof Error && error.message === 'Not a QR code') {
+        throw error;
+      }
       throw new BadRequestException('Invalid QR code: Unable to decode');
     }
   }
