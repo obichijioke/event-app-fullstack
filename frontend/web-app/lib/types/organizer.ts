@@ -82,7 +82,7 @@ export interface DashboardOrder {
 export interface CreatorDraftItem {
   id: string;
   title: string | null;
-  status: 'draft' | 'published' | 'scheduled' | 'abandoned';
+  status: 'draft' | 'ready' | 'scheduled' | 'published' | 'archived';
   completionPercent: number;
   activeSection: string | null;
   lastAutosavedAt: string | null;

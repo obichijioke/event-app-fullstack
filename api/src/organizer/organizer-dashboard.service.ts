@@ -147,7 +147,7 @@ export class OrganizerDashboardService {
           status: {
             in: [
               EventCreatorDraftStatus.draft,
-              EventCreatorDraftStatus.abandoned,
+              EventCreatorDraftStatus.archived,
             ],
           },
         },
@@ -313,7 +313,7 @@ export class OrganizerDashboardService {
         status: {
           in: [
             EventCreatorDraftStatus.draft,
-            EventCreatorDraftStatus.abandoned,
+            EventCreatorDraftStatus.archived,
           ],
         },
       },
