@@ -122,6 +122,22 @@ export class PaymentProcessor extends BaseQueueProcessor {
         });
 
         if (existingTicket) {
+          // Regenerate QR code if it was never set during a previous attempt
+          if (!existingTicket.qrCode) {
+            const qrCode = this.generateQRCode(
+              order.id,
+              item.ticketTypeId,
+              item.seatId || undefined,
+              i,
+              existingTicket.id,
+            );
+
+            await this.prisma.ticket.update({
+              where: { id: existingTicket.id },
+              data: { qrCode },
+            });
+          }
+
           continue;
         }
 
