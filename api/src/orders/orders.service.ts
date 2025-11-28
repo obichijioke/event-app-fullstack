@@ -817,32 +817,23 @@ export class OrdersService {
     // If we already have all tickets, we're done (but still send email if not sent before)
     const ticketsAlreadyExisted = order.tickets && order.tickets.length === totalExpectedTickets;
 
-    const existingQRCodes = new Set(order.tickets?.map((t) => t.qrCode) || []);
+    // Use barcode (stable before ticket creation) for idempotency checks
+    const existingBarcodes = new Set(order.tickets?.map((t) => t.barcode) || []);
 
     // Create tickets for each order item
     for (const item of order.items) {
       for (let i = 0; i < item.quantity; i++) {
-        // First check if ticket already exists by checking existing QR codes
-        // We need to generate a temporary QR to check
-        const tempQrCode = this.generateQRCode(
-          order.id,
-          item.ticketTypeId,
-          item.seatId || undefined,
-          i, // Pass index for uniqueness
-          undefined, // No ticket ID yet
-        );
-
-        // Skip if this specific ticket already exists
-        if (existingQRCodes.has(tempQrCode)) {
-          continue;
-        }
-
         const barcode = this.generateBarcode(
           order.id,
           item.ticketTypeId,
           item.seatId || undefined,
           i, // Pass index for uniqueness
         );
+
+        // Skip if this specific ticket already exists
+        if (existingBarcodes.has(barcode)) {
+          continue;
+        }
 
         // Create ticket first to get the ID
         const ticket = await this.prisma.ticket.create({
@@ -874,6 +865,9 @@ export class OrdersService {
           where: { id: ticket.id },
           data: { qrCode },
         });
+
+        // Add to set to prevent duplicates within same call
+        existingBarcodes.add(barcode);
       }
     }
 
