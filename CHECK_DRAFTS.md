@@ -86,15 +86,15 @@ Authorization: Bearer {YOUR_JWT_TOKEN}
 ### 3. Via Frontend Dashboard
 
 Once the frontend is running:
-1. Navigate to `http://localhost:3000/organizer/dashboard`
-2. Select your organization
-3. Look for the **"In Progress Events"** section
+1. Navigate to `/organizer` (e.g., `http://localhost:4200/organizer` or whatever port your frontend uses)
+2. Select your organization from the dropdown
+3. Look for the **"In Progress Events"** section (appears above the tasks section)
 4. You'll see all your drafts with:
    - Title
-   - Completion percentage
-   - Current section
-   - Resume button
-   - Delete option
+   - Completion percentage with color-coded progress bar
+   - Current section being worked on
+   - "Resume" button to continue editing
+   - Delete button (with confirmation)
 
 ## How to Create a Draft (for Testing)
 
