@@ -429,7 +429,16 @@ export class TicketsService {
   }
 
   async checkInTicket(createCheckinDto: CreateCheckinDto, scannerId?: string) {
-    const { ticketId, gate } = createCheckinDto;
+    const { ticketId: ticketIdOrQRCode, gate } = createCheckinDto;
+
+    // Try to decode QR code first, fall back to direct ticket ID lookup
+    let ticketId: string;
+    try {
+      ticketId = this.decodeQRCode(ticketIdOrQRCode);
+    } catch (error) {
+      // If decoding fails, assume it's a direct ticket ID
+      ticketId = ticketIdOrQRCode;
+    }
 
     // Get ticket
     const ticket = await this.prisma.ticket.findUnique({
@@ -701,8 +710,9 @@ export class TicketsService {
       throw new ForbiddenException('You do not own this ticket');
     }
 
-    // Generate new QR code
+    // Generate new QR code with ticket ID
     const qrCode = this.generateQRCode(
+      ticketId,
       ticket.orderId,
       ticket.ticketTypeId,
       ticket.seatId || undefined,
@@ -718,13 +728,38 @@ export class TicketsService {
   }
 
   private generateQRCode(
+    ticketId: string,
     orderId: string,
     ticketTypeId: string,
     seatId?: string,
   ): string {
-    // Generate a unique QR code
-    const data = `${orderId}-${ticketTypeId}${seatId ? `-${seatId}` : ''}`;
+    // Generate a unique QR code with ticket ID for check-in
+    // Format: ticketId|orderId|ticketTypeId|seatId
+    const parts = [
+      ticketId,
+      orderId,
+      ticketTypeId,
+      seatId || 'GA',
+    ];
+    const data = parts.join('|');
     return Buffer.from(data).toString('base64');
+  }
+
+  private decodeQRCode(qrCode: string): string {
+    // Decode base64 QR code and extract ticket ID
+    // Format: ticketId|orderId|ticketTypeId|seatId
+    try {
+      const decoded = Buffer.from(qrCode, 'base64').toString('utf-8');
+      const parts = decoded.split('|');
+
+      if (parts.length >= 1 && parts[0] !== 'PENDING') {
+        return parts[0]; // Return ticket ID
+      }
+
+      throw new BadRequestException('Invalid QR code format');
+    } catch (error) {
+      throw new BadRequestException('Invalid QR code: Unable to decode');
+    }
   }
 
   async getTicketStats(eventId: string, userId?: string) {

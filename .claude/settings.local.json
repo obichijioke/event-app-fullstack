@@ -48,7 +48,8 @@
       "Bash(node check-sessions.js:*)",
       "Bash(node cleanup-old-sessions.js:*)",
       "Bash(node cleanup-revoked-sessions.js:*)",
-      "Bash(node test-email.js:*)"
+      "Bash(node test-email.js:*)",
+      "Bash(node test-checkin-qr.js:*)"
     ],
     "deny": [],
     "ask": []

@@ -174,14 +174,14 @@ export function CheckinContent({ eventId }: CheckinContentProps) {
           <form onSubmit={handleCheckIn} className="space-y-4">
             <div>
               <label className="block text-sm font-medium mb-2">
-                Ticket Code / QR Code
+                Ticket ID or QR Code
               </label>
               <div className="flex gap-2">
                 <input
                   type="text"
                   value={ticketCode}
                   onChange={(e) => setTicketCode(e.target.value)}
-                  placeholder="Enter ticket code or scan QR"
+                  placeholder="Enter ticket ID or paste/scan QR code"
                   className="flex-1 px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
                   disabled={loading}
                 />
@@ -288,10 +288,11 @@ export function CheckinContent({ eventId }: CheckinContentProps) {
         <h3 className="font-medium text-blue-900 mb-2">How to use Check-in</h3>
         <ul className="text-sm text-blue-800 space-y-1 list-disc list-inside">
           <li>Scan the QR code on the attendee's ticket using the QR scanner button</li>
-          <li>Or manually enter the ticket code and click "Check In"</li>
-          <li>The system will validate the ticket and mark it as checked in</li>
+          <li>Or manually enter the ticket ID or QR code and click "Check In"</li>
+          <li>The system automatically decodes QR codes and validates tickets</li>
           <li>Each ticket can only be checked in once</li>
           <li>Check-in statistics update in real-time</li>
+          <li>Only tickets for events that have started can be checked in</li>
         </ul>
       </div>
     </div>
