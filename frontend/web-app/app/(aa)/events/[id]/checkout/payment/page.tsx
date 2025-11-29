@@ -16,7 +16,7 @@ import {
 import { PublicEvent as Event } from '@/lib/events'
 import { eventsApi } from '@/lib/api/events-api';
 import { ticketsApi, TicketType } from '@/lib/api/tickets-api';
-import { ordersApi, Order } from '@/lib/api/orders-api';
+import { ordersApi, Order, PaymentProviderStatus } from '@/lib/api/orders-api';
 import { getErrorMessage } from '@/lib/utils/error-message';
 import { useAuth } from '@/components/auth';
 import toast from 'react-hot-toast';
@@ -52,6 +52,7 @@ export default function PaymentPage({ params }: Props) {
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [providerStatuses, setProviderStatuses] = useState<PaymentProviderStatus[] | null>(null);
 
   // Payment state
   const [selectedProvider, setSelectedProvider] =
@@ -68,8 +69,15 @@ export default function PaymentPage({ params }: Props) {
   });
 
   // Determine available providers
-  const stripeAvailable = !!STRIPE_PUBLISHABLE_KEY && !!stripePromise;
-  const paystackAvailable = !!PAYSTACK_PUBLIC_KEY;
+  const stripeStatus = providerStatuses?.find((p) => p.id === 'stripe');
+  const paystackStatus = providerStatuses?.find((p) => p.id === 'paystack');
+
+  const stripeAvailable =
+    !!STRIPE_PUBLISHABLE_KEY &&
+    !!stripePromise &&
+    (stripeStatus ? stripeStatus.available : true);
+  const paystackAvailable =
+    !!PAYSTACK_PUBLIC_KEY && (paystackStatus ? paystackStatus.available : true);
 
   // Auto-select available provider
   useEffect(() => {
@@ -77,8 +85,32 @@ export default function PaymentPage({ params }: Props) {
       setSelectedProvider('stripe');
     } else if (paystackAvailable && !stripeAvailable) {
       setSelectedProvider('paystack');
+    } else if (!stripeAvailable && !paystackAvailable) {
+      setSelectedProvider((prev) => prev);
     }
   }, [stripeAvailable, paystackAvailable]);
+
+  useEffect(() => {
+    const availableProviders: PaymentProviderType[] = [];
+    if (stripeAvailable) availableProviders.push('stripe');
+    if (paystackAvailable) availableProviders.push('paystack');
+
+    if (
+      availableProviders.length > 0 &&
+      !availableProviders.includes(selectedProvider)
+    ) {
+      setSelectedProvider(availableProviders[0]);
+    }
+  }, [stripeAvailable, paystackAvailable, selectedProvider]);
+
+  const loadPaymentProviders = useCallback(async () => {
+    try {
+      const response = await ordersApi.getPaymentProviders();
+      setProviderStatuses(response.providers);
+    } catch (error) {
+      console.error('Failed to load payment providers:', error);
+    }
+  }, []);
 
   const loadPaymentData = useCallback(async () => {
     if (!orderId) {
@@ -95,6 +127,9 @@ export default function PaymentPage({ params }: Props) {
         ticketsApi.getTicketTypes(eventId),
         ordersApi.getOrder(orderId),
       ]);
+      if (!providerStatuses) {
+        void loadPaymentProviders();
+      }
       const isFreeOrder =
         typeof orderData.totalCents === 'bigint'
           ? orderData.totalCents === BigInt(0)
@@ -126,7 +161,8 @@ export default function PaymentPage({ params }: Props) {
 
   useEffect(() => {
     loadPaymentData();
-  }, [loadPaymentData]);
+    loadPaymentProviders();
+  }, [loadPaymentData, loadPaymentProviders]);
 
   // Initialize payment when provider is selected
   useEffect(() => {
@@ -305,6 +341,7 @@ export default function PaymentPage({ params }: Props) {
               onProviderChange={setSelectedProvider}
               stripeAvailable={stripeAvailable}
               paystackAvailable={paystackAvailable}
+              providerStatuses={providerStatuses || undefined}
             />
 
             {/* Payment Form based on selected provider */}

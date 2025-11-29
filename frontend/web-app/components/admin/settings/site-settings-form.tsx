@@ -1,8 +1,9 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useAuth } from '@/components/auth';
 import { adminApiService } from '@/services/admin-api.service';
+import { ordersApi, PaymentProviderStatus } from '@/lib/api/orders-api';
 
 interface SiteSettings {
   siteName: string;
@@ -31,10 +32,11 @@ interface SiteSettings {
 }
 
 export default function SiteSettingsForm() {
-  const { user, accessToken } = useAuth();
+  const { accessToken } = useAuth();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [providerStatuses, setProviderStatuses] = useState<PaymentProviderStatus[] | null>(null);
   const [settings, setSettings] = useState<SiteSettings>({
     siteName: '',
     siteTagline: '',
@@ -63,11 +65,12 @@ export default function SiteSettingsForm() {
 
   useEffect(() => {
     loadSettings();
+    loadProviderStatuses();
   }, []);
 
   const loadSettings = async () => {
     if (!accessToken) return;
-    
+
     try {
       setLoading(true);
       const response = await adminApiService.getSiteSettings(accessToken);
@@ -82,6 +85,15 @@ export default function SiteSettingsForm() {
     }
   };
 
+  const loadProviderStatuses = async () => {
+    try {
+      const response = await ordersApi.getPaymentProviders();
+      setProviderStatuses(response.providers);
+    } catch (error) {
+      console.error('Failed to load payment providers:', error);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!accessToken) return;
@@ -89,7 +101,10 @@ export default function SiteSettingsForm() {
     try {
       setSaving(true);
       setMessage(null);
-      const response = await adminApiService.updateSiteSettings(accessToken, settings as unknown as Record<string, unknown>);
+      const response = await adminApiService.updateSiteSettings(
+        accessToken,
+        settings as unknown as Record<string, unknown>,
+      );
       if (response.success) {
         setMessage({ type: 'success', text: 'Settings updated successfully!' });
         setTimeout(() => setMessage(null), 5000);
@@ -103,8 +118,18 @@ export default function SiteSettingsForm() {
   };
 
   const handleChange = (field: keyof SiteSettings, value: string | number | boolean) => {
-    setSettings(prev => ({ ...prev, [field]: value }));
+    setSettings((prev) => ({ ...prev, [field]: value }));
   };
+
+  const statusMap = useMemo(() => {
+    return providerStatuses?.reduce<Record<string, PaymentProviderStatus>>((acc, status) => {
+      acc[status.id] = status;
+      return acc;
+    }, {}) || {};
+  }, [providerStatuses]);
+
+  const stripeStatus = statusMap.stripe;
+  const paystackStatus = statusMap.paystack;
 
   if (loading) {
     return (
@@ -117,11 +142,13 @@ export default function SiteSettingsForm() {
   return (
     <form onSubmit={handleSubmit} className="space-y-8">
       {message && (
-        <div className={`p-4 rounded-lg border ${
-          message.type === 'success' 
-            ? 'bg-green-50 border-green-200 text-green-800' 
-            : 'bg-red-50 border-red-200 text-red-800'
-        }`}>
+        <div
+          className={`p-4 rounded-lg border ${
+            message.type === 'success'
+              ? 'bg-green-50 border-green-200 text-green-800'
+              : 'bg-red-50 border-red-200 text-red-800'
+          }`}
+        >
           {message.text}
         </div>
       )}
@@ -293,31 +320,85 @@ export default function SiteSettingsForm() {
               className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
             />
           </div>
-          <div className="flex items-center">
-            <input
-              type="checkbox"
-              id="enableStripe"
-              checked={settings.enableStripe}
-              onChange={(e) => handleChange('enableStripe', e.target.checked)}
-              className="w-4 h-4 text-primary border-border rounded focus:ring-2 focus:ring-primary"
-            />
-            <label htmlFor="enableStripe" className="ml-2 text-sm font-medium">
-              Enable Stripe Payments
-            </label>
+          <div className="flex flex-col gap-2">
+            <div className="flex items-center">
+              <input
+                type="checkbox"
+                id="enableStripe"
+                checked={settings.enableStripe}
+                onChange={(e) => handleChange('enableStripe', e.target.checked)}
+                className="w-4 h-4 text-primary border-border rounded focus:ring-2 focus:ring-primary"
+                disabled={saving}
+              />
+              <label htmlFor="enableStripe" className="ml-2 text-sm font-medium">
+                Enable Stripe Payments
+              </label>
+            </div>
+            {stripeStatus && !stripeStatus.configured && (
+              <p className="text-xs text-destructive">
+                Stripe keys are missing. Add credentials to enable.
+              </p>
+            )}
+            {stripeStatus && stripeStatus.reason && stripeStatus.configured && !stripeStatus.available && (
+              <p className="text-xs text-destructive">{stripeStatus.reason}</p>
+            )}
           </div>
-          <div className="flex items-center">
-            <input
-              type="checkbox"
-              id="enablePaystack"
-              checked={settings.enablePaystack}
-              onChange={(e) => handleChange('enablePaystack', e.target.checked)}
-              className="w-4 h-4 text-primary border-border rounded focus:ring-2 focus:ring-primary"
-            />
-            <label htmlFor="enablePaystack" className="ml-2 text-sm font-medium">
-              Enable Paystack Payments
-            </label>
+          <div className="flex flex-col gap-2">
+            <div className="flex items-center">
+              <input
+                type="checkbox"
+                id="enablePaystack"
+                checked={settings.enablePaystack}
+                onChange={(e) => handleChange('enablePaystack', e.target.checked)}
+                className="w-4 h-4 text-primary border-border rounded focus:ring-2 focus:ring-primary"
+                disabled={saving}
+              />
+              <label htmlFor="enablePaystack" className="ml-2 text-sm font-medium">
+                Enable Paystack Payments
+              </label>
+            </div>
+            {paystackStatus && !paystackStatus.configured && (
+              <p className="text-xs text-destructive">
+                Paystack keys are missing. Add credentials to enable.
+              </p>
+            )}
+            {paystackStatus && paystackStatus.reason && paystackStatus.configured && !paystackStatus.available && (
+              <p className="text-xs text-destructive">{paystackStatus.reason}</p>
+            )}
           </div>
         </div>
+
+        {providerStatuses && providerStatuses.length > 0 && (
+          <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+            {providerStatuses.map((provider) => (
+              <div
+                key={provider.id}
+                className="border border-border rounded-lg p-4 bg-muted/30"
+              >
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="font-semibold">{provider.label || provider.id}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {provider.configured ? 'Credentials detected' : 'Missing credentials'}
+                    </p>
+                  </div>
+                  <span
+                    className={`text-xs px-2 py-1 rounded-full ${
+                      provider.available
+                        ? 'bg-green-100 text-green-800'
+                        : 'bg-red-100 text-red-800'
+                    }`}
+                  >
+                    {provider.available ? 'Available' : 'Unavailable'}
+                  </span>
+                </div>
+                {provider.reason && (
+                  <p className="text-xs text-destructive mt-2">{provider.reason}</p>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Event Settings */}
@@ -457,4 +538,3 @@ export default function SiteSettingsForm() {
     </form>
   );
 }
-

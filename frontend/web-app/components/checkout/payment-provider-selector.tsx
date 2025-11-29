@@ -1,6 +1,7 @@
 'use client';
 
 import { CreditCard, Smartphone } from 'lucide-react';
+import type { PaymentProviderStatus } from '@/lib/api/orders-api';
 
 export type PaymentProviderType = 'stripe' | 'paystack';
 
@@ -10,6 +11,7 @@ interface PaymentProvider {
   description: string;
   icon: typeof CreditCard;
   available: boolean;
+  reason?: string | null;
   logo?: string;
 }
 
@@ -18,6 +20,7 @@ interface PaymentProviderSelectorProps {
   onProviderChange: (provider: PaymentProviderType) => void;
   stripeAvailable: boolean;
   paystackAvailable: boolean;
+  providerStatuses?: PaymentProviderStatus[];
 }
 
 export function PaymentProviderSelector({
@@ -25,35 +28,58 @@ export function PaymentProviderSelector({
   onProviderChange,
   stripeAvailable,
   paystackAvailable,
+  providerStatuses,
 }: PaymentProviderSelectorProps) {
+  const statusMap =
+    providerStatuses?.reduce<Record<string, PaymentProviderStatus>>((acc, status) => {
+      acc[status.id] = status;
+      return acc;
+    }, {}) || {};
+
   const providers: PaymentProvider[] = [
     {
       id: 'stripe',
       name: 'Credit/Debit Card',
       description: 'Visa, Mastercard, Amex, and more',
       icon: CreditCard,
-      available: stripeAvailable,
+      available: stripeAvailable && (statusMap.stripe?.available ?? true),
+      reason: statusMap.stripe?.reason || (!stripeAvailable ? 'Unavailable' : null),
     },
     {
       id: 'paystack',
       name: 'Paystack',
       description: 'Card, Bank Transfer, USSD, Mobile Money',
       icon: Smartphone,
-      available: paystackAvailable,
+      available: paystackAvailable && (statusMap.paystack?.available ?? true),
+      reason:
+        statusMap.paystack?.reason || (!paystackAvailable ? 'Unavailable' : null),
     },
   ];
 
   const availableProviders = providers.filter((p) => p.available);
+  const unavailableProviders = providers.filter((p) => !p.available);
 
   if (availableProviders.length === 0) {
     return (
-      <div className="rounded-3xl border border-destructive/30 bg-destructive/10 p-6">
-        <p className="text-sm font-semibold text-destructive">
-          No payment providers configured
-        </p>
-        <p className="mt-1 text-xs text-destructive/80">
-          Please contact support to complete your purchase.
-        </p>
+      <div className="rounded-3xl border border-destructive/30 bg-destructive/10 p-6 space-y-3">
+        <div>
+          <p className="text-sm font-semibold text-destructive">
+            No payment providers configured
+          </p>
+          <p className="mt-1 text-xs text-destructive/80">
+            Please contact support to complete your purchase.
+          </p>
+        </div>
+        {unavailableProviders.length > 0 && (
+          <div className="space-y-2">
+            {unavailableProviders.map((provider) => (
+              <div key={provider.id} className="text-xs text-destructive/90">
+                <span className="font-semibold">{provider.name}:</span>{' '}
+                {provider.reason || 'Unavailable'}
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     );
   }
@@ -139,6 +165,16 @@ export function PaymentProviderSelector({
             {availableProviders[0].name} is the only available payment method for this
             transaction.
           </p>
+        </div>
+      )}
+
+      {unavailableProviders.length > 0 && (
+        <div className="mt-4 space-y-1">
+          {unavailableProviders.map((provider) => (
+            <p key={provider.id} className="text-xs text-muted-foreground">
+              {provider.name}: {provider.reason || 'Unavailable'}
+            </p>
+          ))}
         </div>
       )}
     </div>

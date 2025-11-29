@@ -46,7 +46,6 @@ export function DashboardContent() {
 
   useEffect(() => {
     loadDashboard();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentOrganization]);
 
   if (!currentOrganization) {

@@ -785,6 +785,10 @@ export class OrdersService {
     return result;
   }
 
+  async getPaymentProviders() {
+    return this.paymentService.getPaymentProviderStatuses();
+  }
+
   // Ensures tickets are issued for a paid order (used by webhooks/providers)
   async ensureTicketsForOrder(orderId: string) {
     await this.createTicketsForOrder(orderId);

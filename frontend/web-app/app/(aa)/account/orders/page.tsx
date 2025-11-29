@@ -76,7 +76,6 @@ export default function OrdersPage() {
 
   useEffect(() => {
     fetchOrders();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [statusFilter, startDate, endDate, page]);
 
   return (

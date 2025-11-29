@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { StarRating, RatingDistribution } from './star-rating';
 import { ReviewForm } from './review-form';
 import { Button } from '@/components/ui/button';
@@ -42,12 +42,7 @@ export function ReviewList({
   const userReview = reviews.find((r) => r.userId === currentUserId);
   const canWriteReview = token && currentUserId && !userReview && !showReviewForm;
 
-  useEffect(() => {
-    loadReviews();
-    loadSummary();
-  }, [eventId, page]);
-
-  const loadReviews = async () => {
+  const loadReviews = useCallback(async () => {
     setLoading(true);
     const result = await fetchEventReviews(eventId, {
       page,
@@ -55,21 +50,31 @@ export function ReviewList({
       token,
     });
 
-    if (page === 1) {
-      setReviews(result.data);
-    } else {
-      setReviews((prev) => [...prev, ...result.data]);
-    }
+    setReviews((prev) => {
+      const merged = page === 1 ? result.data : [...prev, ...result.data];
+      const totalCount = merged.length;
+      setHasMore(
+        result.data.length === limit && totalCount < result.total,
+      );
+      return merged;
+    });
 
     setTotal(result.total);
-    setHasMore(result.data.length === limit && reviews.length + result.data.length < result.total);
     setLoading(false);
-  };
+  }, [eventId, page, token]);
 
-  const loadSummary = async () => {
+  const loadSummary = useCallback(async () => {
     const summaryData = await fetchEventReviewsSummary(eventId);
     setSummary(summaryData);
-  };
+  }, [eventId]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      void loadReviews();
+      void loadSummary();
+    }, 0);
+    return () => clearTimeout(timer);
+  }, [eventId, page, loadReviews, loadSummary]);
 
   const handleReviewSuccess = () => {
     setShowReviewForm(false);

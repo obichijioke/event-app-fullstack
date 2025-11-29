@@ -42,6 +42,7 @@ export class PaymentService {
   ) {
     const order = await this.findOrderForPayment(orderId);
 
+    await this.ensureProviderAvailable(createPaymentDto.provider);
     const provider = this.getProvider(createPaymentDto.provider);
     const result = await provider.initializePayment(order, createPaymentDto);
 
@@ -103,6 +104,13 @@ export class PaymentService {
     await this.updatePaymentAndOrder(payment.id, payment.orderId, result);
 
     return result.response;
+  }
+
+  async getPaymentProviderStatuses() {
+    const statuses = await this.computeProviderStatuses();
+    return {
+      providers: Object.values(statuses),
+    };
   }
 
   async refundPayment(
@@ -240,6 +248,86 @@ export class PaymentService {
         console.error('Failed to send order confirmation email:', error);
         // Don't fail the payment if email fails
       });
+    }
+  }
+
+  private coerceBoolean(value: any, fallback: boolean) {
+    if (value === undefined || value === null) return fallback;
+    if (typeof value === 'boolean') return value;
+    if (typeof value === 'number') return value !== 0;
+    if (typeof value === 'string') return value.toLowerCase() === 'true';
+    return fallback;
+  }
+
+  private async computeProviderStatuses() {
+    const settings = await this.prisma.siteSetting.findMany({
+      where: { key: { in: ['enableStripe', 'enablePaystack'] } },
+    });
+
+    const enabled: Record<PaymentProviderName, boolean> = {
+      stripe: true,
+      paystack: true,
+      test: false,
+    };
+
+    for (const setting of settings) {
+      if (setting.key === 'enableStripe') {
+        enabled.stripe = this.coerceBoolean(setting.value, true);
+      }
+      if (setting.key === 'enablePaystack') {
+        enabled.paystack = this.coerceBoolean(setting.value, true);
+      }
+    }
+
+    const stripeConfigured = !!process.env.STRIPE_SECRET_KEY;
+    const paystackConfigured = !!process.env.PAYSTACK_SECRET_KEY;
+    const testConfigured = true;
+
+    return {
+      stripe: {
+        id: 'stripe' as const,
+        label: 'Stripe',
+        enabled: enabled.stripe,
+        configured: stripeConfigured,
+        available: enabled.stripe && stripeConfigured,
+        reason: !enabled.stripe
+          ? 'Disabled in site settings'
+          : stripeConfigured
+            ? null
+            : 'Stripe secret key is missing on the server',
+      },
+      paystack: {
+        id: 'paystack' as const,
+        label: 'Paystack',
+        enabled: enabled.paystack,
+        configured: paystackConfigured,
+        available: enabled.paystack && paystackConfigured,
+        reason: !enabled.paystack
+          ? 'Disabled in site settings'
+          : paystackConfigured
+            ? null
+            : 'Paystack secret key is missing on the server',
+      },
+      test: {
+        id: 'test' as const,
+        label: 'Test Payments',
+        enabled: enabled.test,
+        configured: testConfigured,
+        available: enabled.test && testConfigured,
+        reason: enabled.test ? null : 'Test payments are disabled',
+      },
+    };
+  }
+
+  private async ensureProviderAvailable(provider: string) {
+    const normalized = provider.toLowerCase() as PaymentProviderName;
+    const statuses = await this.computeProviderStatuses();
+    const status = statuses[normalized];
+
+    if (!status || !status.available) {
+      throw new BadRequestException(
+        status?.reason || 'This payment provider is not available',
+      );
     }
   }
 

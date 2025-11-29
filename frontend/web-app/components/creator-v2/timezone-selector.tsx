@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Select } from '@/components/ui/select';
 import { Globe, MapPin } from 'lucide-react';
 import { POPULAR_TIMEZONES } from '@/lib/data/timezones';
@@ -18,24 +18,23 @@ export function TimezoneSelector({
   autoDetect = true,
   compact = false,
 }: TimezoneSelectorProps) {
-  const [detectedTimezone, setDetectedTimezone] = useState<string | null>(null);
+  const detectedTimezone = useMemo(() => {
+    if (!autoDetect) return null;
+    try {
+      return Intl.DateTimeFormat().resolvedOptions().timeZone || null;
+    } catch (error) {
+      console.error('Failed to detect timezone:', error);
+      return null;
+    }
+  }, [autoDetect]);
   const [isExpanded, setIsExpanded] = useState(false);
 
   useEffect(() => {
-    if (autoDetect) {
-      try {
-        const detected = Intl.DateTimeFormat().resolvedOptions().timeZone;
-        setDetectedTimezone(detected);
-
-        // Auto-set if value is UTC (default)
-        if (value === 'UTC' && detected) {
-          onChange(detected);
-        }
-      } catch (error) {
-        console.error('Failed to detect timezone:', error);
-      }
+    if (!autoDetect || !detectedTimezone) return;
+    if (value === 'UTC') {
+      onChange(detectedTimezone);
     }
-  }, [autoDetect, value, onChange]);
+  }, [autoDetect, detectedTimezone, onChange, value]);
 
   const selectedTz = POPULAR_TIMEZONES.find((tz) => tz.value === value);
 
