@@ -96,8 +96,6 @@ export function RequestPayoutModal({ onSuccess, onCancel }: RequestPayoutModalPr
     }
   };
 
-  const summaryCurrency = summary?.currency || summary?.totals.currency || 'USD';
-
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
       <div className="bg-card rounded-lg shadow-lg max-w-lg w-full max-h-[90vh] overflow-y-auto">
@@ -138,7 +136,6 @@ export function RequestPayoutModal({ onSuccess, onCancel }: RequestPayoutModalPr
                   <p className="text-2xl font-bold text-blue-900 mb-3">
                     <CurrencyDisplay
                       amountCents={Math.max(0, summary.totals.netRevenueCents - summary.totals.payoutsCents)}
-                      currency={summaryCurrency}
                       showFree={false}
                     />
                   </p>
@@ -148,7 +145,6 @@ export function RequestPayoutModal({ onSuccess, onCancel }: RequestPayoutModalPr
                       <span className="font-medium">
                         <CurrencyDisplay
                           amountCents={summary.totals.grossRevenueCents}
-                          currency={summaryCurrency}
                           showFree={false}
                         />
                       </span>
@@ -159,7 +155,6 @@ export function RequestPayoutModal({ onSuccess, onCancel }: RequestPayoutModalPr
                         -
                         <CurrencyDisplay
                           amountCents={summary.totals.feeCents}
-                          currency={summaryCurrency}
                           showFree={false}
                         />
                       </span>
@@ -170,7 +165,6 @@ export function RequestPayoutModal({ onSuccess, onCancel }: RequestPayoutModalPr
                         -
                         <CurrencyDisplay
                           amountCents={summary.totals.payoutsCents}
-                          currency={summaryCurrency}
                           showFree={false}
                         />
                       </span>
@@ -220,7 +214,6 @@ export function RequestPayoutModal({ onSuccess, onCancel }: RequestPayoutModalPr
               <p className="text-xs text-muted-foreground mt-1">
                 <CurrencyDisplay
                   amountCents={formData.amountCents}
-                  currency={formData.currency}
                   showFree={false}
                 />{' '}
                 will be transferred to your account

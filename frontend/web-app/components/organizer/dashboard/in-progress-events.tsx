@@ -38,7 +38,7 @@ export function InProgressEvents({ drafts, orgId, onDraftDeleted }: InProgressEv
   const getCompletionColor = (percent: number) => {
     if (percent >= 80) return 'bg-green-500';
     if (percent >= 50) return 'bg-yellow-500';
-    return 'bg-red-500';
+    return 'bg-blue-500';
   };
 
   const getSectionLabel = (section: string | null) => {
@@ -75,9 +75,9 @@ export function InProgressEvents({ drafts, orgId, onDraftDeleted }: InProgressEv
         {drafts.map((draft) => (
           <div
             key={draft.id}
-            className="p-4 hover:bg-accent/50 transition-colors"
+            className="p-4"
           >
-            <div className="flex items-start justify-between gap-4">
+            <div className="flex items-center justify-between gap-4">
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-3 mb-2">
                   <h3 className="font-medium text-foreground truncate">
@@ -153,7 +153,7 @@ export function InProgressEvents({ drafts, orgId, onDraftDeleted }: InProgressEv
         ))}
       </div>
 
-      <div className="p-4 bg-accent/30 border-t border-border">
+      <div className="p-4 bg-blue-100/30 border-t border-border">
         <Link
           href="/organizer/events/create"
           className="text-sm text-primary hover:text-primary/80 font-medium"

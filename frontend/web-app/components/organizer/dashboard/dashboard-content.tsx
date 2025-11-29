@@ -74,7 +74,6 @@ export function DashboardContent() {
   }
 
   const creatorUrl = '/organizer/events/create';
-  const currency = dashboard?.metrics.currency || 'USD';
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -116,7 +115,6 @@ export function DashboardContent() {
               ? (
                 <CurrencyDisplay
                   amountCents={dashboard.metrics.grossRevenueCents}
-                  currency={currency}
                   showFree={false}
                 />
               )
@@ -195,7 +193,6 @@ export function DashboardContent() {
               <p className="text-sm text-blue-700 mb-3">
                 <CurrencyDisplay
                   amountCents={dashboard.tasks.unsettledPayouts.amountCents}
-                  currency={currency}
                   showFree={false}
                 />{' '}
                 in {dashboard.tasks.unsettledPayouts.count} payout(s)
@@ -242,7 +239,6 @@ export function DashboardContent() {
                   <p className="text-xl font-semibold flex items-center gap-2">
                     <CurrencyDisplay
                       amountCents={payoutStats.totalAmount}
-                      currency={currency}
                       showFree={false}
                     />
                   </p>
@@ -341,7 +337,6 @@ export function DashboardContent() {
                   <span className="font-semibold">
                     <CurrencyDisplay
                       amountCents={dashboard.metrics.grossRevenueCents}
-                      currency={currency}
                       showFree={false}
                     />
                   </span>
@@ -352,7 +347,6 @@ export function DashboardContent() {
                     -
                     <CurrencyDisplay
                       amountCents={dashboard.metrics.feesCents}
-                      currency={currency}
                       showFree={false}
                     />
                   </span>
@@ -363,7 +357,6 @@ export function DashboardContent() {
                     <span className="font-bold text-lg">
                       <CurrencyDisplay
                         amountCents={dashboard.metrics.netRevenueCents}
-                        currency={currency}
                         showFree={false}
                       />
                     </span>

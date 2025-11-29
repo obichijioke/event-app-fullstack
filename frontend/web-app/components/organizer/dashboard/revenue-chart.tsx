@@ -58,8 +58,7 @@ export function RevenueChart() {
       .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
   }, [summary]);
 
-  const currency = summary?.totals.currency || 'USD';
-  const formatCurrency = (value: number) => formatAmount(Math.round(value), currency);
+  const formatCurrency = (value: number) => formatAmount(Math.round(value));
 
   return (
     <div className="bg-card rounded-lg shadow-card border border-border p-6">

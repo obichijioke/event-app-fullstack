@@ -125,7 +125,6 @@ export function FinancialSummaryWidget() {
             ) : (
               <CurrencyDisplay
                 amountCents={summary?.totals.grossRevenueCents || 0}
-                currency={summary?.totals.currency || 'USD'}
                 showFree={false}
               />
             )
@@ -141,7 +140,6 @@ export function FinancialSummaryWidget() {
             ) : (
               <CurrencyDisplay
                 amountCents={summary?.totals.netRevenueCents || 0}
-                currency={summary?.totals.currency || 'USD'}
                 showFree={false}
               />
             )
@@ -157,7 +155,6 @@ export function FinancialSummaryWidget() {
             ) : (
               <CurrencyDisplay
                 amountCents={summary?.totals.feeCents || 0}
-                currency={summary?.totals.currency || 'USD'}
                 showFree={false}
               />
             )
@@ -173,7 +170,6 @@ export function FinancialSummaryWidget() {
             ) : (
               <CurrencyDisplay
                 amountCents={summary?.totals.payoutsCents || 0}
-                currency={summary?.totals.currency || 'USD'}
                 showFree={false}
               />
             )
@@ -221,7 +217,6 @@ export function FinancialSummaryWidget() {
             ) : (
               <CurrencyDisplay
                 amountCents={summary?.totals.refundCents || 0}
-                currency={summary?.totals.currency || 'USD'}
                 showFree={false}
               />
             )}
