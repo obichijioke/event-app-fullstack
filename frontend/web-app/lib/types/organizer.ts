@@ -30,18 +30,10 @@ export interface DashboardMetrics {
 
 export interface DashboardOrganization {
   id: string;
-  totalCents: number;
-  currency: string;
+  name: string;
+  slug?: string;
   createdAt: string;
-  buyer: {
-    id: string;
-    name: string;
-    email: string;
-  };
-  event: {
-    id: string;
-    title: string;
-  };
+  updatedAt?: string;
 }
 
 export interface DashboardEvent {
