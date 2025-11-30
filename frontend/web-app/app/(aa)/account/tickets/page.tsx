@@ -152,70 +152,61 @@ export default function TicketsPage() {
   };
 
   return (
-    <div className="bg-muted/40 py-10">
-      <div className="container mx-auto px-4">
-        <div className="overflow-hidden rounded-3xl border border-border/60 bg-card shadow-sm">
-          <div className="flex flex-col gap-4 border-b border-border/60 bg-gradient-to-r from-slate-900 via-slate-800 to-slate-700 px-6 py-8 text-white md:flex-row md:items-center md:justify-between">
-            <div className="space-y-2">
-              <div className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-xs font-semibold backdrop-blur">
-                <TicketIcon className="h-4 w-4" />
-                My Tickets
-              </div>
-              <h1 className="text-3xl font-semibold">All your tickets, in one place</h1>
-              <p className="text-sm text-slate-200">{heroCopy}</p>
-            </div>
-            <div className="flex items-center gap-3">
-              <button
-                onClick={fetchTickets}
-                className="inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/20"
-              >
-                <RefreshCw className="h-4 w-4" />
-                Refresh
-              </button>
-            </div>
+    <div className="space-y-6">
+      {/* Page Header */}
+      <div className="overflow-hidden rounded-xl border border-border/70 bg-card">
+        <div className="bg-linear-to-r from-slate-900 via-slate-800 to-slate-700 px-6 py-6 text-white">
+          <div className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-xs font-semibold backdrop-blur mb-2">
+            <TicketIcon className="h-4 w-4" />
+            My Tickets
           </div>
+          <h1 className="text-3xl font-semibold">All your tickets, in one place</h1>
+          <p className="text-sm text-slate-200 mt-1">{heroCopy}</p>
+        </div>
+      </div>
 
-          <div className="px-6 py-6">
-            <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
-              <div className="flex items-center gap-2 rounded-full border border-border bg-muted/60 p-1">
-                <TabButton label="Upcoming" isActive={activeTab === 'upcoming'} onClick={() => setActiveTab('upcoming')} />
-                <TabButton label="Past" isActive={activeTab === 'past'} onClick={() => setActiveTab('past')} />
-              </div>
-              <p className="text-xs text-muted-foreground">
-                {tickets.length} {activeTab === 'upcoming' ? 'upcoming' : 'past'} ticket{tickets.length === 1 ? '' : 's'}
-              </p>
-            </div>
+      <div className="space-y-6">
+        <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
+          <div className="flex items-center gap-2 rounded-full border border-border bg-muted/60 p-1">
+            <TabButton label="Upcoming" isActive={activeTab === 'upcoming'} onClick={() => setActiveTab('upcoming')} />
+            <TabButton label="Past" isActive={activeTab === 'past'} onClick={() => setActiveTab('past')} />
+          </div>
+          <p className="text-xs text-muted-foreground">
+            {tickets.length} {activeTab === 'upcoming' ? 'upcoming' : 'past'} ticket{tickets.length === 1 ? '' : 's'}
+          </p>
+        </div>
 
-            {loading && (
-              <div className="flex items-center justify-center py-12">
-                <Loader2 className="h-6 w-6 animate-spin text-primary" />
-                <span className="ml-2 text-muted-foreground">Loading tickets...</span>
-              </div>
-            )}
+        {loading && (
+          <div className="flex items-center justify-center py-12">
+            <Loader2 className="h-6 w-6 animate-spin text-primary" />
+            <span className="ml-2 text-muted-foreground">Loading tickets...</span>
+          </div>
+        )}
 
-            {error && (
-              <div className="mb-6 rounded-xl border border-destructive/40 bg-destructive/10 px-4 py-3 text-sm text-destructive">
-                {error}
-              </div>
-            )}
+        {error && (
+          <div className="rounded-xl border border-destructive/40 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+            {error}
+          </div>
+        )}
 
-            {!loading && !error && tickets.length === 0 && (
-              <div className="flex flex-col items-center justify-center gap-3 rounded-2xl border border-dashed border-border/70 bg-muted/40 px-6 py-12 text-center text-muted-foreground">
-                <TicketIcon className="h-8 w-8" />
-                <div className="text-sm">
-                  No {activeTab} tickets found. {activeTab === 'upcoming' ? 'Browse events to book your next experience.' : 'Completed events will show here.'}
-                </div>
-                <Link
-                  href="/events"
-                  className="rounded-full bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition hover:opacity-90"
-                >
-                  Browse events
-                </Link>
-              </div>
-            )}
+        {!loading && !error && tickets.length === 0 && (
+          <div className="bg-card rounded-xl border border-border/70 p-12 text-center">
+            <TicketIcon className="h-12 w-12 mx-auto mb-4 text-muted-foreground/50" />
+            <h3 className="text-lg font-semibold mb-2">No {activeTab} tickets</h3>
+            <p className="text-sm text-muted-foreground mb-4">
+              {activeTab === 'upcoming' ? 'Browse events to book your next experience.' : 'Completed events will show here.'}
+            </p>
+            <Link
+              href="/events"
+              className="inline-block px-6 py-2.5 bg-primary text-primary-foreground rounded-lg hover:opacity-90 transition text-sm font-medium"
+            >
+              Browse events
+            </Link>
+          </div>
+        )}
 
-            {!loading && !error && tickets.length > 0 && (
-              <div className="space-y-8">
+        {!loading && !error && tickets.length > 0 && (
+          <div className="space-y-8">
                 {groupedTickets.map((eventGroup) => {
                   const isEventExpanded = expandedEvents.has(eventGroup.eventId);
                   const totalTickets = eventGroup.tickets.length;
@@ -479,10 +470,8 @@ export default function TicketsPage() {
                     </div>
                   );
                 })}
-              </div>
-            )}
           </div>
-        </div>
+        )}
       </div>
     </div>
   );

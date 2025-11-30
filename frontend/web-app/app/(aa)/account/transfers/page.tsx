@@ -83,33 +83,22 @@ export default function TransfersPage() {
   };
 
   return (
-    <div className="bg-muted/40 py-10">
-      <div className="container mx-auto px-4">
-        <div className="overflow-hidden rounded-3xl border border-border/60 bg-card shadow-sm">
-          {/* Header */}
-          <div className="flex flex-col gap-4 border-b border-border/60 bg-linear-to-r from-slate-900 via-slate-800 to-slate-700 px-6 py-8 text-white md:flex-row md:items-center md:justify-between">
-            <div className="space-y-2">
-              <div className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-xs font-semibold backdrop-blur">
-                <ArrowLeftRight className="h-4 w-4" />
-                My Transfers
-              </div>
-              <h1 className="text-3xl font-semibold">Ticket Transfers</h1>
-              <p className="text-sm text-slate-200">Manage sent and received ticket transfers</p>
-            </div>
-            <div className="flex items-center gap-3">
-              <button
-                onClick={fetchTransfers}
-                className="inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/20"
-              >
-                <RefreshCw className="h-4 w-4" />
-                Refresh
-              </button>
-            </div>
+    <div className="space-y-6">
+      {/* Page Header */}
+      <div className="overflow-hidden rounded-xl border border-border/70 bg-card">
+        <div className="bg-linear-to-r from-slate-900 via-slate-800 to-slate-700 px-6 py-6 text-white">
+          <div className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-xs font-semibold backdrop-blur mb-2">
+            <ArrowLeftRight className="h-4 w-4" />
+            My Transfers
           </div>
+          <h1 className="text-3xl font-semibold">Ticket Transfers</h1>
+          <p className="text-sm text-slate-200 mt-1">Manage sent and received ticket transfers</p>
+        </div>
+      </div>
 
-          <div className="px-6 py-6">
-            {/* Tabs */}
-            <div className="mb-6 flex items-center gap-2 rounded-full border border-border bg-muted/60 p-1">
+      <div className="space-y-6">
+        {/* Tabs */}
+        <div className="flex items-center gap-2 rounded-full border border-border bg-muted/60 p-1">
               <button
                 onClick={() => setActiveTab('sent')}
                 className={`flex-1 rounded-full px-4 py-2 text-sm font-semibold transition ${
@@ -138,32 +127,33 @@ export default function TransfersPage() {
               </button>
             </div>
 
-            {/* Loading State */}
-            {loading && (
-              <div className="flex items-center justify-center py-12">
-                <Loader2 className="h-6 w-6 animate-spin text-primary" />
-                <span className="ml-2 text-muted-foreground">Loading transfers...</span>
-              </div>
-            )}
+        {/* Loading State */}
+        {loading && (
+          <div className="flex items-center justify-center py-12">
+            <Loader2 className="h-6 w-6 animate-spin text-primary" />
+            <span className="ml-2 text-muted-foreground">Loading transfers...</span>
+          </div>
+        )}
 
-            {/* Error State */}
-            {error && (
-              <div className="mb-6 rounded-xl border border-destructive/40 bg-destructive/10 px-4 py-3 text-sm text-destructive">
-                {error}
-              </div>
-            )}
+        {/* Error State */}
+        {error && (
+          <div className="rounded-xl border border-destructive/40 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+            {error}
+          </div>
+        )}
 
-            {/* Transfers List */}
-            {!loading && !error && (
-              <div className="space-y-4">
-                {transfers.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center gap-3 rounded-2xl border border-dashed border-border/70 bg-muted/40 px-6 py-12 text-center text-muted-foreground">
-                    {activeTab === 'sent' ? <Send className="h-8 w-8" /> : <Inbox className="h-8 w-8" />}
-                    <div className="text-sm">
-                      No {activeTab} transfers found. {activeTab === 'sent' ? 'Transfer tickets to friends from your tickets page.' : 'Pending transfers will appear here.'}
-                    </div>
-                  </div>
-                ) : (
+        {/* Transfers List */}
+        {!loading && !error && (
+          <div className="space-y-4">
+            {transfers.length === 0 ? (
+              <div className="bg-card rounded-xl border border-border/70 p-12 text-center">
+                {activeTab === 'sent' ? <Send className="h-12 w-12 mx-auto mb-4 text-muted-foreground/50" /> : <Inbox className="h-12 w-12 mx-auto mb-4 text-muted-foreground/50" />}
+                <h3 className="text-lg font-semibold mb-2">No {activeTab} transfers</h3>
+                <p className="text-sm text-muted-foreground">
+                  {activeTab === 'sent' ? 'Transfer tickets to friends from your tickets page.' : 'Pending transfers will appear here.'}
+                </p>
+              </div>
+            ) : (
                   transfers.map((transfer) => (
                     <div key={transfer.id} className="overflow-hidden rounded-xl border border-border/70 bg-card shadow-sm">
                       <div className="bg-linear-to-r from-slate-50 to-slate-100 px-4 py-4 dark:from-slate-800/50 dark:to-slate-900/50">
@@ -300,12 +290,10 @@ export default function TransfersPage() {
                         )}
                       </div>
                     </div>
-                  ))
-                )}
-              </div>
+              ))
             )}
           </div>
-        </div>
+        )}
       </div>
     </div>
   );

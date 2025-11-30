@@ -127,33 +127,41 @@ export default function ProfilePage() {
 
   if (loading) {
     return (
-      <div className="container mx-auto px-4 py-8">
-        <div className="flex items-center justify-center py-12">
-          <Loader2 className="w-6 h-6 animate-spin text-primary" />
-          <span className="ml-2 text-muted-foreground">Loading profile...</span>
-        </div>
+      <div className="flex items-center justify-center py-12">
+        <Loader2 className="w-6 h-6 animate-spin text-primary" />
+        <span className="ml-2 text-muted-foreground">Loading profile...</span>
       </div>
     );
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold mb-8">Edit Profile</h1>
+    <div className="space-y-6">
+      {/* Page Header */}
+      <div className="overflow-hidden rounded-xl border border-border/70 bg-card">
+        <div className="bg-linear-to-r from-slate-900 via-slate-800 to-slate-700 px-6 py-6 text-white">
+          <div className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-xs font-semibold backdrop-blur mb-2">
+            <Camera className="h-4 w-4" />
+            Profile
+          </div>
+          <h1 className="text-3xl font-semibold">Edit Profile</h1>
+          <p className="text-sm text-slate-200 mt-1">Manage your personal information</p>
+        </div>
+      </div>
 
       <div className="max-w-2xl">
         {error && (
-          <div className="bg-destructive/10 border border-destructive rounded-lg p-4 mb-6">
+          <div className="bg-destructive/10 border border-destructive/40 rounded-xl p-4 mb-6">
             <p className="text-destructive text-sm">{error}</p>
           </div>
         )}
 
         {success && (
-          <div className="bg-success/10 border border-success rounded-lg p-4 mb-6">
-            <p className="text-success text-sm">Profile updated successfully!</p>
+          <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4 mb-6">
+            <p className="text-emerald-800 text-sm">Profile updated successfully!</p>
           </div>
         )}
 
-        <div className="bg-card rounded-lg shadow-card p-6">
+        <div className="bg-card rounded-xl border border-border/70 p-6">
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Profile Picture */}
             <div>
@@ -206,7 +214,7 @@ export default function ProfilePage() {
                     type="button"
                     onClick={handleAvatarClick}
                     disabled={uploadingAvatar}
-                    className="px-4 py-2 bg-secondary text-secondary-foreground rounded-md hover:opacity-90 transition text-sm disabled:opacity-50 flex items-center gap-2"
+                    className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:opacity-90 transition text-sm disabled:opacity-50 flex items-center gap-2"
                   >
                     {uploadingAvatar ? (
                       <>
@@ -225,7 +233,7 @@ export default function ProfilePage() {
                       type="button"
                       onClick={handleDeleteAvatar}
                       disabled={deletingAvatar}
-                      className="px-4 py-2 bg-destructive/10 text-destructive rounded-md hover:bg-destructive/20 transition text-sm disabled:opacity-50 flex items-center gap-2"
+                      className="px-4 py-2 border border-border rounded-lg hover:bg-muted transition text-sm disabled:opacity-50 flex items-center gap-2"
                     >
                       {deletingAvatar ? (
                         <>
@@ -316,11 +324,11 @@ export default function ProfilePage() {
             </div>
 
             {/* Actions */}
-            <div className="flex gap-4 pt-4">
+            <div className="flex gap-3 pt-4">
               <button
                 type="submit"
                 disabled={saving}
-                className="px-6 py-2 bg-primary text-primary-foreground rounded-md hover:opacity-90 transition font-medium disabled:opacity-50"
+                className="px-6 py-2.5 bg-primary text-primary-foreground rounded-lg hover:opacity-90 transition font-semibold text-sm disabled:opacity-50"
               >
                 {saving ? 'Saving...' : 'Save Changes'}
               </button>
@@ -334,7 +342,7 @@ export default function ProfilePage() {
                     bio: profile?.bio || '',
                   });
                 }}
-                className="px-6 py-2 bg-muted text-foreground rounded-md hover:bg-muted/80 transition"
+                className="px-6 py-2.5 border border-border rounded-lg hover:bg-muted transition text-sm font-medium"
               >
                 Cancel
               </button>
