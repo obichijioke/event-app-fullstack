@@ -12,6 +12,10 @@ export class CreateOrderDto {
   @IsOptional()
   promoCode?: string;
 
+  @IsString()
+  @IsOptional()
+  holdId?: string;
+
   @IsArray()
   items: CreateOrderItemDto[];
 }

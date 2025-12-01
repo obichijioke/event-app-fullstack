@@ -635,13 +635,11 @@ export class TicketingService {
           : null;
 
         const grossCents = orderItems.reduce(
-          (sum, item) =>
-            sum + Number(item.unitPriceCents) * item.quantity,
+          (sum, item) => sum + Number(item.unitPriceCents) * item.quantity,
           0,
         );
         const feeCents = orderItems.reduce(
-          (sum, item) =>
-            sum + Number(item.unitFeeCents) * item.quantity,
+          (sum, item) => sum + Number(item.unitFeeCents) * item.quantity,
           0,
         );
 
@@ -700,6 +698,23 @@ export class TicketingService {
     };
   }
 
+  async getUserHolds(eventId: string, userId: string) {
+    const now = new Date();
+
+    return await this.prisma.hold.findMany({
+      where: {
+        eventId,
+        userId,
+        expiresAt: { gt: now },
+      },
+      include: {
+        ticketType: { select: { id: true, name: true, kind: true } },
+        seat: { select: { id: true, section: true, row: true, number: true } },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+  }
+
   async createHold(
     eventId: string,
     userId: string,
@@ -725,14 +740,15 @@ export class TicketingService {
       throw new NotFoundException('Event not found');
     }
 
-    if (event.org.members.length === 0) {
+    const { ticketTypeId, seatId, occurrenceId, quantity, expiresAt, reason } =
+      createHoldDto;
+
+    // Allow public users to create checkout holds, but require org membership for other hold types
+    if (reason !== HoldReason.checkout && event.org.members.length === 0) {
       throw new ForbiddenException(
         'You do not have permission to create holds for this event',
       );
     }
-
-    const { ticketTypeId, seatId, occurrenceId, quantity, expiresAt } =
-      createHoldDto;
 
     // Validate ticket type belongs to the event
     if (ticketTypeId) {
@@ -776,6 +792,18 @@ export class TicketingService {
       if (!occurrence) {
         throw new BadRequestException('Invalid occurrence for this event');
       }
+    }
+
+    // Delete any existing holds for this user/event/ticketType combination
+    // to avoid unique constraint violations
+    if (ticketTypeId) {
+      await this.prisma.hold.deleteMany({
+        where: {
+          eventId,
+          ticketTypeId,
+          userId,
+        },
+      });
     }
 
     // Create hold

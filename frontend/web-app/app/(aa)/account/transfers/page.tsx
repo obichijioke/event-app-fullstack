@@ -155,7 +155,7 @@ export default function TransfersPage() {
               </div>
             ) : (
                   transfers.map((transfer) => (
-                    <div key={transfer.id} className="overflow-hidden rounded-xl border border-border/70 bg-card shadow-sm">
+                    <div key={transfer.id} className="overflow-hidden rounded-xl border border-border/70 bg-card">
                       <div className="bg-linear-to-r from-slate-50 to-slate-100 px-4 py-4 dark:from-slate-800/50 dark:to-slate-900/50">
                         <div className="flex items-start justify-between gap-4">
                           <div className="flex-1 space-y-2">

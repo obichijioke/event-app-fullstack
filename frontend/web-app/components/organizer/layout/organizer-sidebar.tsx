@@ -111,7 +111,7 @@ export function OrganizerSidebar() {
   };
 
   return (
-    <aside className="fixed top-16 left-0 w-64 bg-card border-r border-border h-[calc(100vh-4rem)] overflow-y-auto z-40">
+    <aside className="fixed top-16 left-0 w-64 bg-card border-r border-border h-[calc(100vh-4rem)] overflow-y-auto z-10">
       <nav className="p-4 space-y-1">
         {navigation.map((section) => {
           const Icon = section.icon;

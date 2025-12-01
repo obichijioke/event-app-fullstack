@@ -14,7 +14,12 @@ interface TransferQuery {
   limit?: number;
 }
 
-const ALLOWED_AVATAR_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+const ALLOWED_AVATAR_TYPES = [
+  'image/jpeg',
+  'image/png',
+  'image/gif',
+  'image/webp',
+];
 const MAX_AVATAR_SIZE = 5 * 1024 * 1024; // 5MB
 
 @Injectable()
@@ -294,7 +299,12 @@ export class AccountService {
    */
   async uploadAvatar(
     userId: string,
-    file: { buffer: Buffer; originalname: string; mimetype: string; size: number },
+    file: {
+      buffer: Buffer;
+      originalname: string;
+      mimetype: string;
+      size: number;
+    },
   ) {
     // Validate file type
     if (!ALLOWED_AVATAR_TYPES.includes(file.mimetype)) {
@@ -326,7 +336,10 @@ export class AccountService {
         await this.storageService.deleteFile(user.avatarKey);
         this.logger.log(`Deleted old avatar for user ${userId}`);
       } catch (error) {
-        this.logger.warn(`Failed to delete old avatar: ${user.avatarKey}`, error);
+        this.logger.warn(
+          `Failed to delete old avatar: ${user.avatarKey}`,
+          error,
+        );
       }
     }
 
@@ -382,7 +395,10 @@ export class AccountService {
     try {
       await this.storageService.deleteFile(user.avatarKey);
     } catch (error) {
-      this.logger.warn(`Failed to delete avatar file: ${user.avatarKey}`, error);
+      this.logger.warn(
+        `Failed to delete avatar file: ${user.avatarKey}`,
+        error,
+      );
     }
 
     // Update user

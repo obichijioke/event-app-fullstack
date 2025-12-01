@@ -311,10 +311,7 @@ export class OrganizerDashboardService {
       where: {
         organizationId: orgId,
         status: {
-          in: [
-            EventCreatorDraftStatus.draft,
-            EventCreatorDraftStatus.archived,
-          ],
+          in: [EventCreatorDraftStatus.draft, EventCreatorDraftStatus.archived],
         },
       },
       select: {
@@ -372,7 +369,9 @@ export class OrganizerDashboardService {
     }
 
     if (draft.organizationId !== orgId) {
-      throw new ForbiddenException('Draft does not belong to this organization');
+      throw new ForbiddenException(
+        'Draft does not belong to this organization',
+      );
     }
 
     // Only owner or org owner/manager can delete

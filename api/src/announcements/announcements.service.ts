@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ForbiddenException,
+} from '@nestjs/common';
 import { PrismaService } from '../common/prisma/prisma.service';
 import { QueuesService, QueueName } from '../queues/queues.service';
 import { NotificationType, NotificationCategory } from '@prisma/client';
@@ -49,7 +53,12 @@ export class AnnouncementsService {
     });
   }
 
-  async update(eventId: string, announcementId: string, userId: string, dto: UpdateAnnouncementDto) {
+  async update(
+    eventId: string,
+    announcementId: string,
+    userId: string,
+    dto: UpdateAnnouncementDto,
+  ) {
     await this.verifyEventAccess(eventId, userId);
 
     const announcement = await this.prisma.eventAnnouncement.findFirst({
@@ -102,7 +111,10 @@ export class AnnouncementsService {
   }
 
   // Dismissal management
-  async dismissAnnouncement(announcementId: string, userId: string): Promise<void> {
+  async dismissAnnouncement(
+    announcementId: string,
+    userId: string,
+  ): Promise<void> {
     await this.prisma.announcementDismissal.create({
       data: { announcementId, userId },
     });
@@ -117,10 +129,13 @@ export class AnnouncementsService {
       select: { announcementId: true },
     });
 
-    return dismissals.map(d => d.announcementId);
+    return dismissals.map((d) => d.announcementId);
   }
 
-  async undismissAnnouncement(announcementId: string, userId: string): Promise<void> {
+  async undismissAnnouncement(
+    announcementId: string,
+    userId: string,
+  ): Promise<void> {
     await this.prisma.announcementDismissal.delete({
       where: {
         announcementId_userId: { announcementId, userId },
@@ -141,39 +156,50 @@ export class AnnouncementsService {
     });
 
     const totalViews = announcements.reduce((sum, a) => sum + a.viewCount, 0);
-    const totalDismissals = announcements.reduce((sum, a) => sum + a.dismissals.length, 0);
+    const totalDismissals = announcements.reduce(
+      (sum, a) => sum + a.dismissals.length,
+      0,
+    );
 
     const allViewers = new Set<string>();
-    announcements.forEach(a => {
-      a.views.forEach(v => allViewers.add(v.userId));
+    announcements.forEach((a) => {
+      a.views.forEach((v) => allViewers.add(v.userId));
     });
 
-    const byType = announcements.reduce((acc, a) => {
-      const existing = acc.find(item => item.type === a.type);
-      if (existing) {
-        existing.count += 1;
-        existing.views += a.viewCount;
-      } else {
-        acc.push({ type: a.type, count: 1, views: a.viewCount });
-      }
-      return acc;
-    }, [] as Array<{ type: string; count: number; views: number }>);
+    const byType = announcements.reduce(
+      (acc, a) => {
+        const existing = acc.find((item) => item.type === a.type);
+        if (existing) {
+          existing.count += 1;
+          existing.views += a.viewCount;
+        } else {
+          acc.push({ type: a.type, count: 1, views: a.viewCount });
+        }
+        return acc;
+      },
+      [] as Array<{ type: string; count: number; views: number }>,
+    );
 
     const topAnnouncements = announcements
-      .map(a => ({
+      .map((a) => ({
         id: a.id,
         title: a.title,
         views: a.viewCount,
         dismissals: a.dismissals.length,
-        engagementRate: a.viewCount > 0 ? ((a.viewCount / (a.viewCount + a.dismissals.length)) * 100) : 0,
+        engagementRate:
+          a.viewCount > 0
+            ? (a.viewCount / (a.viewCount + a.dismissals.length)) * 100
+            : 0,
       }))
       .sort((a, b) => b.views - a.views)
       .slice(0, 5);
 
     return {
       totalAnnouncements: announcements.length,
-      activeAnnouncements: announcements.filter(a => a.isActive).length,
-      scheduledAnnouncements: announcements.filter(a => a.scheduledFor && !a.publishedAt).length,
+      activeAnnouncements: announcements.filter((a) => a.isActive).length,
+      scheduledAnnouncements: announcements.filter(
+        (a) => a.scheduledFor && !a.publishedAt,
+      ).length,
       totalViews,
       uniqueViewers: allViewers.size,
       totalDismissals,
@@ -202,9 +228,10 @@ export class AnnouncementsService {
           type: this.mapAnnouncementTypeToNotificationType(announcement.type),
           title: `Event Update: ${announcement.title}`,
           message: announcement.message,
-          channels: announcement.type === 'urgent' || announcement.type === 'important'
-            ? ['in_app', 'email', 'push']
-            : ['in_app'],
+          channels:
+            announcement.type === 'urgent' || announcement.type === 'important'
+              ? ['in_app', 'email', 'push']
+              : ['in_app'],
           category: NotificationCategory.event,
           actionUrl: `/events/${announcement.eventId}`,
           actionText: 'View Event',
@@ -213,7 +240,9 @@ export class AnnouncementsService {
     }
   }
 
-  private mapAnnouncementTypeToNotificationType(type: string): NotificationType {
+  private mapAnnouncementTypeToNotificationType(
+    type: string,
+  ): NotificationType {
     switch (type) {
       case 'urgent':
       case 'important':
@@ -245,7 +274,9 @@ export class AnnouncementsService {
     }
 
     if (event.org.members.length === 0) {
-      throw new ForbiddenException('You do not have permission to manage this event');
+      throw new ForbiddenException(
+        'You do not have permission to manage this event',
+      );
     }
   }
 }

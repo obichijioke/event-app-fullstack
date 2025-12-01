@@ -35,13 +35,17 @@ export class AccountController {
   constructor(private readonly accountService: AccountService) {}
 
   @Get('stats')
-  @ApiOperation({ summary: 'Get account-level statistics for the current user' })
+  @ApiOperation({
+    summary: 'Get account-level statistics for the current user',
+  })
   async getStats(@CurrentUser() user: any) {
     return this.accountService.getStats(user.id);
   }
 
   @Get('transfers')
-  @ApiOperation({ summary: 'List ticket transfers sent or received by the user' })
+  @ApiOperation({
+    summary: 'List ticket transfers sent or received by the user',
+  })
   @ApiQuery({
     name: 'type',
     required: false,
@@ -100,23 +104,28 @@ export class AccountController {
 
   @Post('refunds')
   @ApiOperation({ summary: 'Request a refund for an order' })
-  async requestRefund(
-    @CurrentUser() user: any,
-    @Body() dto: RequestRefundDto,
-  ) {
+  async requestRefund(@CurrentUser() user: any, @Body() dto: RequestRefundDto) {
     return this.accountService.requestRefund(user.id, dto);
   }
 
   @Get('profile')
   @ApiOperation({ summary: 'Get current user profile including avatar' })
-  @ApiResponse({ status: 200, description: 'User profile retrieved successfully' })
+  @ApiResponse({
+    status: 200,
+    description: 'User profile retrieved successfully',
+  })
   async getProfile(@CurrentUser() user: any) {
     return this.accountService.getProfile(user.id);
   }
 
   @Get('avatar')
-  @ApiOperation({ summary: 'Get current user avatar URL (refreshed signed URL for S3)' })
-  @ApiResponse({ status: 200, description: 'Avatar URL retrieved successfully' })
+  @ApiOperation({
+    summary: 'Get current user avatar URL (refreshed signed URL for S3)',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Avatar URL retrieved successfully',
+  })
   async getAvatar(@CurrentUser() user: any) {
     const avatarUrl = await this.accountService.getAvatarUrl(user.id);
     return { avatarUrl };
@@ -167,7 +176,13 @@ export class AccountController {
   @ApiResponse({ status: 400, description: 'Invalid file type or size' })
   async uploadAvatar(
     @CurrentUser() user: any,
-    @UploadedFile() file: { buffer: Buffer; originalname: string; mimetype: string; size: number },
+    @UploadedFile()
+    file: {
+      buffer: Buffer;
+      originalname: string;
+      mimetype: string;
+      size: number;
+    },
   ) {
     if (!file) {
       throw new BadRequestException('File is required');

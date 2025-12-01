@@ -34,8 +34,14 @@ export class PayoutsService {
       'You do not have permission to create payouts for this organization',
     );
 
-    const { amountCents, currency, scheduledFor, provider, providerRef, notes } =
-      createPayoutDto;
+    const {
+      amountCents,
+      currency,
+      scheduledFor,
+      provider,
+      providerRef,
+      notes,
+    } = createPayoutDto;
 
     if (!amountCents || amountCents <= 0) {
       throw new BadRequestException('Payout amount must be greater than zero');
@@ -264,8 +270,14 @@ export class PayoutsService {
       );
     }
 
-    const { amountCents, currency, scheduledFor, provider, providerRef, notes } =
-      updatePayoutDto;
+    const {
+      amountCents,
+      currency,
+      scheduledFor,
+      provider,
+      providerRef,
+      notes,
+    } = updatePayoutDto;
 
     // Update payout
     const updatedPayout = await this.prisma.payout.update({

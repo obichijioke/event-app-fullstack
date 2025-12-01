@@ -44,13 +44,11 @@ export default function CheckoutPage({ params }: Props) {
   const [creatingOrder, setCreatingOrder] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
-
-  // Timer for hold expiration (10 minutes from now)
-  const [holdExpiresAt] = useState(() => {
-    const expiry = new Date();
-    expiry.setMinutes(expiry.getMinutes() + 10);
-    return expiry;
-  });
+  
+  // Hold management
+  const [holdId, setHoldId] = useState<string | null>(null);
+  const [holdExpiresAt, setHoldExpiresAt] = useState<Date | null>(null);
+  const [creatingHold, setCreatingHold] = useState(false);
 
   const formatEventDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -87,6 +85,36 @@ export default function CheckoutPage({ params }: Props) {
   useEffect(() => {
     loadEventData();
   }, [loadEventData]);
+  
+  // Fetch and restore existing holds on mount
+  useEffect(() => {
+    const restoreExistingHolds = async () => {
+      try {
+        const holds = await ticketsApi.getMyHolds(eventId);
+        
+        if (holds.length > 0) {
+          // Restore the most recent hold
+          const latestHold = holds[0];
+          
+          // Restore ticket selections
+          const newSelections = new Map<string, number>();
+          if (latestHold.ticketTypeId) {
+            newSelections.set(latestHold.ticketTypeId, latestHold.quantity);
+          }
+          setTicketSelections(newSelections);
+          
+          // Restore hold info
+          setHoldId(latestHold.id);
+          setHoldExpiresAt(new Date(latestHold.expiresAt));
+        }
+      } catch (error) {
+        console.error('Failed to restore holds:', error);
+        // Silently fail - user can create new hold
+      }
+    };
+    
+    restoreExistingHolds();
+  }, [eventId]);
 
   const orderAmounts = useMemo(() => {
     let subtotalCents = 0;
@@ -143,7 +171,56 @@ export default function CheckoutPage({ params }: Props) {
       setAppliedPromoCode('');
       toast('Promo code removed due to ticket selection change', { icon: 'i' });
     }
+    
+    // Clear existing hold when selection changes
+    if (holdId) {
+      setHoldId(null);
+      setHoldExpiresAt(null);
+    }
   };
+  
+  // Create hold when user has selections
+  useEffect(() => {
+    const createHoldForSelections = async () => {
+      const hasSelections = Array.from(ticketSelections.values()).some((q) => q > 0);
+      
+      // Don't create hold if no selections, already have a hold, or currently creating one
+      if (!hasSelections || holdId || creatingHold) {
+        return;
+      }
+      
+      try {
+        setCreatingHold(true);
+        
+        // For simplicity, create a single hold for the first ticket type
+        // In a production system, you might create multiple holds or handle this differently
+        const firstSelection = Array.from(ticketSelections.entries())[0];
+        if (!firstSelection) return;
+        
+        const [ticketTypeId, quantity] = firstSelection;
+        
+        const expiresAt = new Date();
+        expiresAt.setMinutes(expiresAt.getMinutes() + 10);
+        
+        const hold = await ticketsApi.createHold(eventId, {
+          ticketTypeId,
+          quantity,
+          expiresAt: expiresAt.toISOString(),
+          reason: 'checkout',
+        });
+        
+        setHoldId(hold.id);
+        setHoldExpiresAt(new Date(hold.expiresAt));
+      } catch (error) {
+        console.error('Failed to create hold:', error);
+        // Don't show error to user, they can still proceed without hold
+      } finally {
+        setCreatingHold(false);
+      }
+    };
+    
+    createHoldForSelections();
+  }, [ticketSelections, eventId, holdId, creatingHold]);
 
   const handleApplyPromoCode = async () => {
     if (!promoCode.trim()) {
@@ -223,6 +300,7 @@ export default function CheckoutPage({ params }: Props) {
         eventId,
         items: selectedItems,
         promoCode: appliedPromoCode,
+        holdId: holdId || undefined,
       });
       const isFreeOrder =
         typeof order.totalCents === 'bigint'
@@ -248,6 +326,8 @@ export default function CheckoutPage({ params }: Props) {
 
   const handleHoldExpire = () => {
     toast.error('Your ticket reservation has expired. Please select tickets again.');
+    setHoldId(null);
+    setHoldExpiresAt(null);
     setTicketSelections(new Map());
   };
 
@@ -375,7 +455,7 @@ export default function CheckoutPage({ params }: Props) {
               </div>
             </section>
 
-            {hasSelection && (
+            {hasSelection && holdExpiresAt && (
               <CountdownTimer expiresAt={holdExpiresAt} onExpire={handleHoldExpire} />
             )}
 

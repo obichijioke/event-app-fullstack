@@ -62,10 +62,7 @@ export class OrganizerEventsController {
   @Post('upload')
   @UseInterceptors(FileInterceptor('file'))
   @ApiOperation({ summary: 'Upload an image' })
-  async uploadImage(
-    @CurrentUser() user: any,
-    @UploadedFile() file: any,
-  ) {
+  async uploadImage(@CurrentUser() user: any, @UploadedFile() file: any) {
     if (!file) {
       throw new BadRequestException('File is required');
     }

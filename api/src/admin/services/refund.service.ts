@@ -15,7 +15,10 @@ import {
   ProcessRefundDto,
 } from '../dto/refund.dto';
 import { Prisma, RefundStatus } from '@prisma/client';
-import { refundEmailIncludes, RefundWithEmailData } from '../../common/types/prisma-helpers';
+import {
+  refundEmailIncludes,
+  RefundWithEmailData,
+} from '../../common/types/prisma-helpers';
 
 @Injectable()
 export class AdminRefundService {
@@ -37,7 +40,11 @@ export class AdminRefundService {
     return this.createRefund(dto, actorId);
   }
 
-  async updateStatus(refundId: string, dto: UpdateRefundStatusDto, actorId?: string) {
+  async updateStatus(
+    refundId: string,
+    dto: UpdateRefundStatusDto,
+    actorId?: string,
+  ) {
     return this.updateRefundStatus(refundId, dto, actorId);
   }
 
@@ -430,7 +437,11 @@ export class AdminRefundService {
     return refund;
   }
 
-  async updateRefundStatus(refundId: string, dto: UpdateRefundStatusDto, actorId?: string) {
+  async updateRefundStatus(
+    refundId: string,
+    dto: UpdateRefundStatusDto,
+    actorId?: string,
+  ) {
     const { status, reason } = dto;
 
     const refund = await this.prisma.refund.findUnique({
@@ -474,7 +485,11 @@ export class AdminRefundService {
     return updatedRefund;
   }
 
-  async approveRefund(refundId: string, dto: ApproveRefundDto, actorId?: string) {
+  async approveRefund(
+    refundId: string,
+    dto: ApproveRefundDto,
+    actorId?: string,
+  ) {
     const refund = await this.prisma.refund.findUnique({
       where: { id: refundId },
       include: {
@@ -599,7 +614,11 @@ export class AdminRefundService {
     return { message: 'Refund rejected successfully' };
   }
 
-  async processRefund(refundId: string, dto: ProcessRefundDto, actorId?: string) {
+  async processRefund(
+    refundId: string,
+    dto: ProcessRefundDto,
+    actorId?: string,
+  ) {
     const refund = await this.prisma.refund.findUnique({
       where: { id: refundId },
       include: {
@@ -642,7 +661,8 @@ export class AdminRefundService {
         Number(refund.amountCents),
       );
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Refund provider error';
+      const message =
+        err instanceof Error ? err.message : 'Refund provider error';
       const normalized = message.toLowerCase();
       const alreadyProcessed =
         normalized.includes('refund already exist') ||
@@ -785,10 +805,10 @@ export class AdminRefundService {
   }
 
   private async sendRefundConfirmationEmail(refundId: string) {
-    const refund = await this.prisma.refund.findUnique({
+    const refund = (await this.prisma.refund.findUnique({
       where: { id: refundId },
       ...refundEmailIncludes,
-    }) as RefundWithEmailData | null;
+    })) as RefundWithEmailData | null;
 
     if (!refund?.order?.event) {
       return;
@@ -822,7 +842,8 @@ export class AdminRefundService {
     // Calculate refund amount
     const refundAmount = this.formatCurrency(refund.amountCents);
     const originalTotal = this.formatCurrency(order.totalCents);
-    const isFullRefund = Number(refund.amountCents) === Number(order.totalCents);
+    const isFullRefund =
+      Number(refund.amountCents) === Number(order.totalCents);
 
     // Get refunded tickets if any
     const refundedTickets = order.items.map((item) => {
@@ -843,7 +864,7 @@ export class AdminRefundService {
     const paymentMethod = this.formatPaymentMethod(payment?.provider);
 
     // Calculate fees if partial refund
-    let serviceFee: string | null = null;
+    const serviceFee: string | null = null;
     let cancellationFee: string | null = null;
 
     if (!isFullRefund) {

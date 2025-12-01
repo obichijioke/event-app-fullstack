@@ -190,7 +190,7 @@ export default function OrdersPage() {
                   const ticketCount = order.tickets?.length || 0;
 
                   return (
-                    <div key={order.id} className="overflow-hidden rounded-xl border border-border/70 bg-card shadow-sm">
+                    <div key={order.id} className="overflow-hidden rounded-xl border border-border/70 bg-background">
                       {/* Order Header */}
                       <button
                         onClick={() => toggleOrder(order.id)}

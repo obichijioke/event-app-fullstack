@@ -199,7 +199,8 @@ export class PaystackPaymentProvider implements PaymentProvider {
             amountCents: BigInt(amountInMinorUnits),
             currency: payment.currency,
             status: 'success',
-            providerReference: payment.providerCharge || 'paystack_refund_existing',
+            providerReference:
+              payment.providerCharge || 'paystack_refund_existing',
             response: { message },
           };
         }

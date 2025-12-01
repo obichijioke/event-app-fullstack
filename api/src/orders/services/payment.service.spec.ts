@@ -134,7 +134,10 @@ describe('PaymentService', () => {
       undefined,
     );
     expect(mockPrisma.refund.create).toHaveBeenCalledWith({
-      data: expect.objectContaining({ providerRef: 'refund_1', createdBy: 'user_1' }),
+      data: expect.objectContaining({
+        providerRef: 'refund_1',
+        createdBy: 'user_1',
+      }),
     });
   });
 });

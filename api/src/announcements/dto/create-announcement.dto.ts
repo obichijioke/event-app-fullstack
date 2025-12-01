@@ -1,4 +1,10 @@
-import { IsString, IsEnum, IsOptional, IsBoolean, IsDateString } from 'class-validator';
+import {
+  IsString,
+  IsEnum,
+  IsOptional,
+  IsBoolean,
+  IsDateString,
+} from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
 export enum AnnouncementType {
@@ -27,12 +33,19 @@ export class CreateAnnouncementDto {
   @IsOptional()
   isActive?: boolean;
 
-  @ApiProperty({ required: false, description: 'Schedule announcement for future publication' })
+  @ApiProperty({
+    required: false,
+    description: 'Schedule announcement for future publication',
+  })
   @IsDateString()
   @IsOptional()
   scheduledFor?: string;
 
-  @ApiProperty({ required: false, default: false, description: 'Send notification immediately' })
+  @ApiProperty({
+    required: false,
+    default: false,
+    description: 'Send notification immediately',
+  })
   @IsBoolean()
   @IsOptional()
   sendNotification?: boolean;

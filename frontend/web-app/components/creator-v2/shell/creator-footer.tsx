@@ -6,10 +6,12 @@ import { Button } from '@/components/ui/button';
 import { useEventCreatorDraft } from '@/components/creator-v2/event-creator-provider';
 import { eventCreatorV2Api } from '@/lib/api/event-creator-v2-api';
 import { toast } from 'react-hot-toast';
+import { useRouter } from 'next/navigation';
 
 export function CreatorFooter() {
   const { draft, activeSection, setActiveSection } = useEventCreatorDraft();
   const [isPublishing, setIsPublishing] = useState(false);
+  const router = useRouter();
 
   if (!draft) {
     return null;
@@ -24,10 +26,16 @@ export function CreatorFooter() {
   const isCurrentSectionValid = currentSectionData?.status === 'valid';
 
   const handlePublish = async () => {
+    if (!draft) return;
     setIsPublishing(true);
     try {
       const response = await eventCreatorV2Api.publishDraft(draft.id, {});
-      toast.success(response.message);
+      toast.success(response.message || 'Event published');
+      if (response.eventId) {
+        router.push(`/organizer/events/${response.eventId}`);
+      } else {
+        router.push('/organizer/events');
+      }
     } catch (error) {
       const message =
         error instanceof Error ? error.message : 'Unable to publish draft';

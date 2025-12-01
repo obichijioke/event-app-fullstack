@@ -121,4 +121,34 @@ export const ticketsApi = {
   async regenerateQRCode(ticketId: string): Promise<Ticket> {
     return apiClient.post<Ticket>(`/tickets/${ticketId}/regenerate-qr`, {});
   },
+
+  async getMyHolds(eventId: string): Promise<Hold[]> {
+    return apiClient.get<Hold[]>(`/ticketing/events/${eventId}/holds/my-holds`);
+  },
+
+  async createHold(eventId: string, data: CreateHoldDto): Promise<Hold> {
+    return apiClient.post<Hold>(`/ticketing/events/${eventId}/holds`, data);
+  },
 };
+
+export interface CreateHoldDto {
+  ticketTypeId?: string;
+  seatId?: string;
+  occurrenceId?: string;
+  quantity?: number;
+  expiresAt: string;
+  reason?: 'checkout' | 'reservation' | 'organizer_hold';
+}
+
+export interface Hold {
+  id: string;
+  eventId: string;
+  ticketTypeId?: string;
+  seatId?: string;
+  occurrenceId?: string;
+  userId?: string;
+  reason: string;
+  quantity: number;
+  expiresAt: string;
+  createdAt: string;
+}

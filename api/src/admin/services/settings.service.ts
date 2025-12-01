@@ -20,10 +20,15 @@ export class AdminSettingsService {
 
     const settingsObject: Record<string, Prisma.JsonValue | undefined> = {};
     settings.forEach((setting) => {
-      settingsObject[setting.key] = setting.value as Prisma.JsonValue | undefined;
+      settingsObject[setting.key] = setting.value as
+        | Prisma.JsonValue
+        | undefined;
     });
 
-    const parseBoolean = (value: Prisma.JsonValue | undefined, fallback: boolean) => {
+    const parseBoolean = (
+      value: Prisma.JsonValue | undefined,
+      fallback: boolean,
+    ) => {
       if (value === undefined || value === null) return fallback;
       if (typeof value === 'boolean') return value;
       if (typeof value === 'number') return value !== 0;
@@ -31,7 +36,10 @@ export class AdminSettingsService {
       return fallback;
     };
 
-    const parseNumber = (value: Prisma.JsonValue | undefined, fallback: number) => {
+    const parseNumber = (
+      value: Prisma.JsonValue | undefined,
+      fallback: number,
+    ) => {
       if (value === undefined || value === null) return fallback;
       if (typeof value === 'number') return value;
       if (typeof value === 'string') {
@@ -41,7 +49,10 @@ export class AdminSettingsService {
       return fallback;
     };
 
-    const parseString = (value: Prisma.JsonValue | undefined, fallback = '') => {
+    const parseString = (
+      value: Prisma.JsonValue | undefined,
+      fallback = '',
+    ) => {
       if (value === undefined || value === null) return fallback;
       if (typeof value === 'string') return value;
       return String(value);
@@ -49,24 +60,45 @@ export class AdminSettingsService {
 
     return {
       siteName: parseString(settingsObject.siteName, 'EventHub'),
-      siteTagline: parseString(settingsObject.siteTagline, 'Discover amazing events'),
-      supportEmail: parseString(settingsObject.supportEmail, 'support@eventhub.com'),
-      contactEmail: parseString(settingsObject.contactEmail, 'contact@eventhub.com'),
+      siteTagline: parseString(
+        settingsObject.siteTagline,
+        'Discover amazing events',
+      ),
+      supportEmail: parseString(
+        settingsObject.supportEmail,
+        'support@eventhub.com',
+      ),
+      contactEmail: parseString(
+        settingsObject.contactEmail,
+        'contact@eventhub.com',
+      ),
       maintenanceMode: parseBoolean(settingsObject.maintenanceMode, false),
       maintenanceMessage: parseString(
         settingsObject.maintenanceMessage,
         'We are currently performing maintenance. Please check back soon.',
       ),
       allowRegistrations: parseBoolean(settingsObject.allowRegistrations, true),
-      requireEmailVerification: parseBoolean(settingsObject.requireEmailVerification, true),
+      requireEmailVerification: parseBoolean(
+        settingsObject.requireEmailVerification,
+        true,
+      ),
       defaultCurrency: parseString(settingsObject.defaultCurrency, 'NGN'),
-      defaultTimezone: parseString(settingsObject.defaultTimezone, 'Africa/Lagos'),
+      defaultTimezone: parseString(
+        settingsObject.defaultTimezone,
+        'Africa/Lagos',
+      ),
       platformFeePercent: parseNumber(settingsObject.platformFeePercent, 2.5),
-      processingFeePercent: parseNumber(settingsObject.processingFeePercent, 1.5),
+      processingFeePercent: parseNumber(
+        settingsObject.processingFeePercent,
+        1.5,
+      ),
       enableStripe: parseBoolean(settingsObject.enableStripe, true),
       enablePaystack: parseBoolean(settingsObject.enablePaystack, true),
       maxUploadSizeMB: parseNumber(settingsObject.maxUploadSizeMB, 10),
-      eventsRequireApproval: parseBoolean(settingsObject.eventsRequireApproval, false),
+      eventsRequireApproval: parseBoolean(
+        settingsObject.eventsRequireApproval,
+        false,
+      ),
       enableAnalytics: parseBoolean(settingsObject.enableAnalytics, true),
       termsUrl: parseString(settingsObject.termsUrl, ''),
       privacyUrl: parseString(settingsObject.privacyUrl, ''),

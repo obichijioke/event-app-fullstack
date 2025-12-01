@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ForbiddenException,
+} from '@nestjs/common';
 import { PrismaService } from '../common/prisma/prisma.service';
 import { CreateFaqDto } from './dto/create-faq.dto';
 import { UpdateFaqDto } from './dto/update-faq.dto';
@@ -40,7 +44,12 @@ export class FaqsService {
     });
   }
 
-  async update(eventId: string, faqId: string, userId: string, dto: UpdateFaqDto) {
+  async update(
+    eventId: string,
+    faqId: string,
+    userId: string,
+    dto: UpdateFaqDto,
+  ) {
     await this.verifyEventAccess(eventId, userId);
 
     const faq = await this.prisma.eventFAQ.findFirst({
@@ -77,7 +86,7 @@ export class FaqsService {
   async trackView(faqId: string): Promise<void> {
     await this.prisma.eventFAQ.update({
       where: { id: faqId },
-      data: { viewCount: { increment: 1} },
+      data: { viewCount: { increment: 1 } },
     });
   }
 
@@ -90,7 +99,11 @@ export class FaqsService {
   }
 
   // Reorder FAQs
-  async reorderFAQs(eventId: string, userId: string, faqIds: string[]): Promise<void> {
+  async reorderFAQs(
+    eventId: string,
+    userId: string,
+    faqIds: string[],
+  ): Promise<void> {
     await this.verifyEventAccess(eventId, userId);
 
     // Update sort order for each FAQ in a transaction
@@ -138,7 +151,9 @@ export class FaqsService {
     }
 
     if (event.org.members.length === 0) {
-      throw new ForbiddenException('You do not have permission to manage this event');
+      throw new ForbiddenException(
+        'You do not have permission to manage this event',
+      );
     }
   }
 }

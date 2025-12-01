@@ -32,7 +32,12 @@ import { OrganizationsModule } from '../organizations/organizations.module';
       inject: [ConfigService],
     }),
   ],
-  providers: [AuthService, JwtStrategy, JwtRefreshStrategy, SessionCleanupService],
+  providers: [
+    AuthService,
+    JwtStrategy,
+    JwtRefreshStrategy,
+    SessionCleanupService,
+  ],
   controllers: [AuthController],
   exports: [AuthService, SessionCleanupService],
 })

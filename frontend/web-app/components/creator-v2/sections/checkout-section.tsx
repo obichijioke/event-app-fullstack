@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -66,6 +66,7 @@ export function CheckoutSection() {
               })),
               consentMarketing: values.consentMarketing,
             },
+            status: 'valid',
           },
           { showToast: false }
         );
@@ -73,32 +74,50 @@ export function CheckoutSection() {
     [updateSection]
   );
 
-  form.watch((values) => {
-    const parsed = checkoutSchema.safeParse(values);
-    if (parsed.success) debouncedSave(parsed.data);
-  });
+  const debouncedMarkIncomplete = useMemo(
+    () =>
+      debounce((issues: z.ZodIssue[]) => {
+        void updateSection(
+          'checkout',
+          {
+            autosave: true,
+            status: 'incomplete',
+            errors: issues.map((issue) => ({
+              path: issue.path,
+              message: issue.message,
+            })),
+          },
+          { showToast: false }
+        );
+      }, 600),
+    [updateSection]
+  );
 
-  const onSubmit = form.handleSubmit(async (values) => {
-    await updateSection(
-      'checkout',
-      {
-        payload: {
-          formFields: values.questions.map((q) => ({
-            fieldKey: q.fieldKey,
-            label: q.label,
-            fieldType: q.fieldType,
-            required: q.required,
-            options: q.options
-              ? q.options.split(',').map((o) => o.trim()).filter(Boolean)
-              : [],
-          })),
-          consentMarketing: values.consentMarketing,
-        },
-        status: 'valid',
-      },
-      { showToast: true }
-    );
-  });
+  const handleAutosave = useCallback(
+    (values: CheckoutValues) => {
+      const parsed = checkoutSchema.safeParse(values);
+      if (parsed.success) {
+        debouncedSave(parsed.data);
+      } else {
+        debouncedMarkIncomplete(parsed.error.issues);
+      }
+    },
+    [debouncedMarkIncomplete, debouncedSave]
+  );
+
+  React.useEffect(() => {
+    const subscription = form.watch((values) => {
+      handleAutosave(values);
+    });
+    return () => subscription.unsubscribe();
+  }, [form, handleAutosave]);
+
+  // Kick off an initial validation/autosave so an empty (but valid) state marks as complete without requiring edits.
+  React.useEffect(() => {
+    handleAutosave(form.getValues());
+    // form and handleAutosave are stable from hooks, safe to ignore exhaustive-deps here
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <div className="space-y-6">
@@ -112,7 +131,7 @@ export function CheckoutSection() {
         </Button>
       </div>
 
-      <form className="space-y-4" onSubmit={onSubmit}>
+      <form className="space-y-4" onSubmit={(e) => e.preventDefault()}>
         {fields.length === 0 ? (
           <div className="rounded-xl border border-dashed border-border p-6 text-center text-muted-foreground">
             No questions yet. Add your first question.
@@ -169,10 +188,9 @@ export function CheckoutSection() {
           </div>
         )}
 
-        <div className="flex items-center gap-3">
-          <Button type="submit" disabled={isSaving}>{isSaving ? 'Saving…' : 'Save checkout'}</Button>
-          <span className="text-xs text-muted-foreground">Autosaves; this marks the section complete.</span>
-        </div>
+        <p className="text-xs text-muted-foreground">
+          Autosaves as you configure checkout. The step is marked complete when required fields are valid.
+        </p>
       </form>
     </div>
   );

@@ -16,7 +16,10 @@ import {
 } from '../providers/payment-provider.interface';
 import { PAYMENT_PROVIDERS } from '../tokens';
 import { Inject } from '@nestjs/common';
-import { orderEmailIncludes, OrderWithEmailData } from '../../common/types/prisma-helpers';
+import {
+  orderEmailIncludes,
+  OrderWithEmailData,
+} from '../../common/types/prisma-helpers';
 
 @Injectable()
 export class PaymentService {
@@ -143,9 +146,9 @@ export class PaymentService {
           typeof result.providerReference === 'string'
             ? result.providerReference
             : String(result.providerReference),
-      createdBy: createdBy ?? null,
-    },
-  });
+        createdBy: createdBy ?? null,
+      },
+    });
 
     return result.response;
   }
@@ -332,10 +335,10 @@ export class PaymentService {
   }
 
   private async sendOrderConfirmationEmail(orderId: string) {
-    const order = await this.prisma.order.findUnique({
+    const order = (await this.prisma.order.findUnique({
       where: { id: orderId },
       ...orderEmailIncludes,
-    }) as OrderWithEmailData | null;
+    })) as OrderWithEmailData | null;
 
     if (!order?.event) {
       return;
@@ -372,7 +375,10 @@ export class PaymentService {
     }).format(new Date(eventDate));
 
     // Calculate ticket count and group by type
-    const ticketTypes: Record<string, { name: string; quantity: number; price: string }> = {};
+    const ticketTypes: Record<
+      string,
+      { name: string; quantity: number; price: string }
+    > = {};
     let ticketCount = 0;
 
     for (const item of order.items) {
@@ -393,11 +399,12 @@ export class PaymentService {
     let venueAddress = '';
     if (order.event.venue?.address) {
       const addr = order.event.venue.address as any;
-      venueAddress = typeof addr === 'string'
-        ? addr
-        : [addr.street, addr.city, addr.state, addr.country]
-            .filter(Boolean)
-            .join(', ');
+      venueAddress =
+        typeof addr === 'string'
+          ? addr
+          : [addr.street, addr.city, addr.state, addr.country]
+              .filter(Boolean)
+              .join(', ');
     }
 
     await this.mailerService.sendTemplatedMail({

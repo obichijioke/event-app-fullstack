@@ -298,7 +298,11 @@ export class AdminPayoutService {
     return { message: 'Payout retry enqueued' };
   }
 
-  async getAnalytics(query: { orgId?: string; dateFrom?: string; dateTo?: string }) {
+  async getAnalytics(query: {
+    orgId?: string;
+    dateFrom?: string;
+    dateTo?: string;
+  }) {
     const where: Prisma.PayoutWhereInput = {};
     if (query.orgId) where.orgId = query.orgId;
     if (query.dateFrom || query.dateTo) {

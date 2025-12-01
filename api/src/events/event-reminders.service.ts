@@ -54,7 +54,9 @@ export class EventRemindersService {
         },
       });
 
-      this.logger.log(`Found ${upcomingEvents.length} events needing reminders`);
+      this.logger.log(
+        `Found ${upcomingEvents.length} events needing reminders`,
+      );
 
       for (const event of upcomingEvents) {
         await this.sendRemindersForEvent(event);
@@ -106,13 +108,15 @@ export class EventRemindersService {
         if (!user) continue;
 
         // Send one reminder with all tickets
-        await this.sendReminderEmail(event, user, userOrderList).catch((error) => {
-          this.logger.error(
-            `Failed to send reminder to user ${userId}:`,
-            error,
-          );
-          // Continue sending to other users even if one fails
-        });
+        await this.sendReminderEmail(event, user, userOrderList).catch(
+          (error) => {
+            this.logger.error(
+              `Failed to send reminder to user ${userId}:`,
+              error,
+            );
+            // Continue sending to other users even if one fails
+          },
+        );
       }
     } catch (error) {
       this.logger.error(
@@ -124,7 +128,10 @@ export class EventRemindersService {
 
   private async sendReminderEmail(event: any, user: any, orders: any[]) {
     // Count total tickets across all orders
-    const ticketCount = orders.reduce((sum, order) => sum + order.tickets.length, 0);
+    const ticketCount = orders.reduce(
+      (sum, order) => sum + order.tickets.length,
+      0,
+    );
     const orderNumber = orders[0].id; // Use first order ID
 
     // Format event date and time
@@ -155,12 +162,13 @@ export class EventRemindersService {
     // Format venue address (address is a JSON field)
     let venueAddress = '';
     if (event.venue?.address) {
-      const addr = event.venue.address as any;
-      venueAddress = typeof addr === 'string'
-        ? addr
-        : [addr.street, addr.city, addr.state, addr.country]
-            .filter(Boolean)
-            .join(', ');
+      const addr = event.venue.address;
+      venueAddress =
+        typeof addr === 'string'
+          ? addr
+          : [addr.street, addr.city, addr.state, addr.country]
+              .filter(Boolean)
+              .join(', ');
     }
 
     // Create venue map URL (Google Maps)
@@ -192,7 +200,9 @@ export class EventRemindersService {
       },
     });
 
-    this.logger.log(`Reminder sent to ${user.email} for event "${event.title}"`);
+    this.logger.log(
+      `Reminder sent to ${user.email} for event "${event.title}"`,
+    );
   }
 
   /**

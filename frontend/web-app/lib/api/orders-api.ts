@@ -63,6 +63,7 @@ export const ordersApi = {
     eventId: string;
     items: any[];
     promoCode?: string;
+    holdId?: string;
   }) => apiClient.post<Order>('/orders', data),
   
   initiatePayment: (orderId: string, data: {
