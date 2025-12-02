@@ -84,9 +84,10 @@ export function EventHero({ summary, occurrenceStart, eventUrl, eventDescription
       {/* Action Buttons (Top Right) */}
       <div className="absolute top-6 right-6 z-20 flex gap-3">
         <SaveButton 
-          eventId={summary.id} 
-          variant="outline"
-          className="h-10 w-10 rounded border-white/40 bg-white/10 backdrop-blur-sm hover:bg-white/20 p-0"
+          eventId={summary.id}
+          size="icon"
+          variant="ghost"
+          className="h-10 w-10 rounded-full border border-white/30 bg-white/10 backdrop-blur-sm hover:bg-white/20 p-0 text-white"
           iconClassName="text-white"
         />
         <div className="[&_button]:h-10 [&_button]:border-white/40 [&_button]:bg-white/10 [&_button]:backdrop-blur-sm [&_button]:hover:bg-white/20 [&_button]:text-white">
