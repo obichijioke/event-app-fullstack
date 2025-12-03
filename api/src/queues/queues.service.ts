@@ -23,10 +23,7 @@ export class QueuesService {
 
   private initializeQueues() {
     const defaultOptions: QueueOptions = {
-      connection: {
-        host: 'localhost',
-        port: 6379,
-      },
+      connection: this.redisService.getConnectionOptions(),
       defaultJobOptions: {
         removeOnComplete: 100,
         removeOnFail: 50,

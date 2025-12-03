@@ -1,6 +1,6 @@
 import { Injectable, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import Redis from 'ioredis';
+import Redis, { RedisOptions } from 'ioredis';
 
 @Injectable()
 export class RedisService implements OnModuleInit, OnModuleDestroy {
@@ -9,15 +9,35 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
   constructor(private configService: ConfigService) {}
 
   onModuleInit() {
-    this.client = new Redis(
-      this.configService.get<string>('REDIS_URL', 'redis://localhost:6379'),
-    );
+    this.client = new Redis(this.getConnectionOptions());
   }
 
   async onModuleDestroy() {
     if (this.client) {
       await this.client.quit();
     }
+  }
+
+  getConnectionOptions(): RedisOptions {
+    const redisUrl = this.configService.get<string>(
+      'REDIS_URL',
+      'redis://localhost:6379',
+    );
+    const url = new URL(redisUrl);
+
+    const isTls = url.protocol === 'rediss:';
+
+    return {
+      host: url.hostname,
+      port: parseInt(url.port, 10) || 6379,
+      username: url.username || undefined,
+      password: url.password || undefined,
+      tls: isTls ? {} : undefined,
+      // BullMQ recommends disabling these to avoid MaxRetriesPerRequest errors
+      // when running long blocking commands.
+      maxRetriesPerRequest: null,
+      enableReadyCheck: false,
+    };
   }
 
   getClient(): Redis {

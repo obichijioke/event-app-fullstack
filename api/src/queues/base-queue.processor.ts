@@ -33,10 +33,7 @@ export abstract class BaseQueueProcessor
         }
       },
       {
-        connection: {
-          host: 'localhost',
-          port: 6379,
-        },
+        connection: this.redisService.getConnectionOptions(),
         concurrency: 5,
       },
     );
