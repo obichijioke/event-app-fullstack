@@ -70,10 +70,7 @@ export class FaqsController {
   // Search
   @Get('search')
   @ApiOperation({ summary: 'Search FAQs (public)' })
-  search(
-    @Param('eventId') eventId: string,
-    @Query('q') query: string,
-  ) {
+  search(@Param('eventId') eventId: string, @Query('q') query: string) {
     return this.faqsService.search(eventId, query);
   }
 

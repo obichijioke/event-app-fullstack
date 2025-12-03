@@ -159,6 +159,15 @@ export class TicketingController {
     return this.ticketingService.removePriceTier(id, user.id);
   }
 
+  @Get('events/:eventId/holds/my-holds')
+  @UseGuards(JwtAuthGuard)
+  async getMyHolds(
+    @Param('eventId') eventId: string,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    return this.ticketingService.getUserHolds(eventId, user.id);
+  }
+
   // Holds
   @Post('events/:eventId/holds')
   @ApiOperation({ summary: 'Create a new hold for an event' })

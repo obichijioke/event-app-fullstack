@@ -24,7 +24,8 @@ export class PaystackWebhookService {
       throw new BadRequestException('Invalid Paystack webhook signature');
     }
 
-    const reference = payload?.data?.reference || payload?.data?.transaction_reference;
+    const reference =
+      payload?.data?.reference || payload?.data?.transaction_reference;
     const event = payload?.event;
 
     if (!reference || !event) {
@@ -150,11 +151,7 @@ export class PaystackWebhookService {
     await this.prisma.refund.update({
       where: { id: refund!.id },
       data: {
-        status: isProcessed
-          ? 'processed'
-          : isFailed
-            ? 'failed'
-            : 'pending',
+        status: isProcessed ? 'processed' : isFailed ? 'failed' : 'pending',
         processedAt: isProcessed ? new Date() : refund!.processedAt,
         providerRef: refundRef ?? refund!.providerRef,
       },

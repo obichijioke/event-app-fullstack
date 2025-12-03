@@ -22,20 +22,20 @@ const STATUS_CONFIG: Record<PayoutStatus, { color: string; icon: React.ReactNode
     icon: <AlertCircle className="w-5 h-5" />,
     label: 'In Review'
   },
-  approved: {
+  paid: {
     color: 'bg-green-100 text-green-800 border-green-200',
     icon: <CheckCircle className="w-5 h-5" />,
-    label: 'Approved'
+    label: 'Paid'
   },
   failed: {
     color: 'bg-red-100 text-red-800 border-red-200',
     icon: <XCircle className="w-5 h-5" />,
     label: 'Failed'
   },
-  completed: {
+  canceled: {
     color: 'bg-gray-100 text-gray-800 border-gray-200',
-    icon: <CheckCircle className="w-5 h-5" />,
-    label: 'Completed'
+    icon: <AlertCircle className="w-5 h-5" />,
+    label: 'Canceled'
   },
 };
 
@@ -250,13 +250,13 @@ export function PayoutDetail({ payoutId }: PayoutDetailProps) {
             </div>
           )}
 
-          {payout.status === 'completed' && (
+          {payout.status === 'paid' && (
             <div className="flex items-start gap-4">
               <div className="flex-shrink-0 w-8 h-8 rounded-full bg-green-100 flex items-center justify-center">
                 <CheckCircle className="w-4 h-4 text-green-600" />
               </div>
               <div className="flex-1">
-                <p className="font-medium">Payout Completed</p>
+                <p className="font-medium">Payout Paid</p>
                 <p className="text-sm text-muted-foreground">Funds transferred successfully</p>
               </div>
             </div>
@@ -270,6 +270,18 @@ export function PayoutDetail({ payoutId }: PayoutDetailProps) {
               <div className="flex-1">
                 <p className="font-medium">Payout Failed</p>
                 <p className="text-sm text-muted-foreground">{payout.failureReason || 'Unknown error'}</p>
+              </div>
+            </div>
+          )}
+
+          {payout.status === 'canceled' && (
+            <div className="flex items-start gap-4">
+              <div className="flex-shrink-0 w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center">
+                <AlertCircle className="w-4 h-4 text-gray-700" />
+              </div>
+              <div className="flex-1">
+                <p className="font-medium">Payout Canceled</p>
+                <p className="text-sm text-muted-foreground">This payout was canceled and will not be processed.</p>
               </div>
             </div>
           )}

@@ -24,13 +24,22 @@ export class MailerService {
   private transporter: nodemailer.Transporter | null = null;
   private readonly from: string | undefined;
   private readonly templatesDir: string;
-  private readonly templateCache: Map<string, handlebars.TemplateDelegate> = new Map();
+  private readonly templateCache: Map<string, handlebars.TemplateDelegate> =
+    new Map();
 
   constructor() {
     // Prefer source templates directory (works in dev/ts-node and when dist lacks copied templates)
-    const srcTemplates = path.join(process.cwd(), 'src', 'common', 'mailer', 'templates');
+    const srcTemplates = path.join(
+      process.cwd(),
+      'src',
+      'common',
+      'mailer',
+      'templates',
+    );
     const distTemplates = path.join(__dirname, 'templates');
-    this.templatesDir = fs.existsSync(srcTemplates) ? srcTemplates : distTemplates;
+    this.templatesDir = fs.existsSync(srcTemplates)
+      ? srcTemplates
+      : distTemplates;
     const host = process.env.SMTP_HOST;
     const port = process.env.SMTP_PORT
       ? parseInt(process.env.SMTP_PORT, 10)
@@ -49,15 +58,19 @@ export class MailerService {
         secure, // true for 465, false for other ports (like 587, 2525)
         auth: { user, pass },
         // Enable STARTTLS for non-SSL ports
-        ...((!secure && port !== 25) && {
-          requireTLS: true,
-          tls: {
-            rejectUnauthorized: false, // For development/testing with self-signed certs
-          }
-        }),
+        ...(!secure &&
+          port !== 25 &&
+          port !== 1025 && {
+            requireTLS: true,
+            tls: {
+              rejectUnauthorized: false, // For development/testing with self-signed certs
+            },
+          }),
       });
 
-      this.logger.log(`Mailer configured with SMTP transport (${host}:${port}, ${secure ? 'SSL' : 'STARTTLS'})`);
+      this.logger.log(
+        `Mailer configured with SMTP transport (${host}:${port}, ${secure ? 'SSL' : 'STARTTLS'})`,
+      );
 
       // Test connection on startup
       this.transporter.verify((error, success) => {

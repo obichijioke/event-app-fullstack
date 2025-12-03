@@ -66,6 +66,16 @@ export class OrdersController {
     return this.ordersService.findAll(user.id, filters, { page, limit });
   }
 
+  @Get('payment-providers')
+  @ApiOperation({ summary: 'List available payment providers for checkout' })
+  @ApiResponse({
+    status: 200,
+    description: 'Payment providers retrieved successfully',
+  })
+  getPaymentProviders() {
+    return this.ordersService.getPaymentProviders();
+  }
+
   @Get('stats')
   @ApiOperation({ summary: 'Get order statistics for the current user' })
   @ApiResponse({

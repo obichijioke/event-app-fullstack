@@ -5,7 +5,7 @@ import {
   IsNumber,
   IsDateString,
 } from 'class-validator';
-import { TicketKind } from '@prisma/client';
+import { TicketKind, HoldReason } from '@prisma/client';
 
 export class CreateTicketTypeDto {
   @IsString()
@@ -90,4 +90,8 @@ export class CreateHoldDto {
 
   @IsDateString()
   expiresAt: string;
+
+  @IsEnum(HoldReason)
+  @IsOptional()
+  reason?: HoldReason;
 }

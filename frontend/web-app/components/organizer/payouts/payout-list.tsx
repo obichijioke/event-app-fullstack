@@ -14,17 +14,17 @@ import type { Payout, PayoutStatus } from '@/lib/types/organizer';
 const STATUS_COLORS: Record<PayoutStatus, string> = {
   pending: 'bg-yellow-100 text-yellow-800 border-yellow-200',
   in_review: 'bg-blue-100 text-blue-800 border-blue-200',
-  approved: 'bg-green-100 text-green-800 border-green-200',
+  paid: 'bg-green-100 text-green-800 border-green-200',
   failed: 'bg-red-100 text-red-800 border-red-200',
-  completed: 'bg-gray-100 text-gray-800 border-gray-200',
+  canceled: 'bg-gray-100 text-gray-800 border-gray-200',
 };
 
 const STATUS_ICONS: Record<PayoutStatus, React.ReactNode> = {
   pending: <Clock className="w-4 h-4" />,
   in_review: <AlertCircle className="w-4 h-4" />,
-  approved: <CheckCircle className="w-4 h-4" />,
+  paid: <CheckCircle className="w-4 h-4" />,
   failed: <XCircle className="w-4 h-4" />,
-  completed: <CheckCircle className="w-4 h-4" />,
+  canceled: <AlertCircle className="w-4 h-4" />,
 };
 
 export function PayoutList() {
@@ -136,9 +136,9 @@ export function PayoutList() {
             <option value="all">All Status</option>
             <option value="pending">Pending</option>
             <option value="in_review">In Review</option>
-            <option value="approved">Approved</option>
-            <option value="completed">Completed</option>
+            <option value="paid">Paid</option>
             <option value="failed">Failed</option>
+            <option value="canceled">Canceled</option>
           </select>
         </div>
       </div>

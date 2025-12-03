@@ -179,7 +179,9 @@ export class SessionCleanupService {
       where: deleteConditions,
     });
 
-    this.logger.log(`Manual cleanup completed - deleted ${result.count} sessions`);
+    this.logger.log(
+      `Manual cleanup completed - deleted ${result.count} sessions`,
+    );
 
     return {
       deletedCount: result.count,

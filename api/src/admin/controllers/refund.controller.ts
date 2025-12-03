@@ -109,7 +109,11 @@ export class AdminRefundController {
   @ApiOperation({ summary: 'Approve refund request' })
   @ApiResponse({ status: 200, description: 'Refund approved successfully' })
   @HttpCode(HttpStatus.OK)
-  async approveRefund(@Param('id') id: string, @Body() dto: ApproveRefundDto, @Req() req: Request) {
+  async approveRefund(
+    @Param('id') id: string,
+    @Body() dto: ApproveRefundDto,
+    @Req() req: Request,
+  ) {
     const actorId = (req.user as any)?.id;
     const refund = await this.refundService.approve(id, dto, actorId);
     return {
@@ -122,7 +126,11 @@ export class AdminRefundController {
   @ApiOperation({ summary: 'Reject refund request' })
   @ApiResponse({ status: 200, description: 'Refund rejected successfully' })
   @HttpCode(HttpStatus.OK)
-  async rejectRefund(@Param('id') id: string, @Body() dto: RejectRefundDto, @Req() req: Request) {
+  async rejectRefund(
+    @Param('id') id: string,
+    @Body() dto: RejectRefundDto,
+    @Req() req: Request,
+  ) {
     const actorId = (req.user as any)?.id;
     const refund = await this.refundService.reject(id, dto, actorId);
     return {
@@ -135,7 +143,11 @@ export class AdminRefundController {
   @ApiOperation({ summary: 'Process approved refund' })
   @ApiResponse({ status: 200, description: 'Refund processed successfully' })
   @HttpCode(HttpStatus.OK)
-  async processRefund(@Param('id') id: string, @Body() dto: ProcessRefundDto, @Req() req: Request) {
+  async processRefund(
+    @Param('id') id: string,
+    @Body() dto: ProcessRefundDto,
+    @Req() req: Request,
+  ) {
     const actorId = (req.user as any)?.id;
     const refund = await this.refundService.process(id, dto, actorId);
     return {

@@ -3,7 +3,8 @@
 import Image from 'next/image';
 import { resolveImageUrl } from '@/lib/utils/image';
 import { Badge, Button } from '@/components/ui';
-import { HeartIcon } from '@/components/ui/icons';
+// import { HeartIcon } from '@/components/ui/icons'; // Removed as it's used inside SaveButton
+import { SaveButton } from '@/components/events/save-button';
 import { SocialShareDropdown } from './social-share-dropdown';
 import type { EventSummary } from '@/lib/homepage';
 import type { EventDetailSummary } from '@/lib/events';
@@ -82,13 +83,13 @@ export function EventHero({ summary, occurrenceStart, eventUrl, eventDescription
 
       {/* Action Buttons (Top Right) */}
       <div className="absolute top-6 right-6 z-20 flex gap-3">
-        <Button
-          variant="outline"
+        <SaveButton 
+          eventId={summary.id}
           size="icon"
-          className="h-10 w-10 rounded border-white/40 bg-white/10 backdrop-blur-sm hover:bg-white/20"
-        >
-          <HeartIcon className="h-5 w-5 text-white" />
-        </Button>
+          variant="ghost"
+          className="h-10 w-10 rounded-full border border-white/30 bg-white/10 backdrop-blur-sm hover:bg-white/20 p-0 text-white"
+          iconClassName="text-white"
+        />
         <div className="[&_button]:h-10 [&_button]:border-white/40 [&_button]:bg-white/10 [&_button]:backdrop-blur-sm [&_button]:hover:bg-white/20 [&_button]:text-white">
           <SocialShareDropdown
             url={shareUrl}

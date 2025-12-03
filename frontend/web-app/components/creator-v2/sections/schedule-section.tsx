@@ -125,15 +125,43 @@ export function ScheduleSection() {
     [updateSection]
   );
 
-  useEffect(() => {
-    const subscription = form.watch((values) => {
+  const debouncedMarkIncomplete = useMemo(
+    () =>
+      debounce((issues: z.ZodIssue[]) => {
+        void updateSection(
+          'schedule',
+          {
+            autosave: true,
+            status: 'incomplete',
+            errors: issues.map((issue) => ({
+              path: issue.path,
+              message: issue.message,
+            })),
+          },
+          { showToast: false }
+        );
+      }, 600),
+    [updateSection]
+  );
+
+  const handleAutosave = useCallback(
+    (values: ScheduleValues) => {
       const parsed = scheduleSchema.safeParse(values);
       if (parsed.success) {
         debouncedSave(parsed.data);
+      } else {
+        debouncedMarkIncomplete(parsed.error.issues);
       }
+    },
+    [debouncedMarkIncomplete, debouncedSave]
+  );
+
+  useEffect(() => {
+    const subscription = form.watch((values) => {
+      handleAutosave(values);
     });
     return () => subscription.unsubscribe();
-  }, [form, debouncedSave]);
+  }, [form, handleAutosave]);
 
   const handleRecurrenceChange = useCallback(
     (rrule: string, exceptions: string[], preview: { start: string; end?: string }[]) => {

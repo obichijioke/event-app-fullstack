@@ -25,23 +25,24 @@ export function ReviewPublish() {
   const canPublish = blockers.length === 0;
 
   const handlePublish = async (scheduled?: boolean) => {
+    if (!draft) return;
     setPublishing(true);
     setMessage(null);
     try {
-      if (!draft) return;
       const payload: any = {};
       if (scheduled && scheduleAt) payload.publishAt = scheduleAt;
       const res = await eventCreatorV2Api.publishDraft(draft.id, payload);
 
       // Show success message
       if (scheduled) {
-        toast.success(`Event scheduled for ${format(new Date(scheduleAt), 'MMM d, yyyy • h:mm a')}`);
+        toast.success(
+          `Event scheduled for ${format(new Date(scheduleAt), 'MMM d, yyyy - h:mm a')}`,
+        );
       } else {
         toast.success('Event published successfully!');
       }
 
       // Redirect to event details or organizer events list
-      // If we have an eventId in the response, go to event details
       if ('eventId' in res && res.eventId) {
         router.push(`/organizer/events/${res.eventId}`);
       } else {
@@ -94,7 +95,9 @@ export function ReviewPublish() {
                 {s.status === 'valid' ? 'Complete' : s.status === 'blocked' ? 'Needs attention' : 'Incomplete'}
               </div>
               <div className="text-muted-foreground">
-                {s.updatedAt ? format(new Date(s.updatedAt), 'MMM d, yyyy • h:mm a') : '-'}
+                {s.updatedAt
+                  ? format(new Date(s.updatedAt), 'MMM d, yyyy - h:mm a')
+                  : '-'}
               </div>
             </div>
           ))}
@@ -111,7 +114,7 @@ export function ReviewPublish() {
             onChange={(e) => setScheduleAt(e.target.value)}
           />
           <Button onClick={() => handlePublish(true)} disabled={publishing || !scheduleAt}>
-            {publishing ? 'Scheduling…' : 'Schedule publish'}
+            {publishing ? 'Scheduling...' : 'Schedule publish'}
           </Button>
         </div>
       </div>
@@ -121,7 +124,7 @@ export function ReviewPublish() {
           onClick={() => handlePublish(false)}
           disabled={!canPublish || publishing}
         >
-          {publishing ? 'Publishing…' : canPublish ? 'Publish now' : 'Complete sections to publish'}
+          {publishing ? 'Publishing...' : canPublish ? 'Publish now' : 'Complete sections to publish'}
         </Button>
         <a
           href={`/organizer/events/create-v2/${draft.id}`}

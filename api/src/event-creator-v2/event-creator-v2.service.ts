@@ -680,6 +680,8 @@ export class EventCreatorV2Service {
     const story = sections.find((s) => s.section === 'story')?.payload as any;
     const tickets = sections.find((s) => s.section === 'tickets')
       ?.payload as any;
+    const schedulePayload = sections.find((s) => s.section === 'schedule')
+      ?.payload as any;
 
     // Find occurrences from materialized table or fall back to payload
     const rule = await this.prisma.eventCreatorDraftScheduleRule.findFirst({
@@ -704,6 +706,7 @@ export class EventCreatorV2Service {
         .map((o) => ({
           startsAt: new Date(o.startsAt as string),
           endsAt: o.endsAt ? new Date(o.endsAt) : null,
+          venueId: schedulePayload?.venueId || null,
         })) as any;
     }
     if (!occurrences.length) {
@@ -740,6 +743,7 @@ export class EventCreatorV2Service {
             publishAt: targetPublishAt,
             language: basics?.language || null,
             tags: this.normalizeTags(basics?.tags),
+            venueId: schedulePayload?.venueId || null,
           },
         });
 

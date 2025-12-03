@@ -55,7 +55,12 @@ export class AnnouncementsController {
     @Param('announcementId') announcementId: string,
     @Body() dto: UpdateAnnouncementDto,
   ) {
-    return this.announcementsService.update(eventId, announcementId, user.id, dto);
+    return this.announcementsService.update(
+      eventId,
+      announcementId,
+      user.id,
+      dto,
+    );
   }
 
   @Delete(':announcementId')
@@ -86,10 +91,7 @@ export class AnnouncementsController {
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Get announcement analytics (organizer only)' })
-  getAnalytics(
-    @CurrentUser() user: any,
-    @Param('eventId') eventId: string,
-  ) {
+  getAnalytics(@CurrentUser() user: any, @Param('eventId') eventId: string) {
     return this.announcementsService.getAnalytics(eventId, user.id);
   }
 
@@ -102,7 +104,10 @@ export class AnnouncementsController {
     @CurrentUser() user: any,
     @Param('announcementId') announcementId: string,
   ) {
-    return this.announcementsService.dismissAnnouncement(announcementId, user.id);
+    return this.announcementsService.dismissAnnouncement(
+      announcementId,
+      user.id,
+    );
   }
 
   @Delete(':announcementId/dismiss')
@@ -113,17 +118,17 @@ export class AnnouncementsController {
     @CurrentUser() user: any,
     @Param('announcementId') announcementId: string,
   ) {
-    return this.announcementsService.undismissAnnouncement(announcementId, user.id);
+    return this.announcementsService.undismissAnnouncement(
+      announcementId,
+      user.id,
+    );
   }
 
   @Get('dismissed')
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Get dismissed announcement IDs' })
-  getDismissed(
-    @CurrentUser() user: any,
-    @Param('eventId') eventId: string,
-  ) {
+  getDismissed(@CurrentUser() user: any, @Param('eventId') eventId: string) {
     return this.announcementsService.getDismissed(eventId, user.id);
   }
 
@@ -131,13 +136,20 @@ export class AnnouncementsController {
   @Post(':announcementId/notify')
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
-  @ApiOperation({ summary: 'Send notification for announcement (organizer only)' })
+  @ApiOperation({
+    summary: 'Send notification for announcement (organizer only)',
+  })
   async sendNotification(
     @CurrentUser() user: any,
     @Param('eventId') eventId: string,
     @Param('announcementId') announcementId: string,
   ) {
-    const announcement = await this.announcementsService.update(eventId, announcementId, user.id, {});
+    const announcement = await this.announcementsService.update(
+      eventId,
+      announcementId,
+      user.id,
+      {},
+    );
     await this.announcementsService.sendAnnouncementNotification(announcement);
     return { success: true, message: 'Notifications queued' };
   }

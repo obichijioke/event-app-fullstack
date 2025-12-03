@@ -222,9 +222,7 @@ export class AuthController {
 
   @Post('email/verify/request')
   @ApiOperation({ summary: 'Request email verification token' })
-  async requestEmailVerification(
-    @Body() body: RequestEmailVerificationDto,
-  ) {
+  async requestEmailVerification(@Body() body: RequestEmailVerificationDto) {
     return this.authService.requestEmailVerification(body);
   }
 
@@ -252,10 +250,7 @@ export class AuthController {
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Enable two-factor authentication' })
-  async enableTwoFactor(
-    @CurrentUser() user: any,
-    @Body() body: TwoFaCodeDto,
-  ) {
+  async enableTwoFactor(@CurrentUser() user: any, @Body() body: TwoFaCodeDto) {
     return this.authService.enableTwoFactor(user.id, body.code);
   }
 
@@ -263,10 +258,7 @@ export class AuthController {
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Disable two-factor authentication' })
-  async disableTwoFactor(
-    @CurrentUser() user: any,
-    @Body() body: TwoFaCodeDto,
-  ) {
+  async disableTwoFactor(@CurrentUser() user: any, @Body() body: TwoFaCodeDto) {
     return this.authService.disableTwoFactor(user.id, body.code);
   }
 

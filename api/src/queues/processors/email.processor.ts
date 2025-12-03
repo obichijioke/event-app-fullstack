@@ -62,7 +62,9 @@ export class EmailProcessor extends BaseQueueProcessor {
 
           // Use template if provided
           if (template && context) {
-            this.logger.log(`Sending templated email using template: ${template}`);
+            this.logger.log(
+              `Sending templated email using template: ${template}`,
+            );
             result = await this.mailerService.sendTemplatedMail({
               to: recipient,
               subject,

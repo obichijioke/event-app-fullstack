@@ -17,15 +17,19 @@ export class AnnouncementsSchedulerService {
     const now = new Date();
 
     // Find announcements scheduled for publication
-    const scheduledAnnouncements = await this.prisma.eventAnnouncement.findMany({
-      where: {
-        scheduledFor: { lte: now },
-        publishedAt: null,
-        isActive: false, // Draft state
+    const scheduledAnnouncements = await this.prisma.eventAnnouncement.findMany(
+      {
+        where: {
+          scheduledFor: { lte: now },
+          publishedAt: null,
+          isActive: false, // Draft state
+        },
       },
-    });
+    );
 
-    this.logger.log(`Found ${scheduledAnnouncements.length} announcements to publish`);
+    this.logger.log(
+      `Found ${scheduledAnnouncements.length} announcements to publish`,
+    );
 
     for (const announcement of scheduledAnnouncements) {
       try {
@@ -39,13 +43,21 @@ export class AnnouncementsSchedulerService {
         });
 
         // Send notification if it's important/urgent
-        if (announcement.type === 'important' || announcement.type === 'urgent') {
-          await this.announcementsService.sendAnnouncementNotification(announcement);
+        if (
+          announcement.type === 'important' ||
+          announcement.type === 'urgent'
+        ) {
+          await this.announcementsService.sendAnnouncementNotification(
+            announcement,
+          );
         }
 
         this.logger.log(`Published announcement ${announcement.id}`);
       } catch (error) {
-        this.logger.error(`Failed to publish announcement ${announcement.id}:`, error);
+        this.logger.error(
+          `Failed to publish announcement ${announcement.id}:`,
+          error,
+        );
       }
     }
   }

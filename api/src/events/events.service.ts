@@ -305,10 +305,14 @@ export class EventsService {
     },
     userId?: string,
   ) {
+    const now = new Date();
     const whereClause: any = {
       visibility: 'public',
       status: 'live',
       deletedAt: null,
+      endAt: {
+        gte: now,
+      },
     };
 
     if (filters?.status) {
@@ -321,7 +325,7 @@ export class EventsService {
 
     if (filters?.upcoming) {
       whereClause.startAt = {
-        gte: new Date(),
+        gte: now,
       };
     }
 
@@ -419,8 +423,8 @@ export class EventsService {
             endsAt: true,
           },
           where: {
-            startsAt: { lte: new Date() },
-            endsAt: { gte: new Date() },
+            startsAt: { lte: now },
+            endsAt: { gte: now },
           },
           take: 1,
         },
@@ -540,7 +544,7 @@ export class EventsService {
       }
 
       const fees = await this.getApplicableFees(event.orgId);
-      
+
       return serializeResponse({ ...event, fees });
     } catch (error) {
       this.logger.error('findOne error', error);
@@ -1041,11 +1045,15 @@ export class EventsService {
     page: number = 1,
     limit: number = 20,
   ) {
+    const now = new Date();
     // Get all public live events with coordinates
     const events = await this.prisma.event.findMany({
       where: {
         visibility: 'public',
         status: 'live',
+        endAt: {
+          gte: now,
+        },
         OR: [
           {
             // Events with their own coordinates

@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { OrdersService } from './orders.service';
 import { OrdersController } from './orders.controller';
+import { PaymentProvidersController } from './payment-providers.controller';
 import { CommonModule } from '../common/common.module';
 import { PaymentService } from './services/payment.service';
 import { PaystackPaymentProvider } from './providers/paystack/paystack.service';
@@ -32,7 +33,7 @@ import { PromotionsModule } from '../promotions/promotions.module';
       ],
     },
   ],
-  controllers: [OrdersController],
+  controllers: [OrdersController, PaymentProvidersController],
   exports: [
     OrdersService,
     PaymentService,

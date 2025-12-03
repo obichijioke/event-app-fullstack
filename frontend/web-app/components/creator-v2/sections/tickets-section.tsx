@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -93,12 +93,43 @@ export function TicketsSection() {
     [updateSection]
   );
 
-  form.watch((values) => {
-    const parsed = ticketsFormSchema.safeParse(values);
-    if (parsed.success) {
-      debouncedSave(parsed.data);
-    }
-  });
+  const debouncedMarkIncomplete = useMemo(
+    () =>
+      debounce((issues: z.ZodIssue[]) => {
+        void updateSection(
+          'tickets',
+          {
+            autosave: true,
+            status: 'incomplete',
+            errors: issues.map((issue) => ({
+              path: issue.path,
+              message: issue.message,
+            })),
+          },
+          { showToast: false }
+        );
+      }, 600),
+    [updateSection]
+  );
+
+  const handleAutosave = useCallback(
+    (values: TicketsValues) => {
+      const parsed = ticketsFormSchema.safeParse(values);
+      if (parsed.success) {
+        debouncedSave(parsed.data);
+      } else {
+        debouncedMarkIncomplete(parsed.error.issues);
+      }
+    },
+    [debouncedMarkIncomplete, debouncedSave]
+  );
+
+  React.useEffect(() => {
+    const subscription = form.watch((values) => {
+      handleAutosave(values);
+    });
+    return () => subscription.unsubscribe();
+  }, [form, handleAutosave]);
 
   return (
     <div className="space-y-6">

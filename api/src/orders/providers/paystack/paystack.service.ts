@@ -186,6 +186,26 @@ export class PaystackPaymentProvider implements PaymentProvider {
         response: refund,
       };
     } catch (error) {
+      if (axios.isAxiosError(error)) {
+        const message =
+          error.response?.data?.message ||
+          error.response?.data?.status ||
+          error.message ||
+          '';
+
+        // Paystack returns 400 with "A refund already exist for this transaction"
+        if (message.toLowerCase().includes('refund already exist')) {
+          return {
+            amountCents: BigInt(amountInMinorUnits),
+            currency: payment.currency,
+            status: 'success',
+            providerReference:
+              payment.providerCharge || 'paystack_refund_existing',
+            response: { message },
+          };
+        }
+      }
+
       this.handleAxiosError(error, 'creating Paystack refund');
       throw new InternalServerErrorException('Paystack refund failed.');
     }

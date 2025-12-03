@@ -37,6 +37,15 @@ export interface Order {
   };
 }
 
+export interface PaymentProviderStatus {
+  id: string;
+  label: string;
+  enabled: boolean;
+  configured: boolean;
+  available: boolean;
+  reason?: string | null;
+}
+
 export const ordersApi = {
   getMyOrders: (params?: {
     status?: string;
@@ -54,6 +63,7 @@ export const ordersApi = {
     eventId: string;
     items: any[];
     promoCode?: string;
+    holdId?: string;
   }) => apiClient.post<Order>('/orders', data),
   
   initiatePayment: (orderId: string, data: {
@@ -72,4 +82,9 @@ export const ordersApi = {
     orderId: string;
     paymentIntentId: string;
   }) => apiClient.post<{ success: boolean }>(`/orders/${data.orderId}/payment/process`, data),
+
+  getPaymentProviders: () =>
+    apiClient.get<{ providers: PaymentProviderStatus[] }>(
+      '/payment-providers',
+    ),
 };

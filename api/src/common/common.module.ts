@@ -8,6 +8,12 @@ import { MailerService } from './mailer/mailer.service';
 @Module({
   imports: [QueueModule],
   providers: [PrismaService, RedisService, StorageService, MailerService],
-  exports: [PrismaService, RedisService, QueueModule, StorageService, MailerService],
+  exports: [
+    PrismaService,
+    RedisService,
+    QueueModule,
+    StorageService,
+    MailerService,
+  ],
 })
 export class CommonModule {}

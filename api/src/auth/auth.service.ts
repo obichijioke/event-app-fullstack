@@ -461,7 +461,9 @@ export class AuthService {
     });
 
     if (!user) {
-      return { message: 'If an account exists, a verification email has been sent' };
+      return {
+        message: 'If an account exists, a verification email has been sent',
+      };
     }
 
     if (user.emailVerifiedAt) {
@@ -480,20 +482,22 @@ export class AuthService {
     // Send templated email
     const verificationUrl = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/auth/verify-email?token=${token}`;
 
-    await this.mailer.sendTemplatedMail({
-      to: user.email,
-      subject: 'Verify Your Email Address - EventFlow',
-      template: 'email-verification',
-      context: {
-        userName: user.name || user.email.split('@')[0],
-        verificationCode: token.substring(0, 8).toUpperCase(),
-        verificationUrl,
-        expiryMinutes: '24 hours',
-      },
-    }).catch((error) => {
-      console.error('Failed to send verification email:', error);
-      // Don't fail the request if email fails
-    });
+    await this.mailer
+      .sendTemplatedMail({
+        to: user.email,
+        subject: 'Verify Your Email Address - EventFlow',
+        template: 'email-verification',
+        context: {
+          userName: user.name || user.email.split('@')[0],
+          verificationCode: token.substring(0, 8).toUpperCase(),
+          verificationUrl,
+          expiryMinutes: '24 hours',
+        },
+      })
+      .catch((error) => {
+        console.error('Failed to send verification email:', error);
+        // Don't fail the request if email fails
+      });
 
     return {
       message: 'Verification email sent',
@@ -548,23 +552,25 @@ export class AuthService {
     // Send templated password reset email
     const resetUrl = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/auth/reset-password?token=${token}`;
 
-    await this.mailer.sendTemplatedMail({
-      to: user.email,
-      subject: 'Reset Your Password - EventFlow',
-      template: 'password-reset',
-      context: {
-        userName: user.name || user.email.split('@')[0],
-        resetCode: token.substring(0, 8).toUpperCase(),
-        resetUrl,
-        expiryMinutes: '60',
-        ipAddress: 'N/A', // Can be added if request object is passed
-        userAgent: 'Unknown', // Can be added if request object is passed
-        requestTime: new Date().toLocaleString(),
-      },
-    }).catch((error) => {
-      console.error('Failed to send password reset email:', error);
-      // Don't fail the request if email fails
-    });
+    await this.mailer
+      .sendTemplatedMail({
+        to: user.email,
+        subject: 'Reset Your Password - EventFlow',
+        template: 'password-reset',
+        context: {
+          userName: user.name || user.email.split('@')[0],
+          resetCode: token.substring(0, 8).toUpperCase(),
+          resetUrl,
+          expiryMinutes: '60',
+          ipAddress: 'N/A', // Can be added if request object is passed
+          userAgent: 'Unknown', // Can be added if request object is passed
+          requestTime: new Date().toLocaleString(),
+        },
+      })
+      .catch((error) => {
+        console.error('Failed to send password reset email:', error);
+        // Don't fail the request if email fails
+      });
 
     return {
       message: 'Password reset link sent',
@@ -626,7 +632,7 @@ export class AuthService {
       return { message: '2FA already disabled' };
     }
 
-    const code = (crypto.randomInt(0, 999999)).toString().padStart(6, '0');
+    const code = crypto.randomInt(0, 999999).toString().padStart(6, '0');
     const codeHash = await bcrypt.hash(code, 10);
 
     await this.prisma.twoFactorCode.create({
@@ -639,25 +645,30 @@ export class AuthService {
     });
 
     // Send templated 2FA code email
-    const purposeText = purpose === 'enable' ? 'enable two-factor authentication' : 'disable two-factor authentication';
+    const purposeText =
+      purpose === 'enable'
+        ? 'enable two-factor authentication'
+        : 'disable two-factor authentication';
 
-    await this.mailer.sendTemplatedMail({
-      to: user.email,
-      subject: 'Your Two-Factor Authentication Code - EventFlow',
-      template: 'two-factor-code',
-      context: {
-        userName: user.name || user.email.split('@')[0],
-        twoFactorCode: code,
-        purpose: purposeText,
-        expiryMinutes: '10',
-        ipAddress: 'N/A', // Can be added if request object is passed
-        userAgent: 'Unknown', // Can be added if request object is passed
-        requestTime: new Date().toLocaleString(),
-      },
-    }).catch((error) => {
-      console.error('Failed to send 2FA code email:', error);
-      // Don't fail the request if email fails
-    });
+    await this.mailer
+      .sendTemplatedMail({
+        to: user.email,
+        subject: 'Your Two-Factor Authentication Code - EventFlow',
+        template: 'two-factor-code',
+        context: {
+          userName: user.name || user.email.split('@')[0],
+          twoFactorCode: code,
+          purpose: purposeText,
+          expiryMinutes: '10',
+          ipAddress: 'N/A', // Can be added if request object is passed
+          userAgent: 'Unknown', // Can be added if request object is passed
+          requestTime: new Date().toLocaleString(),
+        },
+      })
+      .catch((error) => {
+        console.error('Failed to send 2FA code email:', error);
+        // Don't fail the request if email fails
+      });
 
     return { message: '2FA code sent' };
   }
@@ -706,6 +717,8 @@ export class AuthService {
       }),
     ]);
 
-    return { message: `Two-factor authentication ${enable ? 'enabled' : 'disabled'}` };
+    return {
+      message: `Two-factor authentication ${enable ? 'enabled' : 'disabled'}`,
+    };
   }
 }

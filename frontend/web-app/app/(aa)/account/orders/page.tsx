@@ -76,37 +76,29 @@ export default function OrdersPage() {
 
   useEffect(() => {
     fetchOrders();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [statusFilter, startDate, endDate, page]);
 
   return (
-    <div className="bg-muted/40 py-10">
-      <div className="container mx-auto px-4">
-        <div className="overflow-hidden rounded-3xl border border-border/60 bg-card shadow-sm">
-          {/* Header */}
-          <div className="flex flex-col gap-4 border-b border-border/60 bg-linear-to-r from-slate-900 via-slate-800 to-slate-700 px-6 py-8 text-white md:flex-row md:items-center md:justify-between">
-            <div className="space-y-2">
-              <div className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-xs font-semibold backdrop-blur">
-                <ShoppingBag className="h-4 w-4" />
-                My Orders
-              </div>
-              <h1 className="text-3xl font-semibold">Order History</h1>
-              <p className="text-sm text-slate-200">View and manage your event ticket orders</p>
-            </div>
-            <div className="flex items-center gap-3">
-              <button
-                onClick={fetchOrders}
-                className="inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/20"
-              >
-                <RefreshCw className="h-4 w-4" />
-                Refresh
-              </button>
-            </div>
+    <div className="space-y-6">
+      {/* Page Header */}
+      <div className="overflow-hidden rounded-xl border border-border/70 bg-card">
+        <div className="bg-linear-to-r from-slate-900 via-slate-800 to-slate-700 px-6 py-6 text-white">
+          <div className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-xs font-semibold backdrop-blur mb-2">
+            <ShoppingBag className="h-4 w-4" />
+            My Orders
           </div>
+          <h1 className="text-3xl font-semibold">Order History</h1>
+          <p className="text-sm text-slate-200 mt-1">View and manage your event ticket orders</p>
+        </div>
+      </div>
 
-          <div className="px-6 py-6">
-            {/* Filters */}
-            <div className="mb-6 rounded-xl border border-border/70 bg-muted/30 p-4">
+      <div className="space-y-6">
+        {/* Filters */}
+        <div className="rounded-xl border border-border/70 bg-card overflow-hidden">
+          <div className="px-6 py-4 bg-muted/30 border-b border-border/50">
+            <h2 className="text-sm font-semibold">Filter Orders</h2>
+          </div>
+          <div className="p-4">
               <div className="flex flex-wrap gap-3 items-center">
                 <select
                   className="rounded-lg border border-border bg-background px-4 py-2 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary"
@@ -157,38 +149,40 @@ export default function OrdersPage() {
                   </button>
                 )}
               </div>
-            </div>
+          </div>
+        </div>
 
-            {/* Orders List */}
-            {loading && (
-              <div className="flex items-center justify-center py-12">
-                <Loader2 className="h-6 w-6 animate-spin text-primary" />
-                <span className="ml-2 text-muted-foreground">Loading orders...</span>
-              </div>
-            )}
+        {/* Orders List */}
+        {loading && (
+          <div className="flex items-center justify-center py-12">
+            <Loader2 className="h-6 w-6 animate-spin text-primary" />
+            <span className="ml-2 text-muted-foreground">Loading orders...</span>
+          </div>
+        )}
 
-            {error && (
-              <div className="mb-6 rounded-xl border border-destructive/40 bg-destructive/10 px-4 py-3 text-sm text-destructive">
-                {error}
-              </div>
-            )}
+        {error && (
+          <div className="rounded-xl border border-destructive/40 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+            {error}
+          </div>
+        )}
 
-            {!loading && !error && orders.length === 0 && (
-              <div className="flex flex-col items-center justify-center gap-3 rounded-2xl border border-dashed border-border/70 bg-muted/40 px-6 py-12 text-center text-muted-foreground">
-                <ShoppingBag className="h-8 w-8" />
-                <div className="text-sm">
-                  No orders found. Browse events to book your next experience.
-                </div>
-                <Link
-                  href="/events"
-                  className="rounded-full bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition hover:opacity-90"
-                >
-                  Browse events
-                </Link>
-              </div>
-            )}
+        {!loading && !error && orders.length === 0 && (
+          <div className="bg-card rounded-xl border border-border/70 p-12 text-center">
+            <ShoppingBag className="h-12 w-12 mx-auto mb-4 text-muted-foreground/50" />
+            <h3 className="text-lg font-semibold mb-2">No orders found</h3>
+            <p className="text-sm text-muted-foreground mb-4">
+              Browse events to book your next experience.
+            </p>
+            <Link
+              href="/events"
+              className="inline-block px-6 py-2.5 bg-primary text-primary-foreground rounded-lg hover:opacity-90 transition text-sm font-medium"
+            >
+              Browse events
+            </Link>
+          </div>
+        )}
 
-            {!loading && !error && orders.length > 0 && (
+        {!loading && !error && orders.length > 0 && (
               <div className="space-y-4">
                 {orders.map((order) => {
                   const status: OrderStatus = order.status || 'pending';
@@ -196,7 +190,7 @@ export default function OrdersPage() {
                   const ticketCount = order.tickets?.length || 0;
 
                   return (
-                    <div key={order.id} className="overflow-hidden rounded-xl border border-border/70 bg-card shadow-sm">
+                    <div key={order.id} className="overflow-hidden rounded-xl border border-border/70 bg-background">
                       {/* Order Header */}
                       <button
                         onClick={() => toggleOrder(order.id)}
@@ -335,33 +329,31 @@ export default function OrdersPage() {
                     </div>
                   );
                 })}
-              </div>
-            )}
-
-            {/* Pagination */}
-            {!loading && !error && total > pageSize && (
-              <div className="mt-6 flex items-center justify-between rounded-lg border border-border/70 bg-muted/30 px-4 py-3">
-                <button
-                  className="inline-flex items-center gap-2 rounded-lg border border-border bg-background px-4 py-2 text-sm font-semibold transition hover:bg-muted disabled:opacity-50"
-                  onClick={() => setPage((p) => Math.max(1, p - 1))}
-                  disabled={page === 1}
-                >
-                  Previous
-                </button>
-                <span className="text-sm font-medium text-muted-foreground">
-                  Page {page} of {Math.ceil(total / pageSize)}
-                </span>
-                <button
-                  className="inline-flex items-center gap-2 rounded-lg border border-border bg-background px-4 py-2 text-sm font-semibold transition hover:bg-muted disabled:opacity-50"
-                  onClick={() => setPage((p) => p + 1)}
-                  disabled={page * pageSize >= total}
-                >
-                  Next
-                </button>
-              </div>
-            )}
           </div>
-        </div>
+        )}
+
+        {/* Pagination */}
+        {!loading && !error && total > pageSize && (
+          <div className="flex items-center justify-between rounded-xl border border-border/70 bg-card px-6 py-4">
+            <button
+              className="inline-flex items-center gap-2 rounded-lg border border-border bg-background px-4 py-2 text-sm font-semibold transition hover:bg-muted disabled:opacity-50"
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              disabled={page === 1}
+            >
+              Previous
+            </button>
+            <span className="text-sm font-medium text-muted-foreground">
+              Page {page} of {Math.ceil(total / pageSize)}
+            </span>
+            <button
+              className="inline-flex items-center gap-2 rounded-lg border border-border bg-background px-4 py-2 text-sm font-semibold transition hover:bg-muted disabled:opacity-50"
+              onClick={() => setPage((p) => p + 1)}
+              disabled={page * pageSize >= total}
+            >
+              Next
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

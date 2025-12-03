@@ -13,7 +13,10 @@ import {
   UpdateTicketStatusDto,
 } from './dto/create-ticket.dto';
 import { TicketStatus } from '@prisma/client';
-import { transferEmailIncludes, TransferWithEmailData } from '../common/types/prisma-helpers';
+import {
+  transferEmailIncludes,
+  TransferWithEmailData,
+} from '../common/types/prisma-helpers';
 
 @Injectable()
 export class TicketsService {
@@ -263,7 +266,7 @@ export class TicketsService {
     }
 
     // Create transfer
-    const transfer = await this.prisma.transfer.create({
+    const transfer = (await this.prisma.transfer.create({
       data: {
         ticketId,
         fromUserId: userId,
@@ -271,7 +274,7 @@ export class TicketsService {
         initiatedAt: new Date(),
       },
       ...transferEmailIncludes,
-    }) as TransferWithEmailData;
+    })) as TransferWithEmailData;
 
     // Send transfer notification emails
     await this.sendTransferNotificationEmails(transfer).catch((error) => {
@@ -514,16 +517,20 @@ export class TicketsService {
     const checkinStartTime = ticket.event.doorTime || ticket.event.startAt;
 
     if (now < checkinStartTime) {
-      const hoursUntil = Math.ceil((checkinStartTime.getTime() - now.getTime()) / (1000 * 60 * 60));
-      const minutesUntil = Math.ceil((checkinStartTime.getTime() - now.getTime()) / (1000 * 60));
+      const hoursUntil = Math.ceil(
+        (checkinStartTime.getTime() - now.getTime()) / (1000 * 60 * 60),
+      );
+      const minutesUntil = Math.ceil(
+        (checkinStartTime.getTime() - now.getTime()) / (1000 * 60),
+      );
 
       if (ticket.event.doorTime) {
         throw new BadRequestException(
-          `Check-in has not opened yet. Doors open at ${checkinStartTime.toLocaleTimeString()} (in ${hoursUntil > 0 ? hoursUntil + ' hour' + (hoursUntil !== 1 ? 's' : '') : minutesUntil + ' minute' + (minutesUntil !== 1 ? 's' : '')})`
+          `Check-in has not opened yet. Doors open at ${checkinStartTime.toLocaleTimeString()} (in ${hoursUntil > 0 ? hoursUntil + ' hour' + (hoursUntil !== 1 ? 's' : '') : minutesUntil + ' minute' + (minutesUntil !== 1 ? 's' : '')})`,
         );
       } else {
         throw new BadRequestException(
-          `Check-in has not opened yet. Event starts at ${checkinStartTime.toLocaleTimeString()} (in ${hoursUntil > 0 ? hoursUntil + ' hour' + (hoursUntil !== 1 ? 's' : '') : minutesUntil + ' minute' + (minutesUntil !== 1 ? 's' : '')})`
+          `Check-in has not opened yet. Event starts at ${checkinStartTime.toLocaleTimeString()} (in ${hoursUntil > 0 ? hoursUntil + ' hour' + (hoursUntil !== 1 ? 's' : '') : minutesUntil + ' minute' + (minutesUntil !== 1 ? 's' : '')})`,
         );
       }
     }
@@ -755,12 +762,7 @@ export class TicketsService {
   ): string {
     // Generate a unique QR code with ticket ID for check-in
     // Format: ticketId|orderId|ticketTypeId|seatId
-    const parts = [
-      ticketId,
-      orderId,
-      ticketTypeId,
-      seatId || 'GA',
-    ];
+    const parts = [ticketId, orderId, ticketTypeId, seatId || 'GA'];
     const data = parts.join('|');
     return Buffer.from(data).toString('base64');
   }
@@ -865,12 +867,13 @@ export class TicketsService {
     // Format venue address (address is a JSON field)
     let venueAddress = '';
     if (event.venue?.address) {
-      const addr = event.venue.address as any;
-      venueAddress = typeof addr === 'string'
-        ? addr
-        : [addr.street, addr.city, addr.state, addr.country]
-            .filter(Boolean)
-            .join(', ');
+      const addr = event.venue.address;
+      venueAddress =
+        typeof addr === 'string'
+          ? addr
+          : [addr.street, addr.city, addr.state, addr.country]
+              .filter(Boolean)
+              .join(', ');
     }
 
     // Format seat info if available

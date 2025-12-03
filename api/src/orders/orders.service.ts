@@ -11,10 +11,18 @@ import { UpdateOrderDto } from './dto/update-order.dto';
 import { OrderStatus } from '@prisma/client';
 import { PaymentService } from './services/payment.service';
 import { PromotionsService } from '../promotions/promotions.service';
-import { orderEmailIncludes, OrderWithEmailData } from '../common/types/prisma-helpers';
+import {
+  orderEmailIncludes,
+  OrderWithEmailData,
+} from '../common/types/prisma-helpers';
+
+import { Cron, CronExpression } from '@nestjs/schedule';
+import { Logger } from '@nestjs/common';
 
 @Injectable()
 export class OrdersService {
+  private readonly logger = new Logger(OrdersService.name);
+
   constructor(
     private prisma: PrismaService,
     private paymentService: PaymentService,
@@ -23,7 +31,7 @@ export class OrdersService {
   ) {}
 
   async createOrder(userId: string, createOrderDto: CreateOrderDto) {
-    const { eventId, occurrenceId, items, promoCode } = createOrderDto;
+    const { eventId, occurrenceId, items, promoCode, holdId } = createOrderDto;
 
     // Get event details
     const event = await this.prisma.event.findUnique({
@@ -61,6 +69,25 @@ export class OrdersService {
 
       if (!occurrence) {
         throw new BadRequestException('Invalid occurrence for this event');
+      }
+    }
+
+    // Validate Hold if provided
+    if (holdId) {
+      const hold = await this.prisma.hold.findUnique({
+        where: { id: holdId },
+      });
+
+      if (!hold) {
+        throw new BadRequestException('Invalid hold');
+      }
+
+      if (hold.userId !== userId) {
+        throw new ForbiddenException('Hold does not belong to you');
+      }
+
+      if (hold.expiresAt < new Date()) {
+        throw new BadRequestException('Hold has expired');
       }
     }
 
@@ -102,14 +129,32 @@ export class OrdersService {
           },
         });
 
+        // Count pending orders as sold
+        const pendingOrderItemsCount = await this.prisma.orderItem.aggregate({
+          where: {
+            ticketTypeId: item.ticketTypeId,
+            order: {
+              status: OrderStatus.pending,
+            },
+          },
+          _sum: {
+            quantity: true,
+          },
+        });
+
         const heldCount = await this.prisma.hold.count({
           where: {
             ticketTypeId: item.ticketTypeId,
             expiresAt: { gt: now },
+            // If we are using a hold, exclude it from the count as we are about to consume it
+            ...(holdId ? { id: { not: holdId } } : {}),
           },
         });
 
-        const availableCount = ticketType.capacity - soldCount - heldCount;
+        const totalSold =
+          soldCount + (pendingOrderItemsCount._sum.quantity || 0);
+        const availableCount = ticketType.capacity - totalSold - heldCount;
+
         if (availableCount < item.quantity) {
           throw new BadRequestException(
             `Not enough tickets available for ${ticketType.name}`,
@@ -131,11 +176,29 @@ export class OrdersService {
           throw new BadRequestException(`Seat ${item.seatId} is already sold`);
         }
 
+        // Check pending orders for this seat
+        const pendingSeat = await this.prisma.orderItem.findFirst({
+          where: {
+            seatId: item.seatId,
+            order: {
+              status: OrderStatus.pending,
+            },
+          },
+        });
+
+        if (pendingSeat) {
+          throw new BadRequestException(
+            `Seat ${item.seatId} is currently pending purchase`,
+          );
+        }
+
         const existingHold = await this.prisma.hold.findFirst({
           where: {
             ticketTypeId: item.ticketTypeId,
             seatId: item.seatId,
             expiresAt: { gt: now },
+            // If we are using a hold, allow it if it matches our holdId
+            ...(holdId ? { id: { not: holdId } } : {}),
           },
         });
 
@@ -195,12 +258,11 @@ export class OrdersService {
       feesCents = BigInt(0);
     }
 
-    let feeLines:
-      | {
-          name: string;
-          amountCents: bigint;
-          beneficiary: string;
-        }[] = [];
+    let feeLines: {
+      name: string;
+      amountCents: bigint;
+      beneficiary: string;
+    }[] = [];
 
     if (!isFreeOrder) {
       const totalTickets = items.reduce((acc, item) => acc + item.quantity, 0);
@@ -294,6 +356,17 @@ export class OrdersService {
     // Immediately issue tickets for zero-total orders (no payment step)
     if (isZeroTotalOrder) {
       await this.createTicketsForOrder(order.id);
+    }
+
+    // Delete hold if it was used
+    if (holdId) {
+      await this.prisma.hold
+        .delete({
+          where: { id: holdId },
+        })
+        .catch(() => {
+          // Ignore error if hold was already deleted or expired
+        });
     }
 
     return {
@@ -695,7 +768,7 @@ export class OrdersService {
       // Need to process refund
       const payment = order.payments[0];
       if (payment && payment.status === 'captured') {
-        await this.paymentService.refundPayment(payment.id);
+        await this.paymentService.refundPayment(payment.id, undefined, userId);
       }
     }
 
@@ -785,6 +858,10 @@ export class OrdersService {
     return result;
   }
 
+  async getPaymentProviders() {
+    return this.paymentService.getPaymentProviderStatuses();
+  }
+
   // Ensures tickets are issued for a paid order (used by webhooks/providers)
   async ensureTicketsForOrder(orderId: string) {
     await this.createTicketsForOrder(orderId);
@@ -815,10 +892,13 @@ export class OrdersService {
     );
 
     // If we already have all tickets, we're done (but still send email if not sent before)
-    const ticketsAlreadyExisted = order.tickets && order.tickets.length === totalExpectedTickets;
+    const ticketsAlreadyExisted =
+      order.tickets && order.tickets.length === totalExpectedTickets;
 
     // Use barcode (stable before ticket creation) for idempotency checks
-    const existingBarcodes = new Set(order.tickets?.map((t) => t.barcode) || []);
+    const existingBarcodes = new Set(
+      order.tickets?.map((t) => t.barcode) || [],
+    );
 
     // Create tickets for each order item
     for (const item of order.items) {
@@ -912,10 +992,10 @@ export class OrdersService {
   }
 
   private async sendTicketDeliveryEmail(orderId: string) {
-    const order = await this.prisma.order.findUnique({
+    const order = (await this.prisma.order.findUnique({
       where: { id: orderId },
       ...orderEmailIncludes,
-    }) as OrderWithEmailData | null;
+    })) as OrderWithEmailData | null;
 
     if (!order?.event || !order.tickets || order.tickets.length === 0) {
       return;
@@ -955,11 +1035,12 @@ export class OrdersService {
     let venueAddress = '';
     if (order.event.venue?.address) {
       const addr = order.event.venue.address as any;
-      venueAddress = typeof addr === 'string'
-        ? addr
-        : [addr.street, addr.city, addr.state, addr.country]
-            .filter(Boolean)
-            .join(', ');
+      venueAddress =
+        typeof addr === 'string'
+          ? addr
+          : [addr.street, addr.city, addr.state, addr.country]
+              .filter(Boolean)
+              .join(', ');
     }
 
     // Format tickets with QR codes
@@ -974,7 +1055,9 @@ export class OrdersService {
         ticketType: ticket.ticketType?.name || 'General Admission',
         seatInfo: seatInfo || null,
         holderName: user.name || user.email.split('@')[0],
-        qrCodeUrl: ticket.qrCode ? this.generateQRCodeImageUrl(ticket.qrCode) : null,
+        qrCodeUrl: ticket.qrCode
+          ? this.generateQRCodeImageUrl(ticket.qrCode)
+          : null,
         ticketId: ticket.id,
       };
     });
@@ -1003,7 +1086,9 @@ export class OrdersService {
     // For now, return a data URL. In production, you might generate actual QR code images
     // using a library like qrcode and upload to S3, or use a QR code API service
     // For this implementation, we'll use an API service that generates QR codes
-    const baseUrl = process.env.QR_CODE_API_URL || 'https://api.qrserver.com/v1/create-qr-code/';
+    const baseUrl =
+      process.env.QR_CODE_API_URL ||
+      'https://api.qrserver.com/v1/create-qr-code/';
     return `${baseUrl}?size=200x200&data=${encodeURIComponent(qrCode)}`;
   }
 
@@ -1050,5 +1135,37 @@ export class OrdersService {
     });
 
     return stats;
+  }
+
+  @Cron(CronExpression.EVERY_MINUTE)
+  async cleanupPendingOrders() {
+    const timeoutMinutes = 15;
+    const expirationTime = new Date(Date.now() - timeoutMinutes * 60 * 1000);
+
+    const expiredOrders = await this.prisma.order.findMany({
+      where: {
+        status: OrderStatus.pending,
+        createdAt: {
+          lt: expirationTime,
+        },
+      },
+      select: { id: true },
+    });
+
+    if (expiredOrders.length > 0) {
+      this.logger.log(
+        `Found ${expiredOrders.length} expired pending orders. Canceling...`,
+      );
+
+      await this.prisma.order.updateMany({
+        where: {
+          id: { in: expiredOrders.map((o) => o.id) },
+        },
+        data: {
+          status: OrderStatus.canceled,
+          canceledAt: new Date(),
+        },
+      });
+    }
   }
 }

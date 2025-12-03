@@ -1,6 +1,7 @@
 import { apiClient } from './client';
 import type {
   // Dashboard Overview
+  CreatorDraftItem,
   DashboardOverviewResponse,
   // Events
   EventListParams,
@@ -43,6 +44,7 @@ import type {
   PayoutAccount,
   CalculatePayoutsParams,
   CalculatePayoutsResponse,
+  PayoutStats,
   // Tickets & Inventory
   TicketType,
   CreateTicketTypeDto,
@@ -232,6 +234,14 @@ export const organizerApi = {
     getOverview: (orgId: string) => {
       return apiClient.get<DashboardOverviewResponse>('/organizer/dashboard', { orgId });
     },
+
+    getCreatorDrafts: (orgId: string) => {
+      return apiClient.get<CreatorDraftItem[]>('/organizer/dashboard/creator-drafts', { orgId });
+    },
+
+    deleteCreatorDraft: (draftId: string, orgId: string) => {
+      return apiClient.delete(`/organizer/dashboard/creator-drafts/${draftId}`, { orgId });
+    },
   },
 
   // ============================================================================
@@ -357,7 +367,9 @@ export const organizerApi = {
     },
 
     refund: (orderId: string, data: RefundDto, orgId: string) => {
-      return apiClient.post<RefundResponse>(`/organizer/orders/${orderId}/refund`, { ...data, orgId });
+      return apiClient.post<RefundResponse>(`/organizer/orders/${orderId}/refund?orgId=${orgId}`, {
+        ...data,
+      });
     },
   },
 
@@ -692,6 +704,10 @@ export const organizerApi = {
 
     retry: (payoutId: string, orgId: string) => {
       return apiClient.post<Payout>(`/organizer/payouts/${payoutId}/retry`, { orgId });
+    },
+
+    stats: (orgId: string, params?: { startDate?: string; endDate?: string }) => {
+      return apiClient.get<PayoutStats>('/organizer/payouts/stats', { orgId, ...params });
     },
   },
 

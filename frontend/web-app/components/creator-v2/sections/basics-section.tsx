@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useMemo } from 'react';
+import React, { useCallback, useEffect, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -8,7 +8,6 @@ import { Input } from '@/components/ui/input';
 import { eventCreatorV2Api } from '@/lib/api/event-creator-v2-api';
 import { Textarea } from '@/components/ui/textarea';
 import { Select } from '@/components/ui/select';
-import { Button } from '@/components/ui/button';
 import { categoriesApi, type Category } from '@/lib/api/categories-api';
 import { resolveImageUrl } from '@/lib/utils/image';
 import { useEventCreatorDraft } from '@/components/creator-v2/event-creator-provider';
@@ -107,15 +106,43 @@ export function BasicsSection() {
     [updateSection]
   );
 
-  useEffect(() => {
-    const subscription = form.watch((values) => {
+  const debouncedMarkIncomplete = useMemo(
+    () =>
+      debounce((issues: z.ZodIssue[]) => {
+        void updateSection(
+          'basics',
+          {
+            autosave: true,
+            status: 'incomplete',
+            errors: issues.map((issue) => ({
+              path: issue.path,
+              message: issue.message,
+            })),
+          },
+          { showToast: false }
+        );
+      }, 600),
+    [updateSection]
+  );
+
+  const handleAutosave = useCallback(
+    (values: z.infer<typeof schema>) => {
       const parsed = schema.safeParse(values);
       if (parsed.success) {
         debouncedSave(parsed.data);
+      } else {
+        debouncedMarkIncomplete(parsed.error.issues);
       }
+    },
+    [debouncedMarkIncomplete, debouncedSave]
+  );
+
+  useEffect(() => {
+    const subscription = form.watch((values) => {
+      handleAutosave(values);
     });
     return () => subscription.unsubscribe();
-  }, [form, debouncedSave]);
+  }, [form, handleAutosave]);
 
   return (
     <div className="space-y-8">
@@ -270,14 +297,9 @@ export function BasicsSection() {
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
-          <Button type="submit" disabled={isSaving}>
-            {isSaving ? 'Saving...' : 'Save basics'}
-          </Button>
-          <span className="text-xs text-muted-foreground">
-            Autosaves on change; this button also marks the section complete.
-          </span>
-        </div>
+        <p className="text-xs text-muted-foreground">
+          Autosaves as you type and marks this step complete once required fields are valid.
+        </p>
       </form>
     </div>
   );

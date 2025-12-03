@@ -74,6 +74,21 @@ export class OrganizerFinancialsController {
     });
   }
 
+  @Get('payouts/stats')
+  @ApiOperation({ summary: 'Payout analytics for an organization' })
+  @ApiQuery({ name: 'orgId', required: true })
+  getPayoutStats(
+    @CurrentUser() user: any,
+    @Query('orgId') orgId: string,
+    @Query('startDate') startDate?: string,
+    @Query('endDate') endDate?: string,
+  ) {
+    return this.payoutsService.getPayoutStats(orgId, user.id, {
+      startDate,
+      endDate,
+    });
+  }
+
   @Get('payouts/:payoutId')
   @ApiOperation({ summary: 'Get a specific payout' })
   @ApiQuery({ name: 'orgId', required: true })

@@ -67,10 +67,12 @@ export function EventOrdersContent({ eventId }: EventOrdersContentProps) {
       toast.success('Refund processed successfully');
       setRefundingOrder(null);
       loadOrders();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to process refund:', error);
-      toast.error('Failed to process refund');
-      throw error;
+      toast.error(error?.message || 'Refund may have been processed, but an error occurred. Refresh to confirm.');
+      // Best-effort refresh in case the refund actually completed server-side
+      await loadOrders();
+      setRefundingOrder(null);
     }
   };
 

@@ -164,8 +164,19 @@ export class ApiClient {
         return {} as T;
       }
 
-      const data = await response.json();
-      return data;
+      const text = await response.text();
+      if (!text) {
+        return {} as T;
+      }
+
+      try {
+        const data = JSON.parse(text);
+        return data;
+      } catch {
+        // If JSON parsing fails but we have text, return the text if T is string, else throw
+        // This is a fallback, though usually we expect JSON
+        throw new ApiError(response.status, 'Invalid JSON response');
+      }
     } catch (error) {
       if (error instanceof ApiError) {
         throw error;
@@ -222,8 +233,16 @@ export class ApiClient {
     });
   }
 
-  async delete<T>(endpoint: string): Promise<T> {
-    return this.request<T>(endpoint, {
+  async delete<T>(endpoint: string, params?: Record<string, unknown>): Promise<T> {
+    let url = endpoint;
+    if (params) {
+      const queryString = buildQueryString(params);
+      if (queryString) {
+        url += `?${queryString}`;
+      }
+    }
+
+    return this.request<T>(url, {
       method: 'DELETE',
     });
   }

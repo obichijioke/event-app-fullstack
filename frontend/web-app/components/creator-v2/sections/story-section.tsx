@@ -1,7 +1,7 @@
 ﻿'use client';
 
 import React from 'react';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useForm, useFieldArray, Controller } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -93,6 +93,8 @@ export function StorySection() {
     append: speakerAppend,
     remove: speakerRemove,
   } = useFieldArray({ control: form.control, name: 'speakers' });
+  const [showAgenda, setShowAgenda] = useState(agendaFields.length > 0);
+  const [showSpeakers, setShowSpeakers] = useState(speakerFields.length > 0);
 
   const debouncedSave = useMemo(
     () =>
@@ -111,15 +113,43 @@ export function StorySection() {
     [updateSection]
   );
 
-  useEffect(() => {
-    const subscription = form.watch((values) => {
+  const debouncedMarkIncomplete = useMemo(
+    () =>
+      debounce((issues: z.ZodIssue[]) => {
+        void updateSection(
+          'story',
+          {
+            autosave: true,
+            status: 'incomplete',
+            errors: issues.map((issue) => ({
+              path: issue.path,
+              message: issue.message,
+            })),
+          },
+          { showToast: false }
+        );
+      }, 600),
+    [updateSection]
+  );
+
+  const handleAutosave = useCallback(
+    (values: StoryValues) => {
       const parsed = storySchema.safeParse(values);
       if (parsed.success) {
         debouncedSave(parsed.data);
+      } else {
+        debouncedMarkIncomplete(parsed.error.issues);
       }
+    },
+    [debouncedMarkIncomplete, debouncedSave]
+  );
+
+  useEffect(() => {
+    const subscription = form.watch((values) => {
+      handleAutosave(values);
     });
     return () => subscription.unsubscribe();
-  }, [form, debouncedSave]);
+  }, [form, handleAutosave]);
 
   return (
     <div className="space-y-8">
@@ -145,7 +175,7 @@ export function StorySection() {
                 onChange={(value) => {
                   field.onChange(value);
                   // Trigger debounced save manually since we're not using register's onChange
-                  debouncedSave({ ...form.getValues(), description: value });
+                  handleAutosave({ ...form.getValues(), description: value });
                 }}
                 placeholder="Tell attendees what to expect..."
                 maxLength={5000}
@@ -159,106 +189,154 @@ export function StorySection() {
         </div>
 
         {/* Agenda Section */}
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="text-lg font-semibold flex items-center gap-2">
-                <Calendar className="h-5 w-5" />
-                Agenda
-              </h3>
-              <p className="text-xs text-muted-foreground mt-1">
-                {agendaFields.length === 0
-                  ? 'Add a schedule for your event'
-                  : `${agendaFields.length} ${agendaFields.length === 1 ? 'item' : 'items'}`}
-              </p>
+        <div className="space-y-3">
+          <div className="flex items-center justify-between rounded-lg border border-dashed border-border bg-muted/30 px-4 py-3">
+            <div className="flex items-center gap-2 text-sm font-medium text-foreground">
+              <Calendar className="h-4 w-4" />
+              Agenda (optional)
             </div>
-            <Button
-              type="button"
-              onClick={() => agendaAppend({ time: '', title: '' })}
-              className="gap-2"
-            >
-              <Plus className="h-4 w-4" />
-              Add item
-            </Button>
+            {!showAgenda && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  if (agendaFields.length === 0) {
+                    agendaAppend({ time: '', title: '' });
+                  }
+                  setShowAgenda(true);
+                }}
+              >
+                Add agenda
+              </Button>
+            )}
           </div>
 
-          {agendaFields.length === 0 ? (
-            <EmptyState
-              icon={Calendar}
-              title="No agenda items yet"
-              description="Add a schedule to help attendees know what to expect"
-              actionLabel="Add first item"
-              onAction={() => agendaAppend({ time: '', title: '' })}
-            />
-          ) : (
-            <div className="space-y-3">
-              {agendaFields.map((field, index) => (
-                <AgendaItemCard
-                  key={field.id}
-                  index={index}
-                  time={form.watch(`agenda.${index}.time` as const) as string}
-                  title={form.watch(`agenda.${index}.title` as const) as string}
-                  onTimeChange={(value) => form.setValue(`agenda.${index}.time` as const, value)}
-                  onTitleChange={(value) => form.setValue(`agenda.${index}.title` as const, value)}
-                  onRemove={() => agendaRemove(index)}
-                  error={form.formState.errors.agenda?.[index]?.title?.message as string}
+          {showAgenda && (
+            <div className="space-y-3 rounded-xl border border-border bg-card/50 p-4">
+              <div className="flex items-center justify-between">
+                <p className="text-sm text-muted-foreground">
+                  Outline your program so attendees know what to expect.
+                </p>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  onClick={() => agendaAppend({ time: '', title: '' })}
+                  className="gap-2"
+                >
+                  <Plus className="h-4 w-4" />
+                  Add item
+                </Button>
+              </div>
+
+              {agendaFields.length === 0 ? (
+                <EmptyState
+                  icon={Calendar}
+                  title="No agenda items yet"
+                  description="Add a schedule to help attendees know what to expect"
+                  actionLabel="Add first item"
+                  onAction={() => agendaAppend({ time: '', title: '' })}
                 />
-              ))}
+              ) : (
+                <div className="space-y-3">
+                  {agendaFields.map((field, index) => (
+                    <AgendaItemCard
+                      key={field.id}
+                      index={index}
+                      time={form.watch(`agenda.${index}.time` as const) as string}
+                      title={form.watch(`agenda.${index}.title` as const) as string}
+                      onTimeChange={(value) => form.setValue(`agenda.${index}.time` as const, value)}
+                      onTitleChange={(value) => form.setValue(`agenda.${index}.title` as const, value)}
+                      onRemove={() => {
+                        agendaRemove(index);
+                        if (agendaFields.length <= 1) {
+                          setShowAgenda(false);
+                        }
+                      }}
+                      error={form.formState.errors.agenda?.[index]?.title?.message as string}
+                    />
+                  ))}
+                </div>
+              )}
             </div>
           )}
         </div>
 
         {/* Speakers Section */}
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="text-lg font-semibold flex items-center gap-2">
-                <Users className="h-5 w-5" />
-                Speakers
-              </h3>
-              <p className="text-xs text-muted-foreground mt-1">
-                {speakerFields.length === 0
-                  ? 'Optional: Showcase speakers or performers'
-                  : `${speakerFields.length} ${speakerFields.length === 1 ? 'speaker' : 'speakers'}`}
-              </p>
+        <div className="space-y-3">
+          <div className="flex items-center justify-between rounded-lg border border-dashed border-border bg-muted/30 px-4 py-3">
+            <div className="flex items-center gap-2 text-sm font-medium text-foreground">
+              <Users className="h-4 w-4" />
+              Speakers (optional)
             </div>
-            <Button
-              type="button"
-              onClick={() => speakerAppend({ name: '', role: '', photoUrl: '', bio: '' })}
-              className="gap-2"
-            >
-              <Plus className="h-4 w-4" />
-              Add speaker
-            </Button>
+            {!showSpeakers && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  if (speakerFields.length === 0) {
+                    speakerAppend({ name: '', role: '', photoUrl: '', bio: '' });
+                  }
+                  setShowSpeakers(true);
+                }}
+              >
+                Add speakers
+              </Button>
+            )}
           </div>
 
-          {speakerFields.length === 0 ? (
-            <EmptyState
-              icon={Users}
-              title="No speakers added"
-              description="Highlight speakers, performers, or key people at your event"
-              actionLabel="Add first speaker"
-              onAction={() => speakerAppend({ name: '', role: '', photoUrl: '', bio: '' })}
-            />
-          ) : (
-            <div className="space-y-4">
-              {speakerFields.map((field, index) => (
-                <SpeakerCard
-                  key={field.id}
-                  index={index}
-                  name={form.watch(`speakers.${index}.name` as const) as string}
-                  role={form.watch(`speakers.${index}.role` as const) as string}
-                  photoUrl={form.watch(`speakers.${index}.photoUrl` as const) as string}
-                  bio={form.watch(`speakers.${index}.bio` as const) as string}
-                  onNameChange={(value) => form.setValue(`speakers.${index}.name` as const, value)}
-                  onRoleChange={(value) => form.setValue(`speakers.${index}.role` as const, value)}
-                  onPhotoUrlChange={(value) => form.setValue(`speakers.${index}.photoUrl` as const, value)}
-                  onBioChange={(value) => form.setValue(`speakers.${index}.bio` as const, value)}
-                  onRemove={() => speakerRemove(index)}
-                  nameError={form.formState.errors.speakers?.[index]?.name?.message as string}
-                  photoError={form.formState.errors.speakers?.[index]?.photoUrl?.message as string}
+          {showSpeakers && (
+            <div className="space-y-3 rounded-xl border border-border bg-card/50 p-4">
+              <div className="flex items-center justify-between">
+                <p className="text-sm text-muted-foreground">
+                  Spotlight presenters or performers. Leave empty if not needed.
+                </p>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  onClick={() => speakerAppend({ name: '', role: '', photoUrl: '', bio: '' })}
+                  className="gap-2"
+                >
+                  <Plus className="h-4 w-4" />
+                  Add speaker
+                </Button>
+              </div>
+
+              {speakerFields.length === 0 ? (
+                <EmptyState
+                  icon={Users}
+                  title="No speakers added"
+                  description="Highlight speakers, performers, or key people at your event"
+                  actionLabel="Add first speaker"
+                  onAction={() => speakerAppend({ name: '', role: '', photoUrl: '', bio: '' })}
                 />
-              ))}
+              ) : (
+                <div className="space-y-3">
+                  {speakerFields.map((field, index) => (
+                    <SpeakerCard
+                      key={field.id}
+                      index={index}
+                      name={form.watch(`speakers.${index}.name` as const) as string}
+                      role={form.watch(`speakers.${index}.role` as const) as string}
+                      photoUrl={form.watch(`speakers.${index}.photoUrl` as const) as string}
+                      bio={form.watch(`speakers.${index}.bio` as const) as string}
+                      onNameChange={(value) => form.setValue(`speakers.${index}.name` as const, value)}
+                      onRoleChange={(value) => form.setValue(`speakers.${index}.role` as const, value)}
+                      onPhotoUrlChange={(value) => form.setValue(`speakers.${index}.photoUrl` as const, value)}
+                      onBioChange={(value) => form.setValue(`speakers.${index}.bio` as const, value)}
+                      onRemove={() => {
+                        speakerRemove(index);
+                        if (speakerFields.length <= 1) {
+                          setShowSpeakers(false);
+                        }
+                      }}
+                      nameError={form.formState.errors.speakers?.[index]?.name?.message as string}
+                      photoError={form.formState.errors.speakers?.[index]?.photoUrl?.message as string}
+                    />
+                  ))}
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -280,10 +358,9 @@ export function StorySection() {
           onAccessibilityNotesChange={(value) => form.setValue('accessibilityNotes', value, { shouldDirty: true })}
         />
 
-        <div className="flex items-center gap-3">
-          <Button type="submit" disabled={isSaving}>{isSaving ? 'Saving…' : 'Save details'}</Button>
-          <span className="text-xs text-muted-foreground">Autosaves as you edit; this marks the section complete.</span>
-        </div>
+        <p className="text-xs text-muted-foreground">
+          Autosaves as you edit and marks this step complete when required details are valid.
+        </p>
       </form>
     </div>
   );

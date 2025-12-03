@@ -26,7 +26,7 @@ describe('AdminRefundService - processRefund', () => {
     refundCapturedPayment: jest.fn(),
   };
 
-  const service = new AdminRefundService(prisma as any, paymentService as any);
+  const service = new AdminRefundService(prisma, paymentService);
 
   const baseRefund = {
     id: 'refund_1',

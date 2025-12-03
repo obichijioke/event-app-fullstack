@@ -9,33 +9,42 @@ import { StatCard } from '../stat-card';
 import { EmptyState } from '../empty-state';
 import { OrderItem } from '../order-item';
 import { EventItem } from '../event-item';
+import { InProgressEvents } from './in-progress-events';
 import { CurrencyDisplay } from '@/components/common/currency-display';
 import { Calendar, DollarSign, Ticket, ShoppingCart, AlertCircle, FileText, MapPin } from 'lucide-react';
-import type { DashboardOverviewResponse } from '@/lib/types/organizer';
+import type { DashboardOverviewResponse, PayoutStats } from '@/lib/types/organizer';
 
 export function DashboardContent() {
   const { currentOrganization } = useOrganizerStore();
   const [dashboard, setDashboard] = useState<DashboardOverviewResponse | null>(null);
+  const [payoutStats, setPayoutStats] = useState<PayoutStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    async function loadDashboard() {
-      if (!currentOrganization) return;
+  const loadDashboard = async () => {
+    if (!currentOrganization) return;
 
-      try {
-        setLoading(true);
-        setError(null);
-        const data = await organizerApi.dashboard.getOverview(currentOrganization.id);
-        setDashboard(data);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to load dashboard');
-        console.error('Dashboard error:', err);
-      } finally {
-        setLoading(false);
-      }
+    try {
+      setLoading(true);
+      setError(null);
+      const [data, stats] = await Promise.all([
+        organizerApi.dashboard.getOverview(currentOrganization.id),
+        organizerApi.payouts.stats(currentOrganization.id).catch((err) => {
+          console.error('Failed to load payout stats:', err);
+          return null;
+        }),
+      ]);
+      setDashboard(data);
+      if (stats) setPayoutStats(stats);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load dashboard');
+      console.error('Dashboard error:', err);
+    } finally {
+      setLoading(false);
     }
+  };
 
+  useEffect(() => {
     loadDashboard();
   }, [currentOrganization]);
 
@@ -64,7 +73,6 @@ export function DashboardContent() {
   }
 
   const creatorUrl = '/organizer/events/create';
-  const currency = dashboard?.metrics.currency || 'USD';
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -106,7 +114,6 @@ export function DashboardContent() {
               ? (
                 <CurrencyDisplay
                   amountCents={dashboard.metrics.grossRevenueCents}
-                  currency={currency}
                   showFree={false}
                 />
               )
@@ -123,6 +130,17 @@ export function DashboardContent() {
         />
       </div>
 
+      {/* In Progress Events Section */}
+      {dashboard && dashboard.tasks.inProgressDrafts && dashboard.tasks.inProgressDrafts.length > 0 && (
+        <div className="mb-8">
+          <InProgressEvents
+            drafts={dashboard.tasks.inProgressDrafts}
+            orgId={currentOrganization.id}
+            onDraftDeleted={loadDashboard}
+          />
+        </div>
+      )}
+
       {/* Tasks Section */}
       {dashboard && (dashboard.tasks.drafts.length > 0 || dashboard.tasks.moderationAlerts > 0 || dashboard.tasks.unsettledPayouts.count > 0) && (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
@@ -131,7 +149,7 @@ export function DashboardContent() {
             <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
               <div className="flex items-center gap-2 mb-2">
                 <FileText className="w-5 h-5 text-yellow-600" />
-                <h3 className="font-semibold text-yellow-900">Draft Events</h3>
+                <h3 className="font-semibold text-yellow-900">Draft Events (Legacy)</h3>
               </div>
               <p className="text-sm text-yellow-700 mb-3">
                 {dashboard.tasks.drafts.length} event(s) waiting to be published
@@ -174,7 +192,6 @@ export function DashboardContent() {
               <p className="text-sm text-blue-700 mb-3">
                 <CurrencyDisplay
                   amountCents={dashboard.tasks.unsettledPayouts.amountCents}
-                  currency={currency}
                   showFree={false}
                 />{' '}
                 in {dashboard.tasks.unsettledPayouts.count} payout(s)
@@ -193,6 +210,42 @@ export function DashboardContent() {
       <div className="grid lg:grid-cols-3 gap-8">
         {/* Main Content */}
         <div className="lg:col-span-2 space-y-6">
+          {/* Payout Stats */}
+          {payoutStats && (
+            <StatCard
+              title="Payouts Overview"
+              action={
+                <Link href="/organizer/payouts" className="text-sm text-primary hover:underline">
+                  View Payouts
+                </Link>
+              }
+            >
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                {[
+                  { label: 'Pending', value: payoutStats.pending, tone: 'text-yellow-700' },
+                  { label: 'In Review', value: payoutStats.inReview, tone: 'text-blue-700' },
+                  { label: 'Paid', value: payoutStats.paid, tone: 'text-green-700' },
+                  { label: 'Failed', value: payoutStats.failed, tone: 'text-red-700' },
+                  { label: 'Canceled', value: payoutStats.canceled, tone: 'text-muted-foreground' },
+                ].map((item) => (
+                  <div key={item.label} className="p-3 border border-border rounded-lg bg-card/40">
+                    <p className="text-sm text-muted-foreground">{item.label}</p>
+                    <p className={`text-2xl font-semibold ${item.tone}`}>{item.value}</p>
+                  </div>
+                ))}
+                <div className="p-3 border border-border rounded-lg bg-card/60 md:col-span-3">
+                  <p className="text-sm text-muted-foreground">Total Volume</p>
+                  <p className="text-xl font-semibold flex items-center gap-2">
+                    <CurrencyDisplay
+                      amountCents={payoutStats.totalAmount}
+                      showFree={false}
+                    />
+                  </p>
+                </div>
+              </div>
+            </StatCard>
+          )}
+
           {/* Recent Orders */}
           <StatCard
             title="Recent Orders"
@@ -283,7 +336,6 @@ export function DashboardContent() {
                   <span className="font-semibold">
                     <CurrencyDisplay
                       amountCents={dashboard.metrics.grossRevenueCents}
-                      currency={currency}
                       showFree={false}
                     />
                   </span>
@@ -294,7 +346,6 @@ export function DashboardContent() {
                     -
                     <CurrencyDisplay
                       amountCents={dashboard.metrics.feesCents}
-                      currency={currency}
                       showFree={false}
                     />
                   </span>
@@ -305,7 +356,6 @@ export function DashboardContent() {
                     <span className="font-bold text-lg">
                       <CurrencyDisplay
                         amountCents={dashboard.metrics.netRevenueCents}
-                        currency={currency}
                         showFree={false}
                       />
                     </span>

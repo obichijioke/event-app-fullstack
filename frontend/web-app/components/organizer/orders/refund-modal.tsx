@@ -21,9 +21,18 @@ export function RefundModal({ order, onSubmit, onCancel }: RefundModalProps) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    const amount = Math.max(
+      1,
+      Math.min(order.totalCents, Math.round(formData.amountCents || 0)),
+    );
+    const reason = formData.reason.trim() || undefined;
+    const payload: RefundDto = {
+      amountCents: amount,
+      reason,
+    };
     setLoading(true);
     try {
-      await onSubmit(formData);
+      await onSubmit(payload);
     } finally {
       setLoading(false);
     }

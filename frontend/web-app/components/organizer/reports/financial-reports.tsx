@@ -159,7 +159,6 @@ export function FinancialReports() {
             {loading ? '...' : (
               <CurrencyDisplay
                 amountCents={summary?.totals.grossRevenueCents || 0}
-                currency={summary?.currency || 'USD'}
                 showFree={false}
               />
             )}
@@ -178,7 +177,6 @@ export function FinancialReports() {
             {loading ? '...' : (
               <CurrencyDisplay
                 amountCents={summary?.totals.netRevenueCents || 0}
-                currency={summary?.currency || 'USD'}
                 showFree={false}
               />
             )}
@@ -235,7 +233,6 @@ export function FinancialReports() {
                 <p className="text-xl font-bold">
                   <CurrencyDisplay
                     amountCents={summary?.totals.grossRevenueCents || 0}
-                    currency={summary?.currency || 'USD'}
                     showFree={false}
                   />
                 </p>
@@ -253,7 +250,6 @@ export function FinancialReports() {
                   -
                   <CurrencyDisplay
                     amountCents={summary?.totals.feeCents || 0}
-                    currency={summary?.currency || 'USD'}
                     showFree={false}
                   />
                 </p>
@@ -276,7 +272,6 @@ export function FinancialReports() {
                   -
                   <CurrencyDisplay
                     amountCents={summary?.totals.refundCents || 0}
-                    currency={summary?.currency || 'USD'}
                     showFree={false}
                   />
                 </p>
@@ -298,7 +293,6 @@ export function FinancialReports() {
                 <p className="text-2xl font-bold text-green-900">
                   <CurrencyDisplay
                     amountCents={summary?.totals.netRevenueCents || 0}
-                    currency={summary?.currency || 'USD'}
                     showFree={false}
                   />
                 </p>
@@ -324,7 +318,6 @@ export function FinancialReports() {
               {loading ? '...' : (
                 <CurrencyDisplay
                   amountCents={summary?.totals.payoutsCents || 0}
-                  currency={summary?.currency || 'USD'}
                   showFree={false}
                 />
               )}
@@ -338,7 +331,6 @@ export function FinancialReports() {
                 : (
                   <CurrencyDisplay
                     amountCents={(summary?.totals.netRevenueCents || 0) - (summary?.totals.payoutsCents || 0)}
-                    currency={summary?.currency || 'USD'}
                     showFree={false}
                   />
                 )}
