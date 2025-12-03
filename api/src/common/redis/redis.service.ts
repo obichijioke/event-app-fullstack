@@ -26,10 +26,13 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
     const url = new URL(redisUrl);
 
     const isTls = url.protocol === 'rediss:';
+    const pathnameDb = url.pathname ? url.pathname.replace('/', '') : '';
+    const db = pathnameDb ? Number(pathnameDb) : undefined;
 
     return {
       host: url.hostname,
       port: parseInt(url.port, 10) || 6379,
+      db: Number.isFinite(db) ? db : undefined,
       username: url.username || undefined,
       password: url.password || undefined,
       tls: isTls ? {} : undefined,
