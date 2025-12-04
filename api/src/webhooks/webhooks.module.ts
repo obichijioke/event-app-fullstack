@@ -8,14 +8,17 @@ import { StripeWebhookService } from './services/stripe-webhook.service';
 import { PaystackWebhookController } from './paystack-webhook.controller';
 import { StripeWebhookController } from './stripe-webhook.controller';
 import { OrdersModule } from '../orders/orders.module';
+import { NotificationsModule } from '../notifications/notifications.module';
+import { OrganizerDisputesService } from '../organizer/organizer-disputes.service';
 
 @Module({
-  imports: [CommonModule, OrdersModule],
+  imports: [CommonModule, OrdersModule, NotificationsModule],
   providers: [
     WebhooksService,
     WebhookProcessorService,
     PaystackWebhookService,
     StripeWebhookService,
+    OrganizerDisputesService,
   ],
   controllers: [
     WebhooksController,

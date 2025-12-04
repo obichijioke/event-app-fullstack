@@ -4,7 +4,7 @@ import { TicketType, CreateTicketTypeDto } from '@/lib/types/organizer';
 import { Modal } from '@/components/ui';
 import { CurrencyInput } from '@/components/ui/currency-input';
 import { useFormState } from '@/lib/hooks';
-import { toDateTimeInput, toDollarString } from '@/lib/utils';
+import { toDateTimeInput, toDollarString, toISODateTime } from '@/lib/utils';
 
 interface TicketTypeFormProps {
   ticketType?: TicketType;
@@ -25,7 +25,14 @@ export function TicketTypeForm({ ticketType, onSubmit, onCancel }: TicketTypeFor
       salesEnd: ticketType?.salesEnd || '',
       status: ticketType?.status || 'active',
     },
-    onSubmit,
+    onSubmit: async (data) => {
+      const normalized: CreateTicketTypeDto = {
+        ...data,
+        salesStart: data.salesStart ? toISODateTime(data.salesStart) : undefined,
+        salesEnd: data.salesEnd ? toISODateTime(data.salesEnd) : undefined,
+      };
+      await onSubmit(normalized);
+    },
   });
 
   return (

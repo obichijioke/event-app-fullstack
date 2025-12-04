@@ -28,6 +28,16 @@ export interface PublicEvent {
   ageRestriction?: string | null;
   status: string;
   visibility: string;
+  agenda?: Array<{
+    time?: string | null;
+    title: string;
+  }> | null;
+  speakers?: Array<{
+    name: string;
+    role?: string | null;
+    photoUrl?: string | null;
+    bio?: string | null;
+  }> | null;
   org: {
     id: string;
     name: string;
@@ -145,6 +155,16 @@ export async function fetchEvents(
 
 export interface EventDetail extends PublicEvent {
   descriptionMd?: string | null;
+  agenda?: Array<{
+    time?: string | null;
+    title: string;
+  }> | null;
+  speakers?: Array<{
+    name: string;
+    role?: string | null;
+    photoUrl?: string | null;
+    bio?: string | null;
+  }> | null;
   occurrences: Array<{
     id: string;
     startsAt: string;
@@ -199,6 +219,8 @@ export async function fetchEventDetailData(eventId: string): Promise<EventDetail
   return {
     summary: transformEvent(event),
     description: event.descriptionMd ?? '',
+    agenda: Array.isArray(event.agenda) ? event.agenda : [],
+    speakers: Array.isArray(event.speakers) ? event.speakers : [],
     occurrences: event.occurrences.map((occurrence) => ({
       id: occurrence.id,
       startsAt: occurrence.startsAt,
@@ -247,6 +269,8 @@ export interface EventDetailSummary {
   tickets: EventDetail['ticketTypes'];
   policies: EventDetail['policies'];
   assets: EventDetail['assets'];
+  agenda: NonNullable<EventDetail['agenda']>;
+  speakers: NonNullable<EventDetail['speakers']>;
 }
 
 function transformEvent(event: PublicEvent): EventSummary {

@@ -19,6 +19,8 @@ interface EventContentTabsProps {
   occurrences: EventDetailSummary['occurrences'];
   policies: EventDetailSummary['policies'];
   tickets: EventDetailSummary['tickets'];
+  agenda: EventDetailSummary['agenda'];
+  speakers: EventDetailSummary['speakers'];
   sidebar: React.ReactNode;
 }
 
@@ -29,6 +31,8 @@ export function EventContentTabs({
   occurrences,
   policies,
   tickets,
+  agenda,
+  speakers,
   sidebar,
 }: EventContentTabsProps) {
   const [activeTab, setActiveTab] = useState('overview');
@@ -49,7 +53,12 @@ export function EventContentTabs({
             {/* Overview Tab */}
             {activeTab === 'overview' && (
               <div className="space-y-8">
-                <EventOverview description={description} assets={assets} />
+                <EventOverview
+                  description={description}
+                  assets={assets}
+                  agenda={agenda}
+                  speakers={speakers}
+                />
                 <DetailPanels summary={summary} occurrences={occurrences} policies={policies} />
               </div>
             )}
@@ -150,4 +159,3 @@ export function EventContentTabs({
     </>
   );
 }
-

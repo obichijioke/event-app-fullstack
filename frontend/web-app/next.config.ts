@@ -19,6 +19,10 @@ const nextConfig: NextConfig = {
         protocol: "https",
         hostname: "res.cloudinary.com",
       },
+      {
+        protocol: "https",
+        hostname: "dailypost.ng",
+      },
       // Allow local backend-served uploads for development
       {
         protocol: "http",

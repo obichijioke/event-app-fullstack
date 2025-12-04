@@ -62,6 +62,13 @@ const accountNavItems = [
     icon: RotateCcw,
     description: 'View refund requests',
   },
+  {
+    name: 'Saved Events',
+    href: '/account/saved',
+    icon: Heart,
+    description: 'Events you have saved',
+  
+  }
 ];
 
 export default function AccountLayout({

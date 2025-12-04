@@ -733,6 +733,12 @@ export class EventCreatorV2Service {
             orgId: draft.organizationId,
             title: draft.title || basics?.title || 'Untitled event',
             descriptionMd: story?.description || null,
+            agenda: Array.isArray((story as any)?.agenda)
+              ? ((story as any).agenda as any[])
+              : [],
+            speakers: Array.isArray((story as any)?.speakers)
+              ? ((story as any).speakers as any[])
+              : [],
             status: liveNow ? 'live' : 'pending',
             visibility:
               dto.visibility || basics?.visibility || draft.visibility,
@@ -797,11 +803,16 @@ export class EventCreatorV2Service {
 
         // Occurrences
         for (const o of occurrences) {
+          // Prisma requires a non-null end time; default to 2h after start if missing
+          const endsAt =
+            (o as any).endsAt ||
+            new Date((o as any).startsAt.getTime() + 2 * 60 * 60 * 1000);
+
           await tx.eventOccurrence.create({
             data: {
               eventId: event.id,
               startsAt: o.startsAt,
-              endsAt: (o as any).endsAt || null,
+              endsAt,
               gateOpenAt: (o as any).doorTime || null,
             },
           });
@@ -816,7 +827,8 @@ export class EventCreatorV2Service {
               : t.kind === 'free'
                 ? 0
                 : 0;
-          const capacity = typeof t.quantity === 'number' ? t.quantity : null;
+          const capacity =
+            typeof t.quantity === 'number' && t.quantity > 0 ? t.quantity : null;
           const perOrder = t.perOrderMax || t.perOrderLimit || null;
           await tx.ticketType.create({
             data: {
@@ -1123,6 +1135,8 @@ export class EventCreatorV2Service {
       },
       [EventCreatorSectionType.story]: {
         description: event.descriptionMd,
+        agenda: (event as any).agenda ?? [],
+        speakers: (event as any).speakers ?? [],
       },
       [EventCreatorSectionType.tickets]: {
         ticketTypes: event.ticketTypes?.map((ticket) => ({

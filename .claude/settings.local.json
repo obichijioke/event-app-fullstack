@@ -51,7 +51,8 @@
       "Bash(node test-email.js:*)",
       "Bash(node test-checkin-qr.js:*)",
       "Bash(node test-ticket-deduplication.js:*)",
-      "Bash(node test-qr-decode-validation.js:*)"
+      "Bash(node test-qr-decode-validation.js:*)",
+      "Bash(grep:*)"
     ],
     "deny": [],
     "ask": []

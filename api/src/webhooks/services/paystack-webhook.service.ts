@@ -48,9 +48,9 @@ export class PaystackWebhookService {
 
     if (event === 'charge.success') {
       await this.markPaymentCaptured(payment.id, payment.orderId, payload);
-    } else if (
-      ['charge.failed', 'charge.reversed', 'charge.chargeback'].includes(event)
-    ) {
+    } else if (event === 'charge.chargeback') {
+      await this.handleChargeback(payment.id, payment.orderId, payload);
+    } else if (['charge.failed', 'charge.reversed'].includes(event)) {
       await this.markPaymentFailed(payment.id, payload);
     } else if (event.startsWith('refund')) {
       await this.handleRefundEvent(payment.orderId, payload);
@@ -87,6 +87,62 @@ export class PaystackWebhookService {
 
     // Issue tickets after capture
     await this.ordersService.ensureTicketsForOrder(orderId);
+  }
+
+  private async handleChargeback(
+    paymentId: string,
+    orderId: string,
+    payload: any,
+  ) {
+    const chargebackRef =
+      payload?.data?.reference || payload?.data?.transaction_reference;
+    const reason = payload?.data?.dispute_reason || 'chargeback';
+    const amount = payload?.data?.amount;
+    const createdAt = payload?.data?.created_at || payload?.data?.transaction_date;
+
+    this.logger.warn(`Chargeback received for order ${orderId}: ${reason}`);
+
+    // Check if dispute already exists to ensure idempotency
+    const existingDispute = await this.prisma.dispute.findUnique({
+      where: {
+        provider_caseId: {
+          provider: 'paystack',
+          caseId: chargebackRef,
+        },
+      },
+    });
+
+    if (existingDispute) {
+      this.logger.debug(
+        `Dispute for chargeback ${chargebackRef} already exists, skipping duplicate webhook`,
+      );
+      return;
+    }
+
+    // Create dispute record and update order status
+    await this.prisma.$transaction([
+      this.prisma.dispute.create({
+        data: {
+          orderId,
+          provider: 'paystack',
+          caseId: chargebackRef,
+          status: 'needs_response',
+          amountCents: amount ? BigInt(amount) : null,
+          reason,
+          openedAt: createdAt ? new Date(createdAt) : new Date(),
+        },
+      }),
+      this.prisma.order.update({
+        where: { id: orderId },
+        data: {
+          status: 'chargeback',
+        },
+      }),
+    ]);
+
+    this.logger.log(
+      `Dispute created for chargeback ${chargebackRef} on order ${orderId}`,
+    );
   }
 
   private async markPaymentFailed(paymentId: string, payload: any) {

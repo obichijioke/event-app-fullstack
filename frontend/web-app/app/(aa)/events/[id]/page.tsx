@@ -44,7 +44,7 @@ export default async function EventDetailsPage({ params }: Props) {
   }
 
   const { event, related } = data;
-  const { summary, description, occurrences, tickets, policies, assets } = event;
+  const { summary, description, occurrences, tickets, policies, assets, agenda, speakers } = event;
   const primaryOccurrence = occurrences[0];
 
   const eventUrl = typeof window !== 'undefined' ? window.location.href : `https://eventflow.ng/events/${summary.id}`;
@@ -76,6 +76,8 @@ export default async function EventDetailsPage({ params }: Props) {
         occurrences={occurrences}
         policies={policies}
         tickets={tickets}
+        agenda={agenda}
+        speakers={speakers}
         sidebar={
           <EventSidebar
             eventId={summary.id}

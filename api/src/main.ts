@@ -2,6 +2,7 @@ import { NestFactory } from '@nestjs/core';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { ValidationPipe } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
+import { json, urlencoded } from 'body-parser';
 import { join } from 'path';
 import { AppModule } from './app.module';
 import cookieParser from 'cookie-parser';
@@ -15,6 +16,16 @@ async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule, {
     rawBody: true, // Enable raw body for webhook signature verification
   });
+
+  // Increase JSON/body limits to handle larger payloads (e.g., rich descriptions/uploads metadata)
+  const bodyLimit = process.env.BODY_LIMIT || '5mb';
+  app.use(json({ limit: bodyLimit }));
+  app.use(
+    urlencoded({
+      limit: bodyLimit,
+      extended: true,
+    }),
+  );
 
   // Enable cookie parsing
   app.use(cookieParser());

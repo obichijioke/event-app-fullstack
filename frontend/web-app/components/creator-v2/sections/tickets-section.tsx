@@ -52,7 +52,8 @@ export function TicketsSection() {
           name: t.name ?? '',
           kind: (t.kind as any) ?? 'paid',
           priceCents: t.priceCents != null ? Number(t.priceCents) : undefined,
-          quantity: t.quantity != null ? Number(t.quantity) : undefined,
+          quantity:
+            t.quantity != null && Number(t.quantity) > 0 ? Number(t.quantity) : undefined,
           visibility: (t.visibility as any) ?? 'public',
           salesStart: t.salesStart ?? '',
           salesEnd: t.salesEnd ?? '',
@@ -80,11 +81,16 @@ export function TicketsSection() {
     () =>
       debounce((...args: unknown[]) => {
         const values = args[0] as TicketsValues;
+        // Treat zero quantity as unlimited by omitting it
+        const normalizedTickets = values.tickets.map((t) => ({
+          ...t,
+          quantity: t.quantity === 0 ? undefined : t.quantity,
+        }));
         void updateSection(
           'tickets',
           {
             autosave: true,
-            payload: { ticketTypes: values.tickets, promoCodes: values.promos },
+            payload: { ticketTypes: normalizedTickets, promoCodes: values.promos },
             status: 'valid',
           },
           { showToast: false }
@@ -138,7 +144,7 @@ export function TicketsSection() {
           <h2 className="text-2xl font-bold">Tickets & pricing</h2>
           <p className="text-sm text-muted-foreground">Add ticket types and pricing rules.</p>
         </div>
-        <Button type="button" variant="outline" onClick={() => append({ name: '', kind: 'paid', priceCents: 0, quantity: 0, visibility: 'public' })}>
+        <Button type="button" variant="outline" onClick={() => append({ name: '', kind: 'paid', priceCents: 0, quantity: undefined, visibility: 'public' })}>
           Add ticket
         </Button>
       </div>
@@ -184,7 +190,7 @@ export function TicketsSection() {
                   <div className="space-y-2">
                     <label className="text-xs font-medium">Quantity</label>
                     <Input type="number" placeholder="100" {...form.register(`tickets.${index}.quantity` as const, { valueAsNumber: true })} />
-                    <p className="text-xs text-muted-foreground">Total inventory for this tier.</p>
+                    <p className="text-xs text-muted-foreground">Total inventory for this tier. Leave blank or set to 0 for unlimited.</p>
                   </div>
                   <div className="space-y-2">
                     <label className="text-xs font-medium">Visibility</label>

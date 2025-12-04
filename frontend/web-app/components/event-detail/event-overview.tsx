@@ -5,9 +5,11 @@ import type { EventDetailSummary } from '@/lib/events';
 type EventOverviewProps = {
   description: string;
   assets: EventDetailSummary['assets'];
+  agenda: EventDetailSummary['agenda'];
+  speakers: EventDetailSummary['speakers'];
 };
 
-export function EventOverview({ description, assets }: EventOverviewProps) {
+export function EventOverview({ description, assets, agenda, speakers }: EventOverviewProps) {
   const hasHtml = /<\/?[a-z][\s\S]*>/i.test(description);
   const paragraphs = !hasHtml
     ? description
@@ -55,6 +57,76 @@ export function EventOverview({ description, assets }: EventOverviewProps) {
                   fill
                   className="object-cover"
                 />
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* Agenda */}
+      {agenda.length > 0 && (
+        <section className="rounded border border-border bg-card p-6">
+          <Heading as="h2" className="text-xl font-semibold mb-4">
+            Agenda
+          </Heading>
+          <div className="space-y-3">
+            {agenda.map((item, idx) => (
+              <div
+                key={`${item.title}-${idx}`}
+                className="flex flex-col gap-2 rounded border border-border/60 bg-muted/40 p-4 sm:flex-row sm:items-center sm:justify-between"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary">
+                    {(item.time ?? '').trim() || idx + 1}
+                  </div>
+                  <div>
+                    <p className="font-medium text-foreground">{item.title}</p>
+                    {item.time && (
+                      <p className="text-xs text-muted-foreground">Starts at {item.time}</p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* Speakers */}
+      {speakers.length > 0 && (
+        <section className="rounded border border-border bg-card p-6">
+          <Heading as="h2" className="text-xl font-semibold mb-4">
+            Speakers
+          </Heading>
+          <div className="grid gap-4 sm:grid-cols-2">
+            {speakers.map((speaker, idx) => (
+              <div key={`${speaker.name}-${idx}`} className="rounded border border-border bg-card/70 p-4">
+                <div className="flex items-start gap-3">
+                  {speaker.photoUrl ? (
+                    <div className="relative h-12 w-12 overflow-hidden rounded-full bg-muted">
+                      <Image
+                        src={speaker.photoUrl}
+                        alt={speaker.name}
+                        fill
+                        className="object-cover"
+                        sizes="48px"
+                      />
+                    </div>
+                  ) : (
+                    <div className="flex h-12 w-12 items-center justify-center rounded-full bg-muted text-sm font-semibold text-muted-foreground">
+                      {speaker.name.slice(0, 1).toUpperCase()}
+                    </div>
+                  )}
+                  <div className="space-y-1">
+                    <p className="font-semibold text-foreground">{speaker.name}</p>
+                    {speaker.role && <p className="text-sm text-muted-foreground">{speaker.role}</p>}
+                    {speaker.bio && (
+                      <p className="text-sm text-muted-foreground leading-snug">
+                        {speaker.bio}
+                      </p>
+                    )}
+                  </div>
+                </div>
               </div>
             ))}
           </div>

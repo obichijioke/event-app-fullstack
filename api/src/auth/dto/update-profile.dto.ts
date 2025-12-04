@@ -1,3 +1,4 @@
+import { Transform } from 'class-transformer';
 import {
   IsString,
   IsOptional,
@@ -15,6 +16,7 @@ export class UpdateProfileDto {
 
   @ApiProperty({ required: false })
   @IsString()
+  @Transform(({ value }) => (value === '' || value === null ? undefined : value))
   @IsPhoneNumber()
   @IsOptional()
   phone?: string;

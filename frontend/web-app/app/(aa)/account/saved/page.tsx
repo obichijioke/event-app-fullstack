@@ -5,8 +5,9 @@ import { savedEventsService } from '@/services/saved-events.service';
 import { EventCard } from '@/components/homepage/event-card';
 import { EventSummary } from '@/lib/homepage';
 import { PublicEvent } from '@/lib/events';
-import { Heading, Text } from '@/components/ui';
+import { Text } from '@/components/ui';
 import { useSavedEventsStore } from '@/hooks/use-saved-events';
+import {  Heart } from 'lucide-react';
 
 // Helper to transform PublicEvent to EventSummary
 function transformEvent(event: PublicEvent): EventSummary {
@@ -122,12 +123,16 @@ export default function SavedEventsPage() {
   }, [savedIds]); // Refetch when savedIds change (e.g. unsaving from card)
 
   return (
-    <div className="container py-10">
-      <div className="mb-8">
-        <Heading level="h1">Saved Events</Heading>
-        <Text className="text-muted-foreground mt-2">
-          Events you have saved for later.
-        </Text>
+    <div className="space-y-6">
+      <div className="overflow-hidden rounded-xl border border-border/70 bg-card">
+        <div className="bg-linear-to-r from-slate-900 via-slate-800 to-slate-700 px-6 py-6 text-white">
+          <div className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-xs font-semibold backdrop-blur mb-2">
+            <Heart className="h-4 w-4" />
+            My Saved Events
+          </div>
+          <h1 className="text-3xl font-semibold">Saved Events</h1>
+          <p className="text-sm text-slate-200 mt-1">Events you have saved for later</p>
+        </div>
       </div>
 
       {loading ? (

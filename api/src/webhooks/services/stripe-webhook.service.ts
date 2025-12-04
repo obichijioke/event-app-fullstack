@@ -1,6 +1,7 @@
 import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { StripePaymentProvider } from '../../orders/providers/stripe/stripe.service';
+import { OrganizerDisputesService } from '../../organizer/organizer-disputes.service';
 import { PaymentStatus } from '@prisma/client';
 import Stripe from 'stripe';
 
@@ -11,6 +12,7 @@ export class StripeWebhookService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly stripeProvider: StripePaymentProvider,
+    private readonly disputesService: OrganizerDisputesService,
   ) {}
 
   /**
@@ -249,9 +251,80 @@ export class StripeWebhookService {
       `Dispute created for charge ${chargeId}: ${dispute.reason}`,
     );
 
-    // You could extend this to update order status to 'chargeback'
-    // For now, just log it for manual review
-    await Promise.resolve();
+    // Find the payment and order associated with this charge
+    const paymentIntentId =
+      typeof dispute.payment_intent === 'string'
+        ? dispute.payment_intent
+        : dispute.payment_intent?.id;
+
+    if (!paymentIntentId) {
+      this.logger.warn(
+        `Received dispute.created without payment_intent: ${dispute.id}`,
+      );
+      return;
+    }
+
+    const payment = await this.findPaymentByProviderIntent(paymentIntentId);
+
+    if (!payment) {
+      this.logger.warn(
+        `Received dispute.created for unknown payment intent: ${paymentIntentId}`,
+      );
+      return;
+    }
+
+    // Check if dispute already exists to ensure idempotency
+    const existingDispute = await this.prisma.dispute.findUnique({
+      where: {
+        provider_caseId: {
+          provider: 'stripe',
+          caseId: dispute.id,
+        },
+      },
+    });
+
+    if (existingDispute) {
+      this.logger.debug(
+        `Dispute ${dispute.id} already exists, skipping duplicate webhook`,
+      );
+      return;
+    }
+
+    // Create dispute record and update order status in a transaction
+    const [createdDispute] = await this.prisma.$transaction([
+      this.prisma.dispute.create({
+        data: {
+          orderId: payment.orderId,
+          provider: 'stripe',
+          caseId: dispute.id,
+          status: 'needs_response',
+          amountCents: dispute.amount,
+          reason: dispute.reason,
+          openedAt: new Date(dispute.created * 1000),
+        },
+      }),
+      this.prisma.order.update({
+        where: { id: payment.orderId },
+        data: {
+          status: 'chargeback',
+        },
+      }),
+    ]);
+
+    this.logger.log(
+      `Dispute ${dispute.id} created for order ${payment.orderId} with status 'needs_response'`,
+    );
+
+    // Send notifications to organization members
+    try {
+      await this.disputesService.notifyDisputeCreated(createdDispute.id);
+    } catch (error) {
+      this.logger.error(
+        `Failed to send dispute notification for ${createdDispute.id}`,
+        error,
+      );
+      // Don't fail the webhook if notification fails
+    }
   }
 
   /**
@@ -270,8 +343,77 @@ export class StripeWebhookService {
       `Dispute closed for charge ${chargeId}: status=${dispute.status}`,
     );
 
-    // You could extend this to handle won/lost disputes
-    await Promise.resolve();
+    // Find the existing dispute record
+    const existingDispute = await this.prisma.dispute.findUnique({
+      where: {
+        provider_caseId: {
+          provider: 'stripe',
+          caseId: dispute.id,
+        },
+      },
+      include: {
+        order: true,
+      },
+    });
+
+    if (!existingDispute) {
+      this.logger.warn(
+        `Received dispute.closed for unknown dispute: ${dispute.id}`,
+      );
+      return;
+    }
+
+    // Map Stripe dispute status to our status
+    // Stripe statuses: won, lost, warning_needs_response, warning_under_review, warning_closed
+    let disputeStatus: string;
+    let orderStatus: any = existingDispute.order.status;
+
+    if (dispute.status === 'won') {
+      disputeStatus = 'won';
+      orderStatus = 'paid'; // Restore order to paid status
+    } else if (dispute.status === 'lost') {
+      disputeStatus = 'lost';
+      orderStatus = 'chargeback'; // Keep as chargeback
+    } else if (dispute.status.startsWith('warning')) {
+      disputeStatus = 'warning';
+      // Keep current order status for warnings
+    } else {
+      disputeStatus = dispute.status;
+    }
+
+    // Update dispute and order status in a transaction
+    const [updatedDispute] = await this.prisma.$transaction([
+      this.prisma.dispute.update({
+        where: { id: existingDispute.id },
+        data: {
+          status: disputeStatus,
+          closedAt: new Date(),
+        },
+      }),
+      this.prisma.order.update({
+        where: { id: existingDispute.orderId },
+        data: {
+          status: orderStatus,
+        },
+      }),
+    ]);
+
+    this.logger.log(
+      `Dispute ${dispute.id} closed with status '${disputeStatus}', order ${existingDispute.orderId} updated to '${orderStatus}'`,
+    );
+
+    // Send notifications if dispute is resolved (won/lost)
+    if (disputeStatus === 'won' || disputeStatus === 'lost') {
+      try {
+        await this.disputesService.notifyDisputeResolved(updatedDispute.id);
+      } catch (error) {
+        this.logger.error(
+          `Failed to send dispute resolution notification for ${updatedDispute.id}`,
+          error,
+        );
+        // Don't fail the webhook if notification fails
+      }
+    }
   }
 
   /**

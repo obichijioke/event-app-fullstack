@@ -197,6 +197,7 @@ model User {
   eventQuestions                  EventQuestion[]                 @relation("UserEventQuestions")
   questionUpvotes                 QuestionUpvote[]                @relation("UserQuestionUpvotes")
   savedEvents                     SavedEvent[]
+  disputeEvidenceUploads          DisputeEvidence[]
 
   @@map("users")
 }
@@ -576,6 +577,8 @@ model Event {
   ageRestriction String?     @map("age_restriction")
   coverImageUrl  String?     @map("cover_image_url")
   language       String?
+  agenda         Json        @default("[]")
+  speakers       Json        @default("[]")
   tags           String[]    @default([])
   latitude       Decimal?    @db.Decimal(10, 8)
   longitude      Decimal?    @db.Decimal(11, 8)
@@ -1051,21 +1054,42 @@ model Refund {
 }
 
 model Dispute {
-  id          String    @id @default(cuid())
-  orderId     String    @map("order_id")
-  provider    String
-  caseId      String    @map("case_id")
-  status      String // 'needs_response','won','lost','warning', etc.
-  amountCents BigInt?   @map("amount_cents")
-  reason      String?
-  openedAt    DateTime  @default(now()) @map("opened_at")
-  closedAt    DateTime? @map("closed_at")
+  id           String    @id @default(cuid())
+  orderId      String    @map("order_id")
+  provider     String
+  caseId       String    @map("case_id")
+  status       String // 'needs_response','under_review','won','lost','warning','charge_refunded'
+  amountCents  BigInt?   @map("amount_cents")
+  reason       String?
+  openedAt     DateTime  @default(now()) @map("opened_at")
+  closedAt     DateTime? @map("closed_at")
+  respondByAt  DateTime? @map("respond_by_at") // Deadline for organizer response
+  submittedAt  DateTime? @map("submitted_at") // When organizer submitted response
+  responseNote String?   @map("response_note") // Organizer's response notes
 
   // Relations
-  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  order    Order             @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  evidence DisputeEvidence[]
 
   @@unique([provider, caseId])
   @@map("disputes")
+}
+
+model DisputeEvidence {
+  id         String   @id @default(cuid())
+  disputeId  String   @map("dispute_id")
+  fileUrl    String   @map("file_url")
+  fileName   String   @map("file_name")
+  mimeType   String   @map("mime_type")
+  fileSize   Int      @map("file_size") // Size in bytes
+  uploadedBy String   @map("uploaded_by") // User ID who uploaded
+  uploadedAt DateTime @default(now()) @map("uploaded_at")
+
+  // Relations
+  dispute Dispute @relation(fields: [disputeId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [uploadedBy], references: [id])
+
+  @@map("dispute_evidence")
 }
 
 // ---------- Moderation ----------
