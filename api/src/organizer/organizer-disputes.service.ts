@@ -609,4 +609,345 @@ export class OrganizerDisputesService {
       'resolved',
     );
   }
+
+  // ========== PLATFORM DISPUTE METHODS ==========
+
+  /**
+   * Get all platform disputes for organization's events
+   */
+  async findPlatformDisputes(orgId: string, query: any) {
+    const { page = 1, limit = 10, search, status, category, urgentOnly } = query;
+    const skip = (page - 1) * limit;
+
+    const where: any = {
+      type: 'platform',
+      order: {
+        event: {
+          orgId,
+        },
+      },
+    };
+
+    if (status) {
+      where.status = status;
+    }
+
+    if (category) {
+      where.category = category;
+    }
+
+    // Urgent filter: respond_by deadline within 48 hours
+    if (urgentOnly) {
+      const fortyEightHours = new Date();
+      fortyEightHours.setHours(fortyEightHours.getHours() + 48);
+      where.respondByAt = {
+        lte: fortyEightHours,
+        gte: new Date(), // Not expired yet
+      };
+      where.status = 'open'; // Only open disputes can be urgent
+    }
+
+    if (search) {
+      where.OR = [
+        { id: { contains: search, mode: 'insensitive' } },
+        { orderId: { contains: search, mode: 'insensitive' } },
+        {
+          order: {
+            buyer: {
+              email: { contains: search, mode: 'insensitive' },
+            },
+          },
+        },
+      ];
+    }
+
+    const [disputes, total] = await this.prisma.$transaction([
+      this.prisma.dispute.findMany({
+        where,
+        include: {
+          order: {
+            select: {
+              id: true,
+              totalCents: true,
+              currency: true,
+              buyerId: true,
+              event: {
+                select: {
+                  id: true,
+                  title: true,
+                },
+              },
+            },
+          },
+          initiator: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+            },
+          },
+          evidence: true,
+          _count: {
+            select: {
+              messages: true,
+            },
+          },
+        },
+        orderBy: [
+          { respondByAt: 'asc' }, // Most urgent first
+          { createdAt: 'desc' },
+        ],
+        skip,
+        take: limit,
+      }),
+      this.prisma.dispute.count({ where }),
+    ]);
+
+    return {
+      disputes,
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+      hasMore: skip + disputes.length < total,
+    };
+  }
+
+  /**
+   * Get single platform dispute details
+   */
+  async findOnePlatformDispute(orgId: string, disputeId: string) {
+    const dispute = await this.prisma.dispute.findUnique({
+      where: { id: disputeId },
+      include: {
+        order: {
+          include: {
+            event: {
+              select: {
+                id: true,
+                title: true,
+                orgId: true,
+              },
+            },
+            buyer: {
+              select: {
+                id: true,
+                name: true,
+                email: true,
+              },
+            },
+          },
+        },
+        initiator: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
+        evidence: {
+          include: {
+            user: {
+              select: {
+                id: true,
+                name: true,
+                email: true,
+              },
+            },
+          },
+          orderBy: {
+            uploadedAt: 'desc',
+          },
+        },
+        messages: {
+          include: {
+            sender: {
+              select: {
+                id: true,
+                name: true,
+                email: true,
+              },
+            },
+          },
+          orderBy: {
+            createdAt: 'asc',
+          },
+        },
+      },
+    });
+
+    if (!dispute) {
+      throw new NotFoundException('Dispute not found');
+    }
+
+    // Verify ownership
+    if (dispute.order.event.orgId !== orgId) {
+      throw new ForbiddenException(
+        'You do not have permission to access this dispute',
+      );
+    }
+
+    return dispute;
+  }
+
+  /**
+   * Respond to a platform dispute
+   */
+  async respondToPlatformDispute(
+    orgId: string,
+    disputeId: string,
+    dto: any,
+    userId: string,
+  ) {
+    const dispute = await this.findOnePlatformDispute(orgId, disputeId);
+
+    // Check if can respond
+    if (dispute.status !== 'open') {
+      throw new BadRequestException(
+        `Cannot respond to dispute with status: ${dispute.status}`,
+      );
+    }
+
+    // Check if deadline passed
+    if (dispute.respondByAt && new Date() > new Date(dispute.respondByAt)) {
+      throw new BadRequestException('Response deadline has passed');
+    }
+
+    // Update dispute
+    const updatedDispute = await this.prisma.dispute.update({
+      where: { id: disputeId },
+      data: {
+        status: 'organizer_responded',
+        responseNote: dto.responseNote,
+        submittedAt: new Date(),
+      },
+    });
+
+    // Add message to thread
+    await this.prisma.disputeMessage.create({
+      data: {
+        disputeId,
+        senderId: userId,
+        senderRole: 'organizer',
+        message: dto.responseNote,
+      },
+    });
+
+    // Notify buyer
+    if (dispute.initiatorId) {
+      await this.notifyBuyer(dispute.initiatorId, updatedDispute, 'organizer_responded');
+    }
+
+    return updatedDispute;
+  }
+
+  /**
+   * Propose a resolution
+   */
+  async proposeResolution(
+    orgId: string,
+    disputeId: string,
+    dto: any,
+    userId: string,
+  ) {
+    const dispute = await this.findOnePlatformDispute(orgId, disputeId);
+
+    // Can propose resolution when organizer has responded
+    if (!['organizer_responded', 'open'].includes(dispute.status)) {
+      throw new BadRequestException(
+        'Cannot propose resolution at this stage',
+      );
+    }
+
+    // Update dispute with proposal
+    const updatedDispute = await this.prisma.dispute.update({
+      where: { id: disputeId },
+      data: {
+        resolution: dto.resolution,
+        refundedCents: dto.refundAmountCents,
+        resolutionNote: dto.proposalNote,
+        status: 'organizer_responded',
+      },
+    });
+
+    // Add internal message about proposal
+    await this.prisma.disputeMessage.create({
+      data: {
+        disputeId,
+        senderId: userId,
+        senderRole: 'organizer',
+        message: `Proposed resolution: ${dto.resolution}. ${dto.proposalNote}`,
+      },
+    });
+
+    // Notify buyer of proposal
+    if (dispute.initiatorId) {
+      await this.notifyBuyer(
+        dispute.initiatorId,
+        updatedDispute,
+        'resolution_proposed',
+      );
+    }
+
+    return updatedDispute;
+  }
+
+  /**
+   * Accept a moderator's resolution
+   */
+  async acceptResolution(orgId: string, disputeId: string) {
+    const dispute = await this.findOnePlatformDispute(orgId, disputeId);
+
+    if (dispute.status !== 'resolved') {
+      throw new BadRequestException(
+        'Can only accept resolutions on resolved disputes',
+      );
+    }
+
+    // Update to closed
+    await this.prisma.dispute.update({
+      where: { id: disputeId },
+      data: {
+        status: 'closed',
+        closedAt: new Date(),
+      },
+    });
+
+    return { message: 'Resolution accepted, dispute closed' };
+  }
+
+  /**
+   * Notify buyer about dispute updates
+   */
+  private async notifyBuyer(
+    buyerId: string,
+    dispute: any,
+    eventType: 'organizer_responded' | 'resolution_proposed',
+  ) {
+    let title: string;
+    let message: string;
+
+    if (eventType === 'organizer_responded') {
+      title = '💬 Organizer Responded to Your Dispute';
+      message = `The organizer has responded to your dispute ${dispute.id.slice(0, 8)}. Please review their response.`;
+    } else {
+      title = '🤝 Resolution Proposed';
+      message = `The organizer has proposed a resolution for dispute ${dispute.id.slice(0, 8)}. Please review the proposal.`;
+    }
+
+    await this.notificationsService.createNotification({
+      userId: buyerId,
+      type: NotificationType.info,
+      category: NotificationCategory.order,
+      title,
+      message,
+      channels: ['in_app', 'email'],
+      actionUrl: `/buyer/disputes/${dispute.id}`,
+      actionText: 'View Dispute',
+      data: {
+        disputeId: dispute.id,
+        eventType,
+      },
+    });
+  }
 }

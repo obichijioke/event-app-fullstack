@@ -295,6 +295,7 @@ export class StripeWebhookService {
       this.prisma.dispute.create({
         data: {
           orderId: payment.orderId,
+          type: 'payment_provider',
           provider: 'stripe',
           caseId: dispute.id,
           status: 'needs_response',

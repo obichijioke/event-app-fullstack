@@ -188,4 +188,78 @@ export class OrganizerDisputesController {
     await this.disputesService.deleteEvidence(orgId, id, evidenceId, user.id);
     return { message: 'Evidence deleted successfully' };
   }
+
+  // ========== PLATFORM DISPUTE ENDPOINTS ==========
+
+  /**
+   * Get all platform disputes for organization's events
+   */
+  @Get('platform/list')
+  @ApiOperation({ summary: 'List platform disputes for an organization' })
+  async findPlatformDisputes(
+    @CurrentUser() user: any,
+    @Query('orgId') orgId: string,
+    @Query() query: any,
+  ) {
+    return this.disputesService.findPlatformDisputes(orgId, query);
+  }
+
+  /**
+   * Get single platform dispute
+   */
+  @Get('platform/:id')
+  @ApiOperation({ summary: 'Get platform dispute details' })
+  async findOnePlatformDispute(
+    @CurrentUser() user: any,
+    @Query('orgId') orgId: string,
+    @Param('id') id: string,
+  ) {
+    return this.disputesService.findOnePlatformDispute(orgId, id);
+  }
+
+  /**
+   * Respond to a platform dispute
+   */
+  @Post('platform/:id/respond')
+  @ApiOperation({ summary: 'Respond to a platform dispute' })
+  async respondToPlatformDispute(
+    @CurrentUser() user: any,
+    @Query('orgId') orgId: string,
+    @Param('id') id: string,
+    @Body() dto: any,
+  ) {
+    return this.disputesService.respondToPlatformDispute(
+      orgId,
+      id,
+      dto,
+      user.sub,
+    );
+  }
+
+  /**
+   * Propose a resolution
+   */
+  @Post('platform/:id/propose-resolution')
+  @ApiOperation({ summary: 'Propose a resolution to the buyer' })
+  async proposeResolution(
+    @CurrentUser() user: any,
+    @Query('orgId') orgId: string,
+    @Param('id') id: string,
+    @Body() dto: any,
+  ) {
+    return this.disputesService.proposeResolution(orgId, id, dto, user.sub);
+  }
+
+  /**
+   * Accept moderator's resolution
+   */
+  @Post('platform/:id/accept')
+  @ApiOperation({ summary: 'Accept the moderator resolution' })
+  async acceptResolution(
+    @CurrentUser() user: any,
+    @Query('orgId') orgId: string,
+    @Param('id') id: string,
+  ) {
+    return this.disputesService.acceptResolution(orgId, id);
+  }
 }

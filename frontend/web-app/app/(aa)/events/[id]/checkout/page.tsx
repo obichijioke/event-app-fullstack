@@ -4,6 +4,7 @@ import { use, useCallback, useEffect, useMemo, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 
 import { StepIndicator } from '@/components/checkout/step-indicator';
 import { TicketSelector } from '@/components/checkout/ticket-selector';
@@ -18,6 +19,7 @@ import { getErrorMessage } from '@/lib/utils/error-message';
 import { Calendar, MapPin, Eye } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { ApiError } from '@/lib/api/client';
+import { useAuth } from '@/components/auth';
 
 const STEPS = [
   { id: 1, title: 'Select Tickets', subtitle: 'Choose your tickets' },
@@ -32,6 +34,8 @@ type Props = {
 export default function CheckoutPage({ params }: Props) {
   const { id: eventId } = use(params);
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const { user, initialized } = useAuth();
 
   const [event, setEvent] = useState<Event | null>(null);
   const [ticketTypes, setTicketTypes] = useState<TicketType[]>([]);
@@ -63,6 +67,7 @@ export default function CheckoutPage({ params }: Props) {
   };
 
   const loadEventData = useCallback(async () => {
+    if (!user) return;
     try {
       setLoading(true);
       setLoadError(null);
@@ -80,15 +85,27 @@ export default function CheckoutPage({ params }: Props) {
     } finally {
       setLoading(false);
     }
-  }, [eventId]);
+  }, [eventId, user]);
 
   useEffect(() => {
+    if (!initialized) return;
+    if (user) return;
+
+    const query = searchParams?.toString();
+    const returnUrl = `/events/${eventId}/checkout${query ? `?${query}` : ''}`;
+    toast.error('Please sign in to continue checkout');
+    router.replace(`/auth/login?returnUrl=${encodeURIComponent(returnUrl)}`);
+  }, [initialized, user, router, eventId, searchParams]);
+
+  useEffect(() => {
+    if (!initialized || !user) return;
     loadEventData();
-  }, [loadEventData]);
+  }, [initialized, user, loadEventData]);
   
   // Fetch and restore existing holds on mount
   useEffect(() => {
     const restoreExistingHolds = async () => {
+      if (!user) return;
       try {
         const holds = await ticketsApi.getMyHolds(eventId);
         
@@ -114,7 +131,7 @@ export default function CheckoutPage({ params }: Props) {
     };
     
     restoreExistingHolds();
-  }, [eventId]);
+  }, [eventId, user]);
 
   const orderAmounts = useMemo(() => {
     let subtotalCents = 0;
@@ -182,6 +199,7 @@ export default function CheckoutPage({ params }: Props) {
   // Create hold when user has selections
   useEffect(() => {
     const createHoldForSelections = async () => {
+      if (!user) return;
       const hasSelections = Array.from(ticketSelections.values()).some((q) => q > 0);
       
       // Don't create hold if no selections, already have a hold, or currently creating one
@@ -220,7 +238,7 @@ export default function CheckoutPage({ params }: Props) {
     };
     
     createHoldForSelections();
-  }, [ticketSelections, eventId, holdId, creatingHold]);
+  }, [ticketSelections, eventId, holdId, creatingHold, user]);
 
   const handleApplyPromoCode = async () => {
     if (!promoCode.trim()) {

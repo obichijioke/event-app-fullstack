@@ -60,6 +60,8 @@ export type { ProgressBarProps } from './progress-bar';
 
 export { Avatar, avatarVariants } from './avatar';
 export type { AvatarProps } from './avatar';
+export { Card } from './card';
+export type { CardProps } from './card';
 
 // Modal Components
 export { Modal } from './modal';

@@ -4,17 +4,22 @@ import { useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { organizerApiService, DisputeStats } from '@/services/organizer-api.service';
+import { organizerDisputesApi } from '@/services/organizer-disputes-api.service';
 import { DisputeStatsComponent } from '@/components/organizer/disputes/dispute-stats';
 import { DisputeList } from '@/components/organizer/disputes/dispute-list';
+import { PlatformDisputeList } from '@/components/organizer/disputes/platform-dispute-list';
 import { AlertCircle } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 export default function DisputesPage() {
   const searchParams = useSearchParams();
   const orgId = searchParams.get('orgId') || '';
+  const defaultTab = searchParams.get('type') || 'payment-provider';
 
   const [stats, setStats] = useState<DisputeStats | null>(null);
   const [isLoadingStats, setIsLoadingStats] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<string>(defaultTab);
 
   useEffect(() => {
     if (!orgId) {
@@ -29,7 +34,7 @@ export default function DisputesPage() {
     try {
       setIsLoadingStats(true);
       setError(null);
-      const statsData = await organizerApiService.getDisputeStats(orgId);
+      const statsData = await organizerDisputesApi.getStats(orgId);
       setStats(statsData);
     } catch (err: any) {
       setError(err.message || 'Failed to load dispute statistics');
@@ -66,9 +71,9 @@ export default function DisputesPage() {
     <div className="container mx-auto px-4 py-8">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Payment Disputes</h1>
+          <h1 className="text-3xl font-bold text-gray-900">Disputes</h1>
           <p className="text-gray-600 mt-1">
-            View and respond to payment disputes from buyers
+            Manage payment provider disputes and buyer-initiated platform disputes
           </p>
         </div>
         <Link
@@ -82,40 +87,87 @@ export default function DisputesPage() {
       {/* Statistics */}
       {stats && <DisputeStatsComponent stats={stats} isLoading={isLoadingStats} />}
 
-      {/* Information Banner */}
-      <div className="border border-blue-200 rounded-lg p-4 bg-blue-50 mb-6">
-        <div className="flex items-start gap-3">
-          <AlertCircle className="h-5 w-5 text-blue-600 flex-shrink-0 mt-0.5" />
-          <div className="flex-1">
-            <p className="text-sm font-medium text-blue-900">About Payment Disputes</p>
-            <p className="text-sm text-blue-700 mt-1">
-              Disputes occur when a buyer contests a charge with their bank. Respond promptly with
-              evidence to increase your chances of winning. Check response deadlines carefully.
-            </p>
-          </div>
-        </div>
-      </div>
+      {/* Tabs */}
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-6">
+        <TabsList className="mb-6">
+          <TabsTrigger value="payment-provider">Payment Provider Disputes</TabsTrigger>
+          <TabsTrigger value="platform">Platform Disputes</TabsTrigger>
+        </TabsList>
 
-      {/* Disputes List */}
-      {error && !stats ? (
-        <div className="border border-red-200 rounded-lg p-6 bg-red-50">
-          <div className="flex items-start gap-3">
-            <AlertCircle className="h-5 w-5 text-red-600 flex-shrink-0 mt-0.5" />
-            <div>
-              <p className="text-sm font-medium text-red-900">Error loading disputes</p>
-              <p className="text-sm text-red-700 mt-1">{error}</p>
-              <button
-                onClick={loadStats}
-                className="mt-3 text-sm text-red-700 underline hover:text-red-800"
-              >
-                Try again
-              </button>
+        <TabsContent value="payment-provider">
+          {/* Information Banner */}
+          <div className="border border-blue-200 rounded-lg p-4 bg-blue-50 mb-6">
+            <div className="flex items-start gap-3">
+              <AlertCircle className="h-5 w-5 text-blue-600 flex-shrink-0 mt-0.5" />
+              <div className="flex-1">
+                <p className="text-sm font-medium text-blue-900">About Payment Provider Disputes</p>
+                <p className="text-sm text-blue-700 mt-1">
+                  Disputes occur when a buyer contests a charge with their bank via Stripe/Paystack.
+                  Respond promptly with evidence to increase your chances of winning. Check response deadlines carefully.
+                </p>
+              </div>
             </div>
           </div>
-        </div>
-      ) : (
-        <DisputeList orgId={orgId} />
-      )}
+
+          {/* Disputes List */}
+          {error && !stats ? (
+            <div className="border border-red-200 rounded-lg p-6 bg-red-50">
+              <div className="flex items-start gap-3">
+                <AlertCircle className="h-5 w-5 text-red-600 flex-shrink-0 mt-0.5" />
+                <div>
+                  <p className="text-sm font-medium text-red-900">Error loading disputes</p>
+                  <p className="text-sm text-red-700 mt-1">{error}</p>
+                  <button
+                    onClick={loadStats}
+                    className="mt-3 text-sm text-red-700 underline hover:text-red-800"
+                  >
+                    Try again
+                  </button>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <DisputeList orgId={orgId} />
+          )}
+        </TabsContent>
+
+        <TabsContent value="platform">
+          {/* Information Banner */}
+          <div className="border border-blue-200 rounded-lg p-4 bg-blue-50 mb-6">
+            <div className="flex items-start gap-3">
+              <AlertCircle className="h-5 w-5 text-blue-600 flex-shrink-0 mt-0.5" />
+              <div className="flex-1">
+                <p className="text-sm font-medium text-blue-900">About Platform Disputes</p>
+                <p className="text-sm text-blue-700 mt-1">
+                  Platform disputes are filed directly by buyers through our dispute system for issues like
+                  ticket delivery, event changes, or service quality. You have 7 days to respond with your evidence and explanation.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Platform Disputes List */}
+          {error && !stats ? (
+            <div className="border border-red-200 rounded-lg p-6 bg-red-50">
+              <div className="flex items-start gap-3">
+                <AlertCircle className="h-5 w-5 text-red-600 flex-shrink-0 mt-0.5" />
+                <div>
+                  <p className="text-sm font-medium text-red-900">Error loading disputes</p>
+                  <p className="text-sm text-red-700 mt-1">{error}</p>
+                  <button
+                    onClick={loadStats}
+                    className="mt-3 text-sm text-red-700 underline hover:text-red-800"
+                  >
+                    Try again
+                  </button>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <PlatformDisputeList orgId={orgId} />
+          )}
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

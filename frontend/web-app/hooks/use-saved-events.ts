@@ -1,5 +1,7 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useEffect } from 'react';
 import { savedEventsService } from '@/services/saved-events.service';
+import { ApiError } from '@/lib/api/client';
+import { getAccessToken } from '@/lib/auth/token-store';
 import { create } from 'zustand';
 import toast from 'react-hot-toast';
 
@@ -20,11 +22,20 @@ export const useSavedEventsStore = create<SavedEventsStore>((set, get) => ({
     const { isLoaded, isLoading } = get();
     if (isLoaded || isLoading) return;
 
+    const token = getAccessToken();
+    if (!token) {
+      return;
+    }
+
     set({ isLoading: true });
     try {
       const ids = await savedEventsService.getSavedEventIds();
       set({ savedIds: new Set(ids), isLoading: false, isLoaded: true });
     } catch (error) {
+      if (error instanceof ApiError && error.status === 401) {
+        set({ isLoading: false, isLoaded: false, savedIds: new Set() });
+        return;
+      }
       console.error('Failed to fetch saved events', error);
       set({ isLoading: false });
     }

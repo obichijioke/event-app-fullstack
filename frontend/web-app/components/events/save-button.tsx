@@ -4,6 +4,8 @@ import { useEffect } from 'react';
 import { Button } from '@/components/ui';
 import { HeartIcon } from '@/components/ui/icons';
 import { useSavedEventsStore } from '@/hooks/use-saved-events';
+import { useAuth } from '@/components/auth';
+import toast from 'react-hot-toast';
 import { cn } from '@/lib/utils';
 
 interface SaveButtonProps {
@@ -21,25 +23,23 @@ export function SaveButton({
   className,
   iconClassName 
 }: SaveButtonProps) {
-  const { isSaved, toggleSave, fetchSavedIds, savedIds } = useSavedEventsStore();
+  const { isSaved, toggleSave, fetchSavedIds } = useSavedEventsStore();
+  const { user, initialized } = useAuth();
   const saved = isSaved(eventId);
 
   useEffect(() => {
-    // Ensure we have the latest saved IDs
-    // We use a simple check: if we haven't fetched yet (size is 0), we fetch.
-    // This is not perfect (what if user has 0 saved?), but good enough for MVP.
-    // A better way would be a 'hasFetched' flag in store.
-    // For now, let's just fetch if we are not sure.
-    // Actually, to avoid infinite loops or redundant fetches, let's rely on a global init 
-    // or just fetch on mount of this button if we suspect we need to.
-    // Let's just call fetchSavedIds() and let the store handle deduplication if we add a flag there.
-    // For now, I'll update the store to have a loaded flag.
+    if (!initialized || !user) return;
     fetchSavedIds(); 
-  }, [fetchSavedIds]);
+  }, [fetchSavedIds, initialized, user]);
 
   const handleClick = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
+    if (!initialized) return;
+    if (!user) {
+      toast.error('Sign in to save events');
+      return;
+    }
     toggleSave(eventId);
   };
 

@@ -198,6 +198,10 @@ model User {
   questionUpvotes                 QuestionUpvote[]                @relation("UserQuestionUpvotes")
   savedEvents                     SavedEvent[]
   disputeEvidenceUploads          DisputeEvidence[]
+  initiatedDisputes               Dispute[]                       @relation("DisputeInitiator")
+  moderatedDisputes               Dispute[]                       @relation("DisputeModerator")
+  appealedDisputes                Dispute[]                       @relation("DisputeAppealer")
+  disputeMessages                 DisputeMessage[]
 
   @@map("users")
 }
@@ -1053,25 +1057,105 @@ model Refund {
   @@map("refunds")
 }
 
+enum DisputeType {
+  payment_provider // Stripe/Paystack chargebacks
+  platform         // Buyer-initiated platform disputes
+}
+
+enum DisputeCategory {
+  duplicate_charge
+  tickets_not_delivered
+  wrong_ticket_type
+  refund_not_processed
+  partial_refund_issue
+  event_mismatch
+  venue_changed
+  time_changed
+  unauthorized_purchase
+  counterfeit_tickets
+  account_compromise
+  other
+}
+
+enum DisputeResolution {
+  pending
+  full_refund
+  partial_refund
+  no_refund
+  credit_issued
+  ticket_replacement
+  custom
+}
+
 model Dispute {
-  id           String    @id @default(cuid())
-  orderId      String    @map("order_id")
-  provider     String
-  caseId       String    @map("case_id")
-  status       String // 'needs_response','under_review','won','lost','warning','charge_refunded'
-  amountCents  BigInt?   @map("amount_cents")
-  reason       String?
-  openedAt     DateTime  @default(now()) @map("opened_at")
-  closedAt     DateTime? @map("closed_at")
-  respondByAt  DateTime? @map("respond_by_at") // Deadline for organizer response
-  submittedAt  DateTime? @map("submitted_at") // When organizer submitted response
-  responseNote String?   @map("response_note") // Organizer's response notes
+  id           String              @id @default(cuid())
+  orderId      String              @map("order_id")
+
+  // Type differentiation
+  type         DisputeType         @default(platform)
+
+  // Payment provider fields (for payment_provider type)
+  provider     String?             // 'stripe', 'paystack' (null for platform disputes)
+  caseId       String?             @map("case_id") // Provider's case ID (null for platform)
+
+  // Platform dispute fields (for platform type)
+  initiatorId  String?             @map("initiator_id") // Buyer who initiated
+  category     DisputeCategory?
+  subcategory  String?             // Free-form subcategory
+  description  String?             @db.Text // Buyer's description
+
+  // Status and resolution
+  status       String              // 'open','needs_response','under_review','won','lost','warning','charge_refunded','organizer_responded','escalated','moderator_review','resolved','appealed','appeal_review','closed'
+  resolution   DisputeResolution   @default(pending)
+  resolutionNote String?           @map("resolution_note") @db.Text
+
+  // Amounts
+  amountCents  BigInt?             @map("amount_cents")
+  refundedCents BigInt?            @map("refunded_cents") // Actual refunded amount
+
+  // Reason/notes
+  reason       String?             @db.Text
+
+  // Timestamps
+  openedAt     DateTime            @default(now()) @map("opened_at")
+  closedAt     DateTime?           @map("closed_at")
+  respondByAt  DateTime?           @map("respond_by_at") // Organizer deadline
+  submittedAt  DateTime?           @map("submitted_at") // Organizer response time
+  escalatedAt  DateTime?           @map("escalated_at") // When escalated to moderator
+  resolvedAt   DateTime?           @map("resolved_at") // When final decision made
+
+  // Response tracking
+  responseNote String?             @map("response_note") @db.Text // Organizer's response
+  moderatorNote String?            @map("moderator_note") @db.Text
+
+  // Assignment
+  moderatorId  String?             @map("moderator_id") // Assigned moderator
+
+  // Appeal
+  appealedAt   DateTime?           @map("appealed_at")
+  appealNote   String?             @map("appeal_note") @db.Text
+  appealedBy   String?             @map("appealed_by") // User who appealed
+
+  // Metadata
+  createdAt    DateTime            @default(now()) @map("created_at")
+  updatedAt    DateTime            @updatedAt @map("updated_at")
 
   // Relations
-  order    Order             @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  evidence DisputeEvidence[]
+  order      Order               @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  initiator  User?               @relation("DisputeInitiator", fields: [initiatorId], references: [id])
+  moderator  User?               @relation("DisputeModerator", fields: [moderatorId], references: [id])
+  appealer   User?               @relation("DisputeAppealer", fields: [appealedBy], references: [id])
+  evidence   DisputeEvidence[]
+  messages   DisputeMessage[]
 
-  @@unique([provider, caseId])
+  @@unique([provider, caseId], name: "provider_caseId")
+  @@index([orderId])
+  @@index([type])
+  @@index([status])
+  @@index([category])
+  @@index([initiatorId])
+  @@index([moderatorId])
+  @@index([openedAt])
   @@map("disputes")
 }
 
@@ -1090,6 +1174,24 @@ model DisputeEvidence {
   user    User    @relation(fields: [uploadedBy], references: [id])
 
   @@map("dispute_evidence")
+}
+
+model DisputeMessage {
+  id         String   @id @default(cuid())
+  disputeId  String   @map("dispute_id")
+  senderId   String   @map("sender_id")
+  senderRole String   @map("sender_role") // 'buyer', 'organizer', 'moderator', 'admin'
+  message    String   @db.Text
+  isInternal Boolean  @default(false) @map("is_internal") // Only visible to moderators/admins
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  // Relations
+  dispute Dispute @relation(fields: [disputeId], references: [id], onDelete: Cascade)
+  sender  User    @relation(fields: [senderId], references: [id])
+
+  @@index([disputeId])
+  @@index([createdAt])
+  @@map("dispute_messages")
 }
 
 // ---------- Moderation ----------

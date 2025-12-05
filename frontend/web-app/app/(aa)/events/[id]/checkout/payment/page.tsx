@@ -45,7 +45,7 @@ export default function PaymentPage({ params }: Props) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const orderId = searchParams.get('orderId');
-  const { user } = useAuth();
+  const { user, initialized } = useAuth();
 
   const [event, setEvent] = useState<Event | null>(null);
   const [ticketTypes, setTicketTypes] = useState<TicketType[]>([]);
@@ -113,6 +113,7 @@ export default function PaymentPage({ params }: Props) {
   }, []);
 
   const loadPaymentData = useCallback(async () => {
+    if (!user) return;
     if (!orderId) {
       toast.error('No order found');
       router.push(`/events/${eventId}/checkout`);
@@ -157,12 +158,23 @@ export default function PaymentPage({ params }: Props) {
     } finally {
       setLoading(false);
     }
-  }, [eventId, orderId, router]);
+  }, [eventId, orderId, router, user]);
 
   useEffect(() => {
+    if (!initialized || !user) return;
     loadPaymentData();
     loadPaymentProviders();
-  }, [loadPaymentData, loadPaymentProviders]);
+  }, [initialized, user, loadPaymentData, loadPaymentProviders]);
+
+  useEffect(() => {
+    if (!initialized) return;
+    if (user) return;
+
+    const query = searchParams.toString();
+    const returnUrl = `/events/${eventId}/checkout/payment${query ? `?${query}` : ''}`;
+    toast.error('Please sign in to continue checkout');
+    router.replace(`/auth/login?returnUrl=${encodeURIComponent(returnUrl)}`);
+  }, [initialized, user, router, eventId, searchParams]);
 
   // Initialize payment when provider is selected
   useEffect(() => {
