@@ -68,13 +68,15 @@ docker compose logs -f redis
 
 ### Key Features
 - **Multi-tenant SaaS**: Organization-based isolation with role-based access control
-- **Event Management**: Complete event lifecycle from draft to completion with announcements and FAQs
+- **Event Management**: Complete event lifecycle from draft to completion with announcements, FAQs, agenda, and speakers
 - **Ticketing System**: GA and seated tickets with advanced pricing tiers and seatmap management
 - **Payment Processing**: Dual payment providers (Stripe + Paystack) with webhook handling
 - **Order Management**: Full order lifecycle with refunds, disputes, and chargebacks
+- **Dispute Management**: Platform-level dispute handling system for payment chargebacks and buyer disputes
 - **Creator Interface**: Multi-step event creation wizard (v2) with autosave, templates, and guided workflow
 - **Verification System**: Document upload and review for organization verification with appeal process
 - **Review System**: Separate reviews for events and organizers with moderation
+- **Saved Events**: Users can save/bookmark events for later viewing
 - **Notification System**: Multi-channel notifications (in-app, email, push, SMS) with real-time WebSocket support
 - **Real-time Updates**: WebSocket gateway for live notifications and event updates
 - **User Account Management**: Comprehensive profile, preferences, and account settings
@@ -89,11 +91,12 @@ docker compose logs -f redis
 - **admin/** - Platform administration endpoints for system management
 - **announcements/** - Event announcements and updates system
 - **auth/** - JWT authentication, API keys, session management, and 2FA
+- **buyer-disputes/** - Platform dispute management system for payment chargebacks and buyer disputes
 - **categories/** - Event categorization and taxonomy
 - **common/** - Shared utilities, guards, decorators, and pipes
 - **currency/** - Multi-currency support and conversion utilities
 - **event-creator-v2/** - Step-by-step event creation wizard with autosave and templates
-- **events/** - Event management with occurrences, assets, policies, and seatmaps
+- **events/** - Event management with occurrences, assets, policies, seatmaps, agenda, and speakers
 - **faqs/** - Event FAQ management system
 - **health/** - Health check endpoints for system monitoring
 - **homepage/** - Public homepage API with featured events and categories
@@ -106,6 +109,7 @@ docker compose logs -f redis
 - **promotions/** - Promo codes with various discount types and redemption tracking
 - **queues/** - Background job processing (BullMQ + Redis)
 - **reviews/** - Event reviews and organizer ratings system
+- **saved-events/** - User saved/bookmarked events feature
 - **seatmaps/** - Seating chart management for seated events
 - **ticketing/** - Ticket types, price tiers, holds, and inventory management
 - **tickets/** - Ticket generation, transfers, check-ins, and QR codes
@@ -169,6 +173,8 @@ Multi-step wizard for creating events with comprehensive features:
 - **Templates**: Pre-built templates for common event types (concerts, conferences, sports)
 - **Analytics**: Track user behavior, step transitions, and validation errors
 - **Resume Capability**: Users can abandon and resume wizard sessions later
+- **Agenda Management**: Add agenda items with time slots, titles, descriptions, and speaker assignments
+- **Speaker Management**: Define event speakers with bios, photos, titles, and social links
 
 ### Database Schema Highlights
 - **Complex relationships**: User â†’ Organization â†’ Events â†’ Tickets with proper foreign keys
@@ -178,6 +184,7 @@ Multi-step wizard for creating events with comprehensive features:
 - **Indexed queries**: Performance indexes on frequently queried fields
 - **New models added**:
   - **UserFollow**: User following organizations
+  - **SavedEvent**: User saved/bookmarked events
   - **VerificationDocument**: Organization verification documents with S3 storage
   - **OrganizationAppeal**: Appeals for rejected organizations
   - **CreatorDraft**: Multi-step event creation with autosave
@@ -189,6 +196,8 @@ Multi-step wizard for creating events with comprehensive features:
   - **CreatorTemplate**: Pre-built templates for common event types
   - **EventReview** & **OrganizerReview**: Separate reviews for events and organizers
   - **Notification**: In-app, email, push, and SMS notifications
+  - **Dispute**: Platform dispute management for chargebacks and buyer disputes
+  - **EventAgenda** & **EventSpeaker**: Event agenda items and speaker information
 
 ### Payment Flow
 1. Create order (status: pending) with inventory holds
@@ -226,6 +235,25 @@ WebSocket gateway for live updates and real-time communication:
 - **Room-based**: Organize users into rooms (organization, event-specific)
 - **Connection Management**: Automatic reconnection and session handling
 - **Scalable**: Redis adapter support for horizontal scaling (planned)
+
+### Dispute Management System
+Comprehensive platform-level dispute handling for payment issues:
+- **Dispute Types**: chargeback, buyer_complaint, fraudulent_transaction, service_not_provided, product_not_received, unauthorized_charge, other
+- **Statuses**: open, under_review, awaiting_evidence, resolved_won, resolved_lost, closed
+- **Evidence Management**: Support for evidence submission with document uploads
+- **Order Integration**: Linked to orders with automatic status updates
+- **Admin Tools**: Dispute resolution interface for platform administrators
+- **Webhook Integration**: Automated dispute creation from payment provider webhooks
+- **Timeline Tracking**: Complete audit trail of dispute status changes and actions
+- **Resolution Outcomes**: Track won/lost disputes with reason codes
+
+### Saved Events Feature
+Users can save and bookmark events for later viewing:
+- **Personal Collections**: Each user maintains their own saved events list
+- **Quick Access**: Easily find and access saved events from user dashboard
+- **Persistent Storage**: Saved events persist across sessions
+- **Event Updates**: Users receive notifications for changes to saved events
+- **Social Features**: Foundation for sharing and recommendation features
 
 ### Environment Configuration
 - Copy `.env.example` to `.env`
@@ -423,6 +451,8 @@ The system uses comprehensive enumerations for type safety:
 - **Payment Status**: requires_action, authorized, captured, voided, failed
 - **Payout Status**: pending, in_review, paid, failed, canceled
 - **Refund Status**: pending, approved, processed, failed, canceled
+- **Dispute Types**: chargeback, buyer_complaint, fraudulent_transaction, service_not_provided, product_not_received, unauthorized_charge, other
+- **Dispute Status**: open, under_review, awaiting_evidence, resolved_won, resolved_lost, closed
 - **Moderation Status**: open, needs_changes, approved, rejected, resolved
 - **Verification Status**: pending, approved, rejected, expired
 - **Notification Types**: info, success, warning, error
@@ -604,16 +634,20 @@ EMAIL_PASS=your-password
 ### Completed Features
 - ✅ Multi-tenant organization management with verification
 - ✅ Event creation wizard (v2) with autosave and templates
+- ✅ Event agenda and speakers support
 - ✅ Ticketing system with GA and seated tickets
 - ✅ Order and payment processing (Stripe + Paystack)
+- ✅ Dispute management system for chargebacks and buyer complaints
 - ✅ Real-time notifications via WebSocket
 - ✅ Review system for events and organizers
 - ✅ Event announcements and FAQs
+- ✅ Saved events / bookmarking feature
 - ✅ Admin and moderator tools
 - ✅ File upload and S3 integration
 - ✅ Background job processing with queues
 - ✅ User account management
 - ✅ Health monitoring endpoints
+- ✅ Enhanced Redis connection pooling and error handling
 
 ### In Progress / Planned Features
 - 🚧 Rate limiting for API endpoints
@@ -663,7 +697,13 @@ This is an active development project. When making changes:
 
 ---
 
-**Last Updated**: 2025-01-26
+**Last Updated**: 2025-12-05
 **Project Version**: 0.0.1 (Active Development)
 **NestJS Version**: 11.x
 **Node Version**: 22.x (recommended)
+**Recent Updates**:
+- Added dispute management system for platform-level dispute handling
+- Implemented saved events feature for user bookmarking
+- Enhanced event management with agenda and speakers support
+- Improved Redis connection pooling and error handling
+- Added comprehensive webhook integration for dispute notifications
