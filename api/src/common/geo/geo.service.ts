@@ -1,4 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import {
   Point,
@@ -72,51 +73,49 @@ export class GeoService {
     const radiusMeters = radiusKm * 1000;
     const now = new Date();
 
-    // Build dynamic WHERE conditions for filters
-    let categoryFilter = '';
-    let statusFilter = "AND e.status = 'live'";
-    let dateFilter = '';
+    const whereConditions: Prisma.Sql[] = [
+      Prisma.sql`e.visibility = 'public'`,
+      Prisma.sql`e.deleted_at IS NULL`,
+      Prisma.sql`e.end_at >= ${now}`,
+      Prisma.sql`e.status = ${filters?.status ?? 'live'}`,
+    ];
 
     if (filters?.categoryId) {
-      categoryFilter = `AND e.category_id = '${filters.categoryId}'`;
-    }
-    if (filters?.status) {
-      statusFilter = `AND e.status = '${filters.status}'`;
+      whereConditions.push(Prisma.sql`e.category_id = ${filters.categoryId}`);
     }
     if (filters?.startDate) {
-      dateFilter += `AND e.start_at >= '${filters.startDate.toISOString()}'`;
+      whereConditions.push(Prisma.sql`e.start_at >= ${filters.startDate}`);
     }
     if (filters?.endDate) {
-      dateFilter += `AND e.end_at <= '${filters.endDate.toISOString()}'`;
+      whereConditions.push(Prisma.sql`e.end_at <= ${filters.endDate}`);
     }
+
+    const locationCondition = Prisma.sql`(
+      (e.location IS NOT NULL AND ST_DWithin(
+        e.location,
+        ST_SetSRID(ST_MakePoint(${point.longitude}, ${point.latitude}), 4326)::geography,
+        ${radiusMeters}
+      ))
+      OR
+      (v.location IS NOT NULL AND ST_DWithin(
+        v.location,
+        ST_SetSRID(ST_MakePoint(${point.longitude}, ${point.latitude}), 4326)::geography,
+        ${radiusMeters}
+      ))
+    )`;
+
+    const whereClause = Prisma.join(whereConditions, Prisma.sql` AND `);
 
     // Count total matching events
     let countResult: { count: bigint }[];
     try {
-      countResult = await this.prisma.$queryRawUnsafe<{ count: bigint }[]>(`
+      countResult = await this.prisma.$queryRaw<{ count: bigint }[]>`
         SELECT COUNT(*) as count
         FROM events e
         LEFT JOIN venues v ON e.venue_id = v.id
-        WHERE e.visibility = 'public'
-          ${statusFilter}
-          AND e.end_at >= $1
-          AND e.deleted_at IS NULL
-          ${categoryFilter}
-          ${dateFilter}
-          AND (
-            (e.location IS NOT NULL AND ST_DWithin(
-              e.location,
-              ST_SetSRID(ST_MakePoint($2, $3), 4326)::geography,
-              $4
-            ))
-            OR
-            (v.location IS NOT NULL AND ST_DWithin(
-              v.location,
-              ST_SetSRID(ST_MakePoint($2, $3), 4326)::geography,
-              $4
-            ))
-          )
-      `, now, point.longitude, point.latitude, radiusMeters);
+        WHERE ${whereClause}
+          AND ${locationCondition}
+      `;
     } catch (error) {
       this.logger.error(`PostGIS count query failed: ${error.message}`, error.stack);
       throw error;
@@ -127,7 +126,7 @@ export class GeoService {
     // Fetch paginated events with distance
     let events: EventWithDistance[];
     try {
-      events = await this.prisma.$queryRawUnsafe<EventWithDistance[]>(`
+      events = await this.prisma.$queryRaw<EventWithDistance[]>`
         SELECT
           e.id,
           e.title,
@@ -145,39 +144,22 @@ export class GeoService {
           ROUND(
             LEAST(
               CASE WHEN e.location IS NOT NULL
-                THEN ST_Distance(e.location, ST_SetSRID(ST_MakePoint($2, $3), 4326)::geography) / 1000
+                THEN ST_Distance(e.location, ST_SetSRID(ST_MakePoint(${point.longitude}, ${point.latitude}), 4326)::geography) / 1000
                 ELSE 999999
               END,
               CASE WHEN v.location IS NOT NULL
-                THEN ST_Distance(v.location, ST_SetSRID(ST_MakePoint($2, $3), 4326)::geography) / 1000
+                THEN ST_Distance(v.location, ST_SetSRID(ST_MakePoint(${point.longitude}, ${point.latitude}), 4326)::geography) / 1000
                 ELSE 999999
               END
             )::numeric, 2
           ) as distance
         FROM events e
         LEFT JOIN venues v ON e.venue_id = v.id
-        WHERE e.visibility = 'public'
-          ${statusFilter}
-          AND e.end_at >= $1
-          AND e.deleted_at IS NULL
-          ${categoryFilter}
-          ${dateFilter}
-          AND (
-            (e.location IS NOT NULL AND ST_DWithin(
-              e.location,
-              ST_SetSRID(ST_MakePoint($2, $3), 4326)::geography,
-              $4
-            ))
-            OR
-            (v.location IS NOT NULL AND ST_DWithin(
-              v.location,
-              ST_SetSRID(ST_MakePoint($2, $3), 4326)::geography,
-              $4
-            ))
-          )
+        WHERE ${whereClause}
+          AND ${locationCondition}
         ORDER BY distance ASC
-        LIMIT $5 OFFSET $6
-      `, now, point.longitude, point.latitude, radiusMeters, limit, offset);
+        LIMIT ${limit} OFFSET ${offset}
+      `;
     } catch (error) {
       this.logger.error(`PostGIS events query failed: ${error.message}`, error.stack);
       throw error;
