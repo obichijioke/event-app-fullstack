@@ -550,11 +550,11 @@ export const organizerApi = {
 
   organization: {
     get: (orgId: string) => {
-      return apiClient.get<DashboardOrganization>('/organizer/organization', { orgId });
+      return apiClient.get<Organization>('/organizer/organization', { orgId });
     },
 
     update: (orgId: string, data: UpdateOrganizationDto) => {
-      return apiClient.patch<DashboardOrganization>('/organizer/organization', data, { orgId });
+      return apiClient.patch<Organization>('/organizer/organization', data, { orgId });
     },
 
     members: {

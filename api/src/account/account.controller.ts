@@ -2,6 +2,7 @@ import {
   Controller,
   Get,
   Post,
+  Put,
   Delete,
   Query,
   UseGuards,
@@ -11,6 +12,7 @@ import {
   UseInterceptors,
   UploadedFile,
   BadRequestException,
+  Req,
 } from '@nestjs/common';
 import {
   ApiBearerAuth,
@@ -22,17 +24,23 @@ import {
   ApiResponse,
 } from '@nestjs/swagger';
 import { FileInterceptor } from '@nestjs/platform-express';
+import type { Request } from 'express';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { AccountService } from './account.service';
+import { UserLocationService } from './user-location.service';
 import { RequestRefundDto } from './dto/request-refund.dto';
+import { SetLocationDto, BrowserLocationDto } from './dto/set-location.dto';
 
 @ApiTags('Account')
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard)
 @Controller('account')
 export class AccountController {
-  constructor(private readonly accountService: AccountService) {}
+  constructor(
+    private readonly accountService: AccountService,
+    private readonly userLocationService: UserLocationService,
+  ) {}
 
   @Get('stats')
   @ApiOperation({
@@ -196,5 +204,112 @@ export class AccountController {
   @ApiResponse({ status: 400, description: 'No avatar to delete' })
   async deleteAvatar(@CurrentUser() user: any) {
     return this.accountService.deleteAvatar(user.id);
+  }
+
+  // ==================== Location Endpoints ====================
+
+  @Get('location')
+  @ApiOperation({
+    summary: "Get user's stored location",
+    description:
+      'Returns the stored location for the current user, including coordinates, city, and source.',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'User location retrieved successfully',
+    schema: {
+      type: 'object',
+      properties: {
+        latitude: { type: 'number', example: 6.5244 },
+        longitude: { type: 'number', example: 3.3792 },
+        city: { type: 'string', example: 'Lagos' },
+        country: { type: 'string', example: 'Nigeria' },
+        source: {
+          type: 'string',
+          enum: ['ip', 'browser', 'manual', 'address'],
+        },
+        accuracy: { type: 'number', nullable: true },
+        updatedAt: { type: 'string', format: 'date-time' },
+      },
+    },
+  })
+  @ApiResponse({ status: 404, description: 'No location stored for user' })
+  async getLocation(@CurrentUser() user: any) {
+    return this.userLocationService.getUserLocation(user.id);
+  }
+
+  @Put('location')
+  @ApiOperation({
+    summary: 'Set user location manually',
+    description:
+      'Set location using coordinates, city ID, or both. At least one method must be provided.',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Location updated successfully',
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Invalid location data or city not found',
+  })
+  async setLocation(@CurrentUser() user: any, @Body() dto: SetLocationDto) {
+    return this.userLocationService.setUserLocation(user.id, dto);
+  }
+
+  @Post('location/browser')
+  @ApiOperation({
+    summary: 'Set location from browser geolocation',
+    description:
+      'Store location obtained from browser geolocation API. Requires latitude and longitude.',
+  })
+  @ApiResponse({
+    status: 201,
+    description: 'Browser location stored successfully',
+  })
+  async setLocationFromBrowser(
+    @CurrentUser() user: any,
+    @Body() dto: BrowserLocationDto,
+  ) {
+    return this.userLocationService.setLocationFromBrowser(user.id, dto);
+  }
+
+  @Post('location/detect')
+  @ApiOperation({
+    summary: 'Detect location from IP address',
+    description:
+      "Automatically detect and store user's location based on their IP address.",
+  })
+  @ApiResponse({
+    status: 201,
+    description: 'Location detected and stored successfully',
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Could not determine location from IP',
+  })
+  async detectLocation(@CurrentUser() user: any, @Req() req: Request) {
+    const ipAddr =
+      (req.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim() ||
+      req.ip ||
+      req.socket?.remoteAddress;
+
+    if (!ipAddr) {
+      throw new BadRequestException('Could not determine IP address');
+    }
+
+    return this.userLocationService.captureLocationFromIP(user.id, ipAddr);
+  }
+
+  @Delete('location')
+  @ApiOperation({
+    summary: 'Clear stored location',
+    description: "Remove the user's stored location from the system.",
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Location cleared successfully',
+  })
+  async clearLocation(@CurrentUser() user: any) {
+    return this.userLocationService.clearUserLocation(user.id);
   }
 }

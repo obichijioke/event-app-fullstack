@@ -1,31 +1,49 @@
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { IsNumber, Min, Max, IsOptional } from 'class-validator';
+import {
+  IsNumber,
+  Min,
+  Max,
+  IsOptional,
+  IsString,
+  ValidateIf,
+} from 'class-validator';
 
 export class NearbyEventsDto {
-  @ApiProperty({
-    description: 'Latitude coordinate (-90 to 90)',
+  @ApiPropertyOptional({
+    description: 'Latitude coordinate (-90 to 90). Required if city is not provided.',
     example: 6.5244,
     minimum: -90,
     maximum: 90,
   })
+  @ValidateIf((o) => !o.city)
   @Type(() => Number)
   @IsNumber()
   @Min(-90)
   @Max(90)
-  latitude: number;
+  latitude?: number;
 
-  @ApiProperty({
-    description: 'Longitude coordinate (-180 to 180)',
+  @ApiPropertyOptional({
+    description:
+      'Longitude coordinate (-180 to 180). Required if city is not provided.',
     example: 3.3792,
     minimum: -180,
     maximum: 180,
   })
+  @ValidateIf((o) => !o.city)
   @Type(() => Number)
   @IsNumber()
   @Min(-180)
   @Max(180)
-  longitude: number;
+  longitude?: number;
+
+  @ApiPropertyOptional({
+    description: 'City name or ID. Alternative to lat/lon coordinates.',
+    example: 'Lagos',
+  })
+  @IsOptional()
+  @IsString()
+  city?: string;
 
   @ApiPropertyOptional({
     description: 'Search radius in kilometers',
@@ -40,6 +58,14 @@ export class NearbyEventsDto {
   @Max(500)
   @IsOptional()
   radius?: number = 50;
+
+  @ApiPropertyOptional({
+    description: 'Filter by category ID',
+    example: 'category-music',
+  })
+  @IsOptional()
+  @IsString()
+  categoryId?: string;
 
   @ApiPropertyOptional({
     description: 'Page number for pagination',

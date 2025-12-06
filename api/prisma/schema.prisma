@@ -142,6 +142,13 @@ enum AnnouncementType {
   urgent
 }
 
+enum LocationSource {
+  ip
+  browser
+  manual
+  address
+}
+
 // ---------- Identity & Access ----------
 model User {
   id              String       @id @default(cuid())
@@ -202,6 +209,7 @@ model User {
   moderatedDisputes               Dispute[]                       @relation("DisputeModerator")
   appealedDisputes                Dispute[]                       @relation("DisputeAppealer")
   disputeMessages                 DisputeMessage[]
+  userLocation                    UserLocation?
 
   @@map("users")
 }
@@ -2069,4 +2077,71 @@ model SavedEvent {
   @@index([userId])
   @@index([eventId])
   @@map("saved_events")
+}
+
+// ---------- Geographic Location ----------
+model Region {
+  id          String   @id @default(cuid())
+  name        String
+  countryCode String   @map("country_code")
+  countryName String   @map("country_name")
+  latitude    Decimal  @db.Decimal(10, 8)
+  longitude   Decimal  @db.Decimal(11, 8)
+  timezone    String?
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  cities City[]
+
+  @@index([countryCode])
+  @@map("regions")
+}
+
+model City {
+  id          String   @id @default(cuid())
+  name        String
+  regionId    String?  @map("region_id")
+  countryCode String   @map("country_code")
+  countryName String   @map("country_name")
+  latitude    Decimal  @db.Decimal(10, 8)
+  longitude   Decimal  @db.Decimal(11, 8)
+  population  Int?
+  timezone    String?
+  aliases     String[] @default([])
+  isMajor     Boolean  @default(false) @map("is_major")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  region        Region?        @relation(fields: [regionId], references: [id], onDelete: SetNull)
+  userLocations UserLocation[]
+
+  @@index([name])
+  @@index([countryCode])
+  @@index([isMajor])
+  @@map("cities")
+}
+
+model UserLocation {
+  id             String         @id @default(cuid())
+  userId         String         @unique @map("user_id")
+  latitude       Decimal?       @db.Decimal(10, 8)
+  longitude      Decimal?       @db.Decimal(11, 8)
+  city           String?
+  cityId         String?        @map("city_id")
+  region         String?
+  country        String?
+  countryCode    String?        @map("country_code")
+  source         LocationSource @default(ip)
+  accuracyMeters Int?           @map("accuracy_meters")
+  lastUpdatedAt  DateTime       @default(now()) @map("last_updated_at")
+  createdAt      DateTime       @default(now()) @map("created_at")
+
+  // Relations
+  user    User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  cityRef City? @relation(fields: [cityId], references: [id], onDelete: SetNull)
+
+  @@index([cityId])
+  @@map("user_locations")
 }

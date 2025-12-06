@@ -91,7 +91,7 @@ class OrganizerApiService {
    * Get all disputes for an organization
    */
   async getDisputes(orgId: string, params: DisputeListParams = {}): Promise<DisputeListResponse> {
-    const queryString = buildQueryString(params);
+    const queryString = buildQueryString(params as Record<string, unknown>);
     const response = await apiClient.get<DisputeListResponse>(
       `/organizer/disputes?orgId=${orgId}${queryString ? `&${queryString}` : ""}`
     );

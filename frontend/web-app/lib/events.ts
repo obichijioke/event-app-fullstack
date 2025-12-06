@@ -182,6 +182,10 @@ export interface EventDetail extends PublicEvent {
     salesStart?: string | null;
     salesEnd?: string | null;
     status: string;
+    _count?: {
+      tickets?: number;
+      holds?: number;
+    };
   }>;
   policies?: {
     refundPolicy?: string | null;

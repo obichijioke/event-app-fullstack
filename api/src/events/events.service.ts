@@ -14,12 +14,19 @@ import { UpdateEventDto, UpdateEventPoliciesDto } from './dto/update-event.dto';
 import { CreateEventAssetDto } from './dto/create-event-asset.dto';
 import { OrgMemberRole, EventStatus, Prisma } from '@prisma/client';
 import { checkOrgPermission, serializeResponse } from '../common/utils';
+import { GeoService } from '../common/geo/geo.service';
+import { GeolocationService } from '../common/geolocation/geolocation.service';
+import { NearbySearchFilters } from '../common/geo/geo.types';
 
 @Injectable()
 export class EventsService {
   private readonly logger = new Logger(EventsService.name);
 
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private geoService: GeoService,
+    private geolocationService: GeolocationService,
+  ) {}
 
   async createForOrg(
     orgId: string,
@@ -1036,7 +1043,8 @@ export class EventsService {
   }
 
   /**
-   * Find events near a specific location
+   * Find events near a specific location using PostGIS (optimized)
+   * Falls back to Haversine formula if PostGIS is not available
    */
   async findNearby(
     latitude: number,
@@ -1044,109 +1052,124 @@ export class EventsService {
     radius: number = 50,
     page: number = 1,
     limit: number = 20,
+    filters?: NearbySearchFilters,
   ) {
-    const now = new Date();
-    // Get all public live events with coordinates
-    const events = await this.prisma.event.findMany({
-      where: {
-        visibility: 'public',
-        status: 'live',
-        endAt: {
-          gte: now,
-        },
-        OR: [
-          {
-            // Events with their own coordinates
-            AND: [{ latitude: { not: null } }, { longitude: { not: null } }],
-          },
-          {
-            // Events with venue coordinates
-            venue: {
-              AND: [{ latitude: { not: null } }, { longitude: { not: null } }],
-            },
-          },
-        ],
+    return this.geoService.findEventsWithinRadius(
+      { latitude, longitude },
+      radius,
+      page,
+      limit,
+      filters,
+    );
+  }
+
+  /**
+   * Find events near a specific city by name or ID
+   */
+  async findNearbyByCity(
+    cityNameOrId: string,
+    radius: number = 50,
+    page: number = 1,
+    limit: number = 20,
+    filters?: NearbySearchFilters,
+  ) {
+    // Try to find city by ID first
+    const cityById = await this.geolocationService.getCityById(cityNameOrId);
+
+    let latitude: number;
+    let longitude: number;
+    let cityName: string;
+    let countryName: string;
+
+    if (cityById) {
+      latitude = Number(cityById.latitude);
+      longitude = Number(cityById.longitude);
+      cityName = cityById.name;
+      countryName = cityById.countryName;
+    } else {
+      // Try by name
+      const cityCoords =
+        await this.geolocationService.resolveCityToCoordinates(cityNameOrId);
+
+      if (!cityCoords) {
+        throw new NotFoundException(`City not found: ${cityNameOrId}`);
+      }
+
+      latitude = cityCoords.latitude;
+      longitude = cityCoords.longitude;
+      cityName = cityCoords.cityName;
+      countryName = cityCoords.country;
+    }
+
+    const result = await this.geoService.findEventsWithinRadius(
+      { latitude, longitude },
+      radius,
+      page,
+      limit,
+      filters,
+    );
+
+    // Add city info to response
+    return {
+      ...result,
+      searchLocation: {
+        ...result.searchLocation,
+        city: cityName,
+        country: countryName,
       },
-      include: {
-        org: {
-          select: {
-            id: true,
-            name: true,
-          },
-        },
-        venue: {
-          select: {
-            id: true,
-            name: true,
-            address: true,
-            latitude: true,
-            longitude: true,
-          },
-        },
-        category: true,
-        _count: {
-          select: {
-            ticketTypes: true,
-            orders: true,
-          },
-        },
+    };
+  }
+
+  /**
+   * Find events near a user's stored location
+   */
+  async findNearbyForUser(
+    userId: string,
+    radius: number = 50,
+    page: number = 1,
+    limit: number = 20,
+    filters?: NearbySearchFilters,
+  ) {
+    // Query user location using raw table name since Prisma client may not have it yet
+    const userLocations = await this.prisma.$queryRaw<
+      Array<{
+        latitude: number | null;
+        longitude: number | null;
+        city: string | null;
+        country: string | null;
+      }>
+    >`
+      SELECT latitude, longitude, city, country
+      FROM user_locations
+      WHERE user_id = ${userId}
+      LIMIT 1
+    `;
+
+    const userLocation = userLocations[0];
+
+    if (!userLocation || !userLocation.latitude || !userLocation.longitude) {
+      throw new NotFoundException(
+        'User location not set. Please set your location first.',
+      );
+    }
+
+    const result = await this.geoService.findEventsWithinRadius(
+      {
+        latitude: Number(userLocation.latitude),
+        longitude: Number(userLocation.longitude),
       },
-    });
-
-    // Calculate distances and filter by radius
-    const eventsWithDistance = events
-      .map((event) => {
-        // Use event coordinates if available, otherwise use venue coordinates
-        const eventLat = event.latitude
-          ? Number(event.latitude)
-          : event.venue?.latitude
-            ? Number(event.venue.latitude)
-            : null;
-        const eventLon = event.longitude
-          ? Number(event.longitude)
-          : event.venue?.longitude
-            ? Number(event.venue.longitude)
-            : null;
-
-        if (eventLat === null || eventLon === null) {
-          return null;
-        }
-
-        const distance = this.calculateDistance(
-          latitude,
-          longitude,
-          eventLat,
-          eventLon,
-        );
-
-        return {
-          ...event,
-          distance,
-          coordinates: {
-            latitude: eventLat,
-            longitude: eventLon,
-          },
-        };
-      })
-      .filter(
-        (event): event is NonNullable<typeof event> & { distance: number } =>
-          event !== null && event.distance <= radius,
-      )
-      .sort((a, b) => a.distance - b.distance);
-
-    // Pagination
-    const total = eventsWithDistance.length;
-    const totalPages = Math.ceil(total / limit);
-    const skip = (page - 1) * limit;
-    const paginatedEvents = eventsWithDistance.slice(skip, skip + limit);
+      radius,
+      page,
+      limit,
+      filters,
+    );
 
     return {
-      data: paginatedEvents,
-      meta: {
-        total,
-        page,
-        limit,
-        totalPages,
+      ...result,
+      searchLocation: {
+        ...result.searchLocation,
+        city: userLocation.city,
+        country: userLocation.country,
       },
     };
   }

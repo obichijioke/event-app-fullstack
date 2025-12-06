@@ -76,10 +76,12 @@ export function CheckoutSection() {
 
   const debouncedMarkIncomplete = useMemo(
     () =>
-      debounce((issues: z.ZodIssue[]) => {
+      debounce((...args: unknown[]) => {
+        const issues = args[0] as z.ZodIssue[];
         void updateSection(
           'checkout',
           {
+            payload: {},
             autosave: true,
             status: 'incomplete',
             errors: issues.map((issue) => ({
@@ -107,7 +109,7 @@ export function CheckoutSection() {
 
   React.useEffect(() => {
     const subscription = form.watch((values) => {
-      handleAutosave(values);
+      handleAutosave(values as CheckoutValues);
     });
     return () => subscription.unsubscribe();
   }, [form, handleAutosave]);
@@ -115,9 +117,7 @@ export function CheckoutSection() {
   // Kick off an initial validation/autosave so an empty (but valid) state marks as complete without requiring edits.
   React.useEffect(() => {
     handleAutosave(form.getValues());
-    // form and handleAutosave are stable from hooks, safe to ignore exhaustive-deps here
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [form, handleAutosave]);
 
   return (
     <div className="space-y-6">

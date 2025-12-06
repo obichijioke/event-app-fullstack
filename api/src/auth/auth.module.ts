@@ -9,12 +9,14 @@ import { JwtRefreshStrategy } from './strategies/jwt-refresh.strategy';
 import { SessionCleanupService } from './session-cleanup.service';
 import { CommonModule } from '../common/common.module';
 import { OrganizationsModule } from '../organizations/organizations.module';
+import { AccountModule } from '../account/account.module';
 
 @Module({
   imports: [
     CommonModule,
     PassportModule,
     forwardRef(() => OrganizationsModule),
+    AccountModule,
     JwtModule.registerAsync({
       useFactory: (configService: ConfigService) => {
         const secret = configService.get<string>('JWT_SECRET');

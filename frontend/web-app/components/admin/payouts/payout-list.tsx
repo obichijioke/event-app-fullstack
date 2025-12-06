@@ -241,7 +241,7 @@ export function PayoutList({ className }: PayoutListProps) {
     {
       label: 'Reject',
       onClick: (payout: AdminPayout) => handleRejectPayout(payout.id),
-      variant: 'danger' as const,
+      variant: 'destructive' as const,
       condition: (payout: AdminPayout) => payout.status === 'pending' || payout.status === 'in_review',
     },
     {
@@ -380,10 +380,10 @@ export function PayoutList({ className }: PayoutListProps) {
               <Checkbox
                 id="force-process"
                 checked={dialog.force}
-                onCheckedChange={(checked) =>
+                onChange={(event) =>
                   setDialog((prev) =>
                     prev && prev.type === 'process'
-                      ? { ...prev, force: Boolean(checked) }
+                      ? { ...prev, force: event.target.checked }
                       : prev,
                   )
                 }

@@ -12,7 +12,7 @@ interface FilterOption {
 interface FilterField {
   key: string;
   label: string;
-  type: 'text' | 'select' | 'date' | 'daterange';
+  type: 'text' | 'select' | 'date' | 'daterange' | 'number';
   options?: FilterOption[];
   placeholder?: string;
 }
@@ -67,6 +67,17 @@ export function FiltersPanel({
             value={(value as string) || ''}
             onChange={(e) => handleFieldChange(field.key, e.target.value)}
             options={field.options}
+            className="w-full"
+          />
+        );
+
+      case 'number':
+        return (
+          <Input
+            type="number"
+            value={value !== undefined && value !== null ? String(value) : ''}
+            onChange={(e) => handleFieldChange(field.key, e.target.value === '' ? undefined : Number(e.target.value))}
+            placeholder={field.placeholder}
             className="w-full"
           />
         );

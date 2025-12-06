@@ -4,7 +4,6 @@ import { useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { organizerApiService, DisputeStats } from '@/services/organizer-api.service';
-import { organizerDisputesApi } from '@/services/organizer-disputes-api.service';
 import { DisputeStatsComponent } from '@/components/organizer/disputes/dispute-stats';
 import { DisputeList } from '@/components/organizer/disputes/dispute-list';
 import { PlatformDisputeList } from '@/components/organizer/disputes/platform-dispute-list';
@@ -34,7 +33,7 @@ export default function DisputesPage() {
     try {
       setIsLoadingStats(true);
       setError(null);
-      const statsData = await organizerDisputesApi.getStats(orgId);
+      const statsData = await organizerApiService.getDisputeStats(orgId);
       setStats(statsData);
     } catch (err: any) {
       setError(err.message || 'Failed to load dispute statistics');

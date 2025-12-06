@@ -34,6 +34,9 @@ export interface DashboardOrganization {
   slug?: string;
   createdAt: string;
   updatedAt?: string;
+  type?: OrganizationType;
+  // Role of the current user within this organization, when provided by the API
+  role?: OrganizerRole;
 }
 
 export interface DashboardEvent {
