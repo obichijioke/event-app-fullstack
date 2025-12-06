@@ -104,7 +104,7 @@ export class GeoService {
       ))
     )`;
 
-    const whereClause = Prisma.join(whereConditions, Prisma.sql` AND `);
+    const whereClause = Prisma.join(whereConditions, ' AND ');
 
     // Count total matching events
     let countResult: { count: bigint }[];
