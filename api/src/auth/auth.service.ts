@@ -3,6 +3,7 @@ import {
   UnauthorizedException,
   ConflictException,
   NotFoundException,
+  Logger,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
@@ -21,14 +22,18 @@ import { RequestPasswordResetDto } from './dto/request-password-reset.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { MailerService } from '../common/mailer/mailer.service';
 import { RequestTwoFaCodeDto } from './dto/twofa.dto';
+import { UserLocationService } from '../account/user-location.service';
 
 @Injectable()
 export class AuthService {
+  private readonly logger = new Logger(AuthService.name);
+
   constructor(
     private prisma: PrismaService,
     private jwtService: JwtService,
     private configService: ConfigService,
     private mailer: MailerService,
+    private userLocationService: UserLocationService,
   ) {}
 
   async register(registerDto: RegisterDto) {
@@ -94,6 +99,11 @@ export class AuthService {
     const session = await this.createSession(user.id, userAgent, ipAddr);
     const { accessToken, refreshToken } = this.generateTokens(user, session.id);
 
+    // Capture user location from IP (non-blocking)
+    if (ipAddr) {
+      this.captureUserLocationAsync(user.id, ipAddr);
+    }
+
     return {
       accessToken,
       refreshToken,
@@ -104,6 +114,22 @@ export class AuthService {
         role: user.role,
       },
     };
+  }
+
+  /**
+   * Capture user location from IP address (async, non-blocking)
+   */
+  private async captureUserLocationAsync(
+    userId: string,
+    ipAddr: string,
+  ): Promise<void> {
+    try {
+      await this.userLocationService.captureLocationFromIP(userId, ipAddr);
+    } catch (error) {
+      this.logger.warn(
+        `Failed to capture location for user ${userId}: ${error}`,
+      );
+    }
   }
 
   async refreshTokens(

@@ -18,7 +18,8 @@ export interface TicketType {
   updatedAt: string;
   priceTiers?: PriceTier[];
   _count?: {
-    tickets: number;
+    tickets?: number;
+    holds?: number;
   };
 }
 

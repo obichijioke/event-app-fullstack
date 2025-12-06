@@ -129,9 +129,8 @@ class OrganizerDisputesApiService {
     data: RespondToPlatformDisputeDto
   ): Promise<OrganizerDispute> {
     return apiClient.post<OrganizerDispute>(
-      `/organizer/disputes/platform/${disputeId}/respond`,
-      data,
-      { orgId }
+      `/organizer/disputes/platform/${disputeId}/respond?orgId=${orgId}`,
+      data
     );
   }
 
@@ -144,9 +143,8 @@ class OrganizerDisputesApiService {
     data: ProposeResolutionDto
   ): Promise<OrganizerDispute> {
     return apiClient.post<OrganizerDispute>(
-      `/organizer/disputes/platform/${disputeId}/propose-resolution`,
-      data,
-      { orgId }
+      `/organizer/disputes/platform/${disputeId}/propose-resolution?orgId=${orgId}`,
+      data
     );
   }
 
@@ -155,9 +153,8 @@ class OrganizerDisputesApiService {
    */
   async acceptResolution(orgId: string, disputeId: string): Promise<OrganizerDispute> {
     return apiClient.post<OrganizerDispute>(
-      `/organizer/disputes/platform/${disputeId}/accept`,
-      {},
-      { orgId }
+      `/organizer/disputes/platform/${disputeId}/accept?orgId=${orgId}`,
+      {}
     );
   }
 
@@ -206,9 +203,8 @@ class OrganizerDisputesApiService {
     data: any
   ): Promise<OrganizerDispute> {
     return apiClient.post<OrganizerDispute>(
-      `/organizer/disputes/${disputeId}/respond`,
-      data,
-      { orgId }
+      `/organizer/disputes/${disputeId}/respond?orgId=${orgId}`,
+      data
     );
   }
 }

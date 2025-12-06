@@ -23,10 +23,10 @@ export class ApiClient {
     return new URL(path, this.baseUrl).toString();
   }
 
-  private buildHeaders(existing: HeadersInit | undefined, token?: string) {
+  private buildHeaders(existing: HeadersInit | undefined, token?: string, skipJsonContentType = false) {
     const headers = new Headers(existing ?? {});
 
-    if (!headers.has('Content-Type')) {
+    if (!skipJsonContentType && !headers.has('Content-Type')) {
       headers.set('Content-Type', 'application/json');
     }
 
@@ -39,10 +39,11 @@ export class ApiClient {
 
   async request<T>(path: string, config: RequestConfig = {}): Promise<T> {
     const { token, ...rest } = config;
+    const isFormData = rest.body instanceof FormData;
     const response = await fetch(this.createUrl(path), {
       credentials: 'include',
       ...rest,
-      headers: this.buildHeaders(rest.headers, token),
+      headers: this.buildHeaders(rest.headers, token, isFormData),
     });
 
     const contentType = response.headers.get('content-type');
@@ -69,6 +70,14 @@ export class ApiClient {
     return this.request<T>(path, {
       method: 'POST',
       body: data ? JSON.stringify(data) : undefined,
+      token,
+    });
+  }
+
+  postFormData<T>(path: string, data: FormData, token?: string) {
+    return this.request<T>(path, {
+      method: 'POST',
+      body: data,
       token,
     });
   }

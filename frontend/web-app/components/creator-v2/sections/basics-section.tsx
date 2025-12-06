@@ -108,10 +108,12 @@ export function BasicsSection() {
 
   const debouncedMarkIncomplete = useMemo(
     () =>
-      debounce((issues: z.ZodIssue[]) => {
+      debounce((...args: unknown[]) => {
+        const issues = args[0] as z.ZodIssue[];
         void updateSection(
           'basics',
           {
+            payload: {},
             autosave: true,
             status: 'incomplete',
             errors: issues.map((issue) => ({
@@ -139,7 +141,7 @@ export function BasicsSection() {
 
   useEffect(() => {
     const subscription = form.watch((values) => {
-      handleAutosave(values);
+      handleAutosave(values as z.infer<typeof schema>);
     });
     return () => subscription.unsubscribe();
   }, [form, handleAutosave]);

@@ -84,28 +84,113 @@ export class EventsController {
   }
 
   @Get('nearby')
-  @ApiOperation({ summary: 'Find events near a location' })
+  @ApiOperation({
+    summary: 'Find events near a location',
+    description:
+      'Search for events near coordinates or a city. Supports both lat/lon and city-based search.',
+  })
   @ApiResponse({
     status: 200,
     description: 'Nearby events retrieved successfully',
   })
-  @ApiQuery({ name: 'latitude', required: true, type: Number })
-  @ApiQuery({ name: 'longitude', required: true, type: Number })
+  @ApiQuery({
+    name: 'latitude',
+    required: false,
+    type: Number,
+    description: 'Latitude (required if city not provided)',
+  })
+  @ApiQuery({
+    name: 'longitude',
+    required: false,
+    type: Number,
+    description: 'Longitude (required if city not provided)',
+  })
+  @ApiQuery({
+    name: 'city',
+    required: false,
+    type: String,
+    description: 'City name or ID (alternative to lat/lon)',
+  })
   @ApiQuery({
     name: 'radius',
     required: false,
     type: Number,
-    description: 'Radius in kilometers (default: 50)',
+    description: 'Radius in kilometers (default: 50, max: 500)',
+  })
+  @ApiQuery({
+    name: 'categoryId',
+    required: false,
+    type: String,
+    description: 'Filter by category',
   })
   @ApiQuery({ name: 'page', required: false, type: Number })
   @ApiQuery({ name: 'limit', required: false, type: Number })
   findNearby(@Query() query: NearbyEventsDto) {
+    // If city is provided, use city-based search
+    if (query.city) {
+      return this.eventsService.findNearbyByCity(
+        query.city,
+        query.radius,
+        query.page,
+        query.limit,
+        query.categoryId ? { categoryId: query.categoryId } : undefined,
+      );
+    }
+
+    // Otherwise use lat/lon search (validated by DTO when city is not provided)
     return this.eventsService.findNearby(
-      query.latitude,
-      query.longitude,
+      query.latitude!,
+      query.longitude!,
       query.radius,
       query.page,
       query.limit,
+      query.categoryId ? { categoryId: query.categoryId } : undefined,
+    );
+  }
+
+  @Get('nearby/me')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: 'Find events near the current user',
+    description:
+      "Search for events near the user's stored location. Requires user to have set their location.",
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Nearby events retrieved successfully',
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'User location not set',
+  })
+  @ApiQuery({
+    name: 'radius',
+    required: false,
+    type: Number,
+    description: 'Radius in kilometers (default: 50, max: 500)',
+  })
+  @ApiQuery({
+    name: 'categoryId',
+    required: false,
+    type: String,
+    description: 'Filter by category',
+  })
+  @ApiQuery({ name: 'page', required: false, type: Number })
+  @ApiQuery({ name: 'limit', required: false, type: Number })
+  findNearbyForUser(
+    @CurrentUser() user: any,
+    @Query('radius') radius?: number,
+    @Query('categoryId') categoryId?: string,
+    @Query('page') page?: number,
+    @Query('limit') limit?: number,
+  ) {
+    return this.eventsService.findNearbyForUser(
+      user.id,
+      radius ?? 50,
+      page ?? 1,
+      limit ?? 20,
+      categoryId ? { categoryId } : undefined,
     );
   }
 

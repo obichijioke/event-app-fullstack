@@ -31,6 +31,7 @@ import { AnnouncementsModule } from './announcements/announcements.module';
 import { FaqsModule } from './faqs/faqs.module';
 import { SavedEventsModule } from './saved-events/saved-events.module';
 import { BuyerDisputesModule } from './buyer-disputes/buyer-disputes.module';
+import { CityModule } from './cities/city.module';
 import { ScheduleModule } from '@nestjs/schedule';
 
 @Module({
@@ -69,6 +70,7 @@ import { ScheduleModule } from '@nestjs/schedule';
     FaqsModule,
     SavedEventsModule,
     BuyerDisputesModule,
+    CityModule,
   ],
   controllers: [AppController],
   providers: [AppService],

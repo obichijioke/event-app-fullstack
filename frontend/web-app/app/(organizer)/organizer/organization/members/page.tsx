@@ -17,7 +17,8 @@ export default function TeamMembersPage() {
   const [error, setError] = useState<string | null>(null);
   const [showAddForm, setShowAddForm] = useState(false);
 
-  const canManageMembers = currentOrganization?.role === 'owner' || currentOrganization?.role === 'manager';
+  const canManageMembers =
+    currentOrganization?.role === 'owner' || currentOrganization?.role === 'manager';
 
   useEffect(() => {
     async function loadMembers() {
@@ -160,7 +161,7 @@ export default function TeamMembersPage() {
           ) : (
             <MemberList
               members={members}
-              currentUserRole={currentOrganization.role}
+              currentUserRole={currentOrganization.role ?? 'staff'}
               onUpdateRole={handleUpdateRole}
               onRemove={handleRemove}
             />

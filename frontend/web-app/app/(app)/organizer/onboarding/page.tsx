@@ -1,4 +1,5 @@
 import { Metadata } from 'next';
+import { Suspense } from 'react';
 import { OnboardingContent } from '@/components/organizer/onboarding-content';
 
 export const metadata: Metadata = {
@@ -7,5 +8,9 @@ export const metadata: Metadata = {
 };
 
 export default function OnboardingPage() {
-  return <OnboardingContent />;
+  return (
+    <Suspense fallback={null}>
+      <OnboardingContent />
+    </Suspense>
+  );
 }

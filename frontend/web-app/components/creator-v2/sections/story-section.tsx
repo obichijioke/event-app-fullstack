@@ -115,10 +115,12 @@ export function StorySection() {
 
   const debouncedMarkIncomplete = useMemo(
     () =>
-      debounce((issues: z.ZodIssue[]) => {
+      debounce((...args: unknown[]) => {
+        const issues = args[0] as z.ZodIssue[];
         void updateSection(
           'story',
           {
+            payload: {},
             autosave: true,
             status: 'incomplete',
             errors: issues.map((issue) => ({
@@ -146,7 +148,7 @@ export function StorySection() {
 
   useEffect(() => {
     const subscription = form.watch((values) => {
-      handleAutosave(values);
+      handleAutosave(values as StoryValues);
     });
     return () => subscription.unsubscribe();
   }, [form, handleAutosave]);

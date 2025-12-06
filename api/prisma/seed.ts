@@ -9,6 +9,7 @@ import {
   Visibility,
 } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
+import { seedCities } from './seed/cities';
 
 const prisma = new PrismaClient();
 
@@ -649,6 +650,9 @@ async function main() {
   const samples = eventSamples(venues, categories);
 
   await seedEvents(org.id, samples);
+
+  // Seed geographic data
+  await seedCities();
 
   console.log('✅ Seed data ready. Organizer credentials:');
   console.log('   Email: organizer@eventflow.dev');

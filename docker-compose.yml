@@ -2,18 +2,19 @@ version: '3.8'
 
 services:
   postgres:
-    image: postgres:15
+    image: postgis/postgis:15-3.4
     container_name: event_management_db
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: password
-      POSTGRES_DB: event_management
+      POSTGRES_USER: eventapp
+      POSTGRES_PASSWORD: eventapp123
+      POSTGRES_DB: eventapp
     ports:
       - '5432:5432'
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./001_schema_improvements.sql:/docker-entrypoint-initdb.d/001_schema_improvements.sql
-      - ./tables.md:/docker-entrypoint-initdb.d/tables.md
+      # Note: Schema improvements are applied via Prisma migrations, not init scripts
+      # - ./001_schema_improvements.sql:/docker-entrypoint-initdb.d/001_schema_improvements.sql
+      # - ./tables.md:/docker-entrypoint-initdb.d/tables.md
 
   redis:
     image: redis:7-alpine

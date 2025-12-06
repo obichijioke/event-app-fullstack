@@ -85,6 +85,7 @@ docker compose logs -f redis
 - **File Storage**: AWS S3 integration for document and media storage with presigned URLs
 - **Background Jobs**: Queue-based processing for async operations (BullMQ + Redis)
 - **Health Monitoring**: Health check endpoints for database, Redis, and service monitoring
+- **Location-based Search**: PostGIS-powered spatial queries for finding nearby events with city/region support
 
 ### Core Module Structure
 - **account/** - User account management and profile settings
@@ -93,7 +94,8 @@ docker compose logs -f redis
 - **auth/** - JWT authentication, API keys, session management, and 2FA
 - **buyer-disputes/** - Platform dispute management system for payment chargebacks and buyer disputes
 - **categories/** - Event categorization and taxonomy
-- **common/** - Shared utilities, guards, decorators, and pipes
+- **cities/** - City database and search for location-based features
+- **common/** - Shared utilities, guards, decorators, pipes, geo services, and geolocation
 - **currency/** - Multi-currency support and conversion utilities
 - **event-creator-v2/** - Step-by-step event creation wizard with autosave and templates
 - **events/** - Event management with occurrences, assets, policies, seatmaps, agenda, and speakers
@@ -119,7 +121,7 @@ docker compose logs -f redis
 
 ### Key Dependencies
 - **Framework**: NestJS 11 with Express and Socket.IO
-- **Database**: PostgreSQL with Prisma ORM 6.18.0
+- **Database**: PostgreSQL with PostGIS 3.4 and Prisma ORM 6.18.0
 - **Cache/Queue**: Redis with BullMQ 5.61.0 and IORedis 5.8.2
 - **WebSockets**: @nestjs/websockets 11.1.8 with Socket.IO 4.8.1
 - **Payments**: Stripe 19.1.0 (international) + Paystack (Africa-focused)
@@ -198,6 +200,8 @@ Multi-step wizard for creating events with comprehensive features:
   - **Notification**: In-app, email, push, and SMS notifications
   - **Dispute**: Platform dispute management for chargebacks and buyer disputes
   - **EventAgenda** & **EventSpeaker**: Event agenda items and speaker information
+  - **Region** & **City**: Geographic data for location-based features with spatial indexes
+  - **UserLocation**: User location storage with source tracking (ip, browser, manual)
 
 ### Payment Flow
 1. Create order (status: pending) with inventory holds
@@ -254,6 +258,27 @@ Users can save and bookmark events for later viewing:
 - **Persistent Storage**: Saved events persist across sessions
 - **Event Updates**: Users receive notifications for changes to saved events
 - **Social Features**: Foundation for sharing and recommendation features
+
+### Location-based Event Search
+PostGIS-powered spatial queries for finding nearby events:
+- **PostGIS Integration**: Database uses `postgis/postgis:15-3.4` image with spatial extensions
+- **Spatial Indexes**: GIST indexes on geometry columns for efficient proximity queries
+- **Search Methods**:
+  - By coordinates: `GET /events/nearby?latitude=6.5244&longitude=3.3792&radius=50`
+  - By city name: `GET /events/nearby?city=Lagos&radius=50`
+  - By user location: `GET /events/nearby/me` (authenticated)
+- **City Database**: 60+ major cities pre-seeded with focus on Africa and global coverage
+- **User Location Management**:
+  - Automatic IP geolocation on login (non-blocking)
+  - Browser geolocation API support
+  - Manual city selection
+  - `GET/PUT/DELETE /account/location` endpoints
+- **IP Geolocation**: Uses ip-api.com with Redis caching (24h TTL)
+- **Haversine Fallback**: Falls back to in-memory Haversine calculation if PostGIS unavailable
+- **New Models**:
+  - **Region**: Geographic regions with coordinates
+  - **City**: Cities with coordinates, population, timezone, aliases
+  - **UserLocation**: User's stored location with source tracking (ip, browser, manual)
 
 ### Environment Configuration
 - Copy `.env.example` to `.env`
@@ -459,6 +484,7 @@ The system uses comprehensive enumerations for type safety:
 - **Notification Channels**: in_app, email, push, sms
 - **Creator Steps**: basic_info, date_time, location, seating, ticket_types, price_tiers, policies, media, review
 - **Creator Session Status**: in_progress, completed, abandoned, published
+- **Location Source**: ip, browser, manual, address
 
 ## Best Practices
 
@@ -702,6 +728,10 @@ This is an active development project. When making changes:
 **NestJS Version**: 11.x
 **Node Version**: 22.x (recommended)
 **Recent Updates**:
+- Added PostGIS-powered location-based event search with city/region support
+- Implemented user location management (IP geolocation, browser geolocation, manual selection)
+- Added cities database with 60+ major cities pre-seeded
+- Created new endpoints: GET /events/nearby/me, GET/PUT/DELETE /account/location, GET /cities
 - Added dispute management system for platform-level dispute handling
 - Implemented saved events feature for user bookmarking
 - Enhanced event management with agenda and speakers support

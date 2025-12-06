@@ -101,10 +101,12 @@ export function TicketsSection() {
 
   const debouncedMarkIncomplete = useMemo(
     () =>
-      debounce((issues: z.ZodIssue[]) => {
+      debounce((...args: unknown[]) => {
+        const issues = args[0] as z.ZodIssue[];
         void updateSection(
           'tickets',
           {
+            payload: {},
             autosave: true,
             status: 'incomplete',
             errors: issues.map((issue) => ({
@@ -132,7 +134,7 @@ export function TicketsSection() {
 
   React.useEffect(() => {
     const subscription = form.watch((values) => {
-      handleAutosave(values);
+      handleAutosave(values as TicketsValues);
     });
     return () => subscription.unsubscribe();
   }, [form, handleAutosave]);

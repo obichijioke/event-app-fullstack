@@ -25,7 +25,7 @@ export function RefundModal({ order, onSubmit, onCancel }: RefundModalProps) {
       1,
       Math.min(order.totalCents, Math.round(formData.amountCents || 0)),
     );
-    const reason = formData.reason.trim() || undefined;
+    const reason = formData.reason?.trim() || undefined;
     const payload: RefundDto = {
       amountCents: amount,
       reason,

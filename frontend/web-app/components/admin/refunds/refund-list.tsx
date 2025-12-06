@@ -361,7 +361,6 @@ export function RefundList({ className }: RefundListProps) {
         label: 'Process',
         onClick: handleProcess,
         variant: 'primary',
-        disabled: refund.status === 'processed',
       });
     }
 

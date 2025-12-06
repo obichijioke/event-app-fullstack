@@ -22,9 +22,10 @@ import { Calendar, Plus } from 'lucide-react';
 
 const occurrenceSchema = z.object({
   startsAt: z.string().min(1, 'Start time required'),
-  endsAt: z.string()
-    .optional()
-    .transform(val => val === '' ? undefined : val),
+  endsAt: z
+    .string()
+    .nullable()
+    .transform((val) => (val === '' || val === null ? null : val)),
 });
 
 const overrideSchema = z.object({
@@ -47,7 +48,7 @@ const scheduleSchema = z.object({
   overrides: z.array(overrideSchema).optional(),
 });
 
-type ScheduleValues = z.infer<typeof scheduleSchema>;
+type ScheduleValues = z.output<typeof scheduleSchema>;
 
 export function ScheduleSection() {
   const { draft, updateSection, isSaving } = useEventCreatorDraft();
@@ -55,21 +56,27 @@ export function ScheduleSection() {
     (s) => s.section === 'schedule'
   );
 
+  const occurrencesFromPayload: { startsAt: string; endsAt: string | null }[] =
+    Array.isArray(schedule?.payload?.occurrences) && (schedule?.payload?.occurrences as any[]).length > 0
+      ? (schedule?.payload?.occurrences as any[]).map((o) => ({
+          startsAt: o.startsAt ?? '',
+          endsAt: o.endsAt ?? null,
+        }))
+      : [];
+
   const defaultValues: ScheduleValues = {
     mode: ((schedule?.payload?.mode as any) ?? 'single') as any,
     timezone: (schedule?.payload?.timezone as string) || draft?.timezone || 'UTC',
     venueId: (schedule?.payload?.venueId as string) || '',
-    occurrences: Array.isArray(schedule?.payload?.occurrences) && (schedule?.payload?.occurrences as any[]).length > 0
-      ? ((schedule?.payload?.occurrences as any[]).map((o) => ({
-          startsAt: o.startsAt ?? '',
-          endsAt: o.endsAt ?? '',
-        })) as any)
-      : [{ startsAt: '', endsAt: '' }],
+    occurrences:
+      occurrencesFromPayload.length > 0
+        ? occurrencesFromPayload
+        : [{ startsAt: '', endsAt: null }],
     notes: (schedule?.payload?.notes as string) || '',
     rrule: (schedule?.payload?.rrule as string) || '',
     exceptions: Array.isArray(schedule?.payload?.exceptions) ? (schedule?.payload?.exceptions as string[]) : [],
     overrides: [],
-  } as ScheduleValues;
+  };
 
   const form = useForm<ScheduleValues>({
     resolver: zodResolver(scheduleSchema),
@@ -127,10 +134,12 @@ export function ScheduleSection() {
 
   const debouncedMarkIncomplete = useMemo(
     () =>
-      debounce((issues: z.ZodIssue[]) => {
+      debounce((...args: unknown[]) => {
+        const issues = args[0] as z.ZodIssue[];
         void updateSection(
           'schedule',
           {
+            payload: {},
             autosave: true,
             status: 'incomplete',
             errors: issues.map((issue) => ({
@@ -158,7 +167,7 @@ export function ScheduleSection() {
 
   useEffect(() => {
     const subscription = form.watch((values) => {
-      handleAutosave(values);
+      handleAutosave(values as ScheduleValues);
     });
     return () => subscription.unsubscribe();
   }, [form, handleAutosave]);
@@ -270,8 +279,12 @@ export function ScheduleSection() {
                   venues={venues}
                   venuesLoading={venuesLoading}
                   defaultVenueName={defaultVenueName}
-                  onStartChange={(value) => form.setValue(`occurrences.${index}.startsAt` as const, value)}
-                  onEndChange={(value) => form.setValue(`occurrences.${index}.endsAt` as const, value)}
+                  onStartChange={(value) =>
+                    form.setValue(`occurrences.${index}.startsAt` as const, value ?? '')
+                  }
+                  onEndChange={(value) =>
+                    form.setValue(`occurrences.${index}.endsAt` as const, value ?? null)
+                  }
                   onDoorTimeChange={(value) => {
                     form.setValue(`overrides.${index}.sourceStart` as const, form.getValues(`occurrences.${index}.startsAt` as const));
                     form.setValue(`overrides.${index}.doorTime` as const, value);

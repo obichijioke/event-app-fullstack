@@ -129,7 +129,7 @@ export function OrderList({ className }: OrderListProps) {
       render: (value: unknown, order: AdminOrder) => (
         <Text className="font-medium">
           <CurrencyDisplay
-            amountCents={order.amountCents}
+            amountCents={order.amountCents ?? order.totalCents ?? 0}
             currency={order.currency}
             showFree={false}
           />
