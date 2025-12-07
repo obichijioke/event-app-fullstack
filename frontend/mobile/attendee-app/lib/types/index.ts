@@ -289,6 +289,29 @@ export interface Review {
   updatedAt: string;
 }
 
+export interface ReviewSummary {
+  averageRating: number;
+  totalReviews: number;
+  distribution: Record<number, number>; // 1-5 star counts
+}
+
+export interface CreateReviewRequest {
+  rating: number;
+  title?: string;
+  content: string;
+}
+
+export interface OrganizerReview extends Review {
+  organizationId: string;
+}
+
+// Following types
+export interface FollowedOrganizer {
+  id: string;
+  organization: Organization;
+  createdAt: string;
+}
+
 // Dispute types
 export interface Dispute {
   id: string;
