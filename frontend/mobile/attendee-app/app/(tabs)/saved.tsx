@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -16,7 +16,7 @@ import { savedEventsApi } from '@/lib/api';
 import { EventCard } from '@/components/events/event-card';
 import { Loading } from '@/components/ui/loading';
 import { Button } from '@/components/ui/button';
-import type { Event } from '@/lib/types';
+import type { Event, PaginatedResponse } from '@/lib/types';
 
 export default function SavedScreen() {
   const colorScheme = useColorScheme() ?? 'light';
@@ -28,13 +28,17 @@ export default function SavedScreen() {
     isLoading,
     refetch,
     isRefetching,
-  } = useQuery({
+  } = useQuery<PaginatedResponse<Event>>({
     queryKey: ['savedEvents'],
     queryFn: () => savedEventsApi.getSavedEvents(1, 50),
-    onSuccess: (data) => {
-      setSavedEventIds(new Set(data.data.map((e) => e.id)));
-    },
   });
+
+  // Update saved event IDs when data changes
+  useEffect(() => {
+    if (savedEventsData?.data) {
+      setSavedEventIds(new Set(savedEventsData.data.map((e) => e.id)));
+    }
+  }, [savedEventsData]);
 
   const handleSaveToggle = async (eventId: string) => {
     try {

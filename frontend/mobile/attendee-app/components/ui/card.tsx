@@ -16,8 +16,9 @@ interface CardProps {
   variant?: 'default' | 'elevated' | 'outlined';
 }
 
-interface PressableCardProps extends CardProps, Omit<TouchableOpacityProps, 'style'> {
+interface PressableCardProps extends Omit<CardProps, 'children'>, Omit<TouchableOpacityProps, 'style'> {
   onPress: () => void;
+  children: React.ReactNode;
 }
 
 export function Card({

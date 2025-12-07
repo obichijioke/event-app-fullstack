@@ -78,8 +78,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       const response = await authApi.login(credentials);
 
       // Check if 2FA is required
-      if ('requires2FA' in response && (response as { requires2FA: boolean; tempToken: string }).requires2FA) {
-        const twoFAResponse = response as { requires2FA: boolean; tempToken: string };
+      if ('requires2FA' in response && (response as unknown as { requires2FA: boolean }).requires2FA) {
+        const twoFAResponse = response as unknown as { requires2FA: boolean; tempToken: string };
         set({
           isLoading: false,
           requires2FA: true,

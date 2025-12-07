@@ -40,11 +40,17 @@ export default function HomeScreen() {
   });
 
   // Fetch saved event IDs
-  useQuery({
+  const { data: savedIds } = useQuery({
     queryKey: ['savedEventIds'],
     queryFn: savedEventsApi.getSavedEventIds,
-    onSuccess: (ids: string[]) => setSavedEventIds(new Set(ids)),
   });
+
+  // Update saved event IDs when data changes
+  React.useEffect(() => {
+    if (savedIds) {
+      setSavedEventIds(new Set(savedIds));
+    }
+  }, [savedIds]);
 
   const handleSaveToggle = async (eventId: string) => {
     try {

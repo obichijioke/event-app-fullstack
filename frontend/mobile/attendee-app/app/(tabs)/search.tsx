@@ -47,11 +47,17 @@ export default function SearchScreen() {
   });
 
   // Fetch saved event IDs
-  useQuery({
+  const { data: savedIds } = useQuery({
     queryKey: ['savedEventIds'],
     queryFn: savedEventsApi.getSavedEventIds,
-    onSuccess: (ids) => setSavedEventIds(new Set(ids)),
   });
+
+  // Update saved event IDs when data changes
+  React.useEffect(() => {
+    if (savedIds) {
+      setSavedEventIds(new Set(savedIds));
+    }
+  }, [savedIds]);
 
   // Search events
   const {
