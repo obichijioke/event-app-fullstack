@@ -6,3 +6,4 @@ export { ticketsApi } from './tickets';
 export { ordersApi } from './orders';
 export { savedEventsApi } from './saved-events';
 export { notificationsApi } from './notifications';
+export { accountApi } from './account';
