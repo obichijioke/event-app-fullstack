@@ -118,9 +118,14 @@ export default function TicketsScreen() {
       {/* Header */}
       <View style={styles.header}>
         <Text style={[styles.title, { color: colors.text }]}>My Tickets</Text>
-        <TouchableOpacity onPress={() => router.push('/orders' as const)}>
-          <Text style={[styles.ordersLink, { color: colors.tint }]}>Orders</Text>
-        </TouchableOpacity>
+        <View style={styles.headerActions}>
+          <TouchableOpacity onPress={() => router.push('/account/transfers' as const)}>
+            <Ionicons name="swap-horizontal-outline" size={22} color={colors.tint} />
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => router.push('/orders' as const)}>
+            <Text style={[styles.ordersLink, { color: colors.tint }]}>Orders</Text>
+          </TouchableOpacity>
+        </View>
       </View>
 
       {/* Filters */}
@@ -185,6 +190,11 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 28,
     fontWeight: '700',
+  },
+  headerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 16,
   },
   ordersLink: {
     fontSize: 15,

@@ -8,6 +8,7 @@ import {
   TouchableOpacity,
   Dimensions,
   Share,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -16,11 +17,14 @@ import { useQuery } from '@tanstack/react-query';
 import { format } from 'date-fns';
 import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
-import { eventsApi, savedEventsApi } from '@/lib/api';
+import { useCalendar } from '@/hooks/use-calendar';
+import { useMaps } from '@/hooks/use-maps';
+import { eventsApi, savedEventsApi, reviewsApi } from '@/lib/api';
 import { Loading } from '@/components/ui/loading';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar } from '@/components/ui/avatar';
+import { StarRating } from '@/components/reviews';
 
 const { width } = Dimensions.get('window');
 
@@ -29,6 +33,8 @@ export default function EventDetailScreen() {
   const colorScheme = useColorScheme() ?? 'light';
   const colors = Colors[colorScheme];
   const [isSaved, setIsSaved] = useState(false);
+  const { addEventToCalendar, isAdding: isAddingToCalendar } = useCalendar();
+  const { openDirections: openMapsDirections } = useMaps();
 
   const { data: event, isLoading, error } = useQuery({
     queryKey: ['event', id],
@@ -39,6 +45,27 @@ export default function EventDetailScreen() {
   const { data: faqs } = useQuery({
     queryKey: ['eventFaqs', id],
     queryFn: () => eventsApi.getEventFAQs(id!),
+    enabled: !!id,
+  });
+
+  // Fetch agenda
+  const { data: agenda } = useQuery({
+    queryKey: ['event', id, 'agenda'],
+    queryFn: () => eventsApi.getEventAgenda(id!),
+    enabled: !!id,
+  });
+
+  // Fetch speakers
+  const { data: speakers } = useQuery({
+    queryKey: ['event', id, 'speakers'],
+    queryFn: () => eventsApi.getEventSpeakers(id!),
+    enabled: !!id,
+  });
+
+  // Fetch review summary
+  const { data: reviewSummary } = useQuery({
+    queryKey: ['event', id, 'review-summary'],
+    queryFn: () => reviewsApi.getEventReviewSummary(id!),
     enabled: !!id,
   });
 
@@ -62,6 +89,11 @@ export default function EventDetailScreen() {
     } catch (error) {
       console.error('Failed to share:', error);
     }
+  };
+
+  const handleAddToCalendar = async () => {
+    if (!event) return;
+    await addEventToCalendar(event);
   };
 
   const formatPrice = () => {
@@ -109,6 +141,17 @@ export default function EventDetailScreen() {
             <View style={styles.headerRight}>
               <TouchableOpacity
                 style={[styles.headerButton, { backgroundColor: colors.card }]}
+                onPress={handleAddToCalendar}
+                disabled={isAddingToCalendar}
+              >
+                {isAddingToCalendar ? (
+                  <ActivityIndicator size="small" color={colors.tint} />
+                ) : (
+                  <Ionicons name="calendar-outline" size={22} color={colors.text} />
+                )}
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.headerButton, { backgroundColor: colors.card }]}
                 onPress={handleSave}
               >
                 <Ionicons
@@ -154,7 +197,12 @@ export default function EventDetailScreen() {
           </View>
 
           {/* Location */}
-          <View style={styles.infoRow}>
+          <TouchableOpacity
+            style={styles.infoRow}
+            onPress={() => event.venue && openMapsDirections(event.venue)}
+            disabled={!event.venue}
+            activeOpacity={event.venue ? 0.7 : 1}
+          >
             <View style={[styles.infoIcon, { backgroundColor: colors.tint + '15' }]}>
               <Ionicons name="location-outline" size={20} color={colors.tint} />
             </View>
@@ -168,7 +216,12 @@ export default function EventDetailScreen() {
                 </Text>
               )}
             </View>
-          </View>
+            {event.venue && (
+              <View style={[styles.directionsButton, { backgroundColor: colors.tint }]}>
+                <Ionicons name="navigate" size={16} color="#fff" />
+              </View>
+            )}
+          </TouchableOpacity>
 
           {/* Organizer */}
           <TouchableOpacity
@@ -233,20 +286,94 @@ export default function EventDetailScreen() {
             </View>
           )}
 
-          {/* FAQs */}
-          {faqs && faqs.length > 0 && (
+          {/* Reviews */}
+          <TouchableOpacity
+            style={[styles.reviewsSection, { backgroundColor: colors.card, borderColor: colors.border }]}
+            onPress={() => router.push(`/events/${id}/reviews` as const)}
+          >
+            <View style={styles.reviewsHeader}>
+              <Text style={[styles.sectionTitle, { color: colors.text, marginBottom: 0 }]}>
+                Reviews
+              </Text>
+              <View style={styles.reviewsRating}>
+                {reviewSummary && reviewSummary.reviewCount > 0 ? (
+                  <>
+                    <StarRating rating={reviewSummary.averageRating} size={16} />
+                    <Text style={[styles.reviewsCount, { color: colors.textSecondary }]}>
+                      {reviewSummary.averageRating.toFixed(1)} ({reviewSummary.reviewCount})
+                    </Text>
+                  </>
+                ) : (
+                  <Text style={[styles.reviewsCount, { color: colors.textSecondary }]}>
+                    No reviews yet
+                  </Text>
+                )}
+              </View>
+            </View>
+            <Ionicons name="chevron-forward" size={20} color={colors.icon} />
+          </TouchableOpacity>
+
+          {/* Event Details - Agenda, Speakers, FAQs */}
+          {((agenda && agenda.length > 0) || (speakers && speakers.length > 0) || (faqs && faqs.length > 0)) && (
             <View style={styles.section}>
-              <Text style={[styles.sectionTitle, { color: colors.text }]}>FAQ</Text>
-              {faqs.slice(0, 3).map((faq) => (
-                <View key={faq.id} style={styles.faqItem}>
-                  <Text style={[styles.faqQuestion, { color: colors.text }]}>
-                    {faq.question}
-                  </Text>
-                  <Text style={[styles.faqAnswer, { color: colors.textSecondary }]}>
-                    {faq.answer}
-                  </Text>
-                </View>
-              ))}
+              <Text style={[styles.sectionTitle, { color: colors.text }]}>Event Details</Text>
+
+              {/* Agenda Link */}
+              {agenda && agenda.length > 0 && (
+                <TouchableOpacity
+                  style={[styles.detailLink, { backgroundColor: colors.card, borderColor: colors.border }]}
+                  onPress={() => router.push(`/events/${id}/agenda` as const)}
+                >
+                  <View style={[styles.detailIcon, { backgroundColor: colors.tint + '15' }]}>
+                    <Ionicons name="calendar-outline" size={20} color={colors.tint} />
+                  </View>
+                  <View style={styles.detailContent}>
+                    <Text style={[styles.detailTitle, { color: colors.text }]}>Agenda</Text>
+                    <Text style={[styles.detailSubtitle, { color: colors.textSecondary }]}>
+                      {agenda.length} session{agenda.length !== 1 ? 's' : ''}
+                    </Text>
+                  </View>
+                  <Ionicons name="chevron-forward" size={20} color={colors.icon} />
+                </TouchableOpacity>
+              )}
+
+              {/* Speakers Link */}
+              {speakers && speakers.length > 0 && (
+                <TouchableOpacity
+                  style={[styles.detailLink, { backgroundColor: colors.card, borderColor: colors.border }]}
+                  onPress={() => router.push(`/events/${id}/speakers` as const)}
+                >
+                  <View style={[styles.detailIcon, { backgroundColor: colors.tint + '15' }]}>
+                    <Ionicons name="people-outline" size={20} color={colors.tint} />
+                  </View>
+                  <View style={styles.detailContent}>
+                    <Text style={[styles.detailTitle, { color: colors.text }]}>Speakers</Text>
+                    <Text style={[styles.detailSubtitle, { color: colors.textSecondary }]}>
+                      {speakers.length} speaker{speakers.length !== 1 ? 's' : ''}
+                    </Text>
+                  </View>
+                  <Ionicons name="chevron-forward" size={20} color={colors.icon} />
+                </TouchableOpacity>
+              )}
+
+              {/* FAQs Link */}
+              {faqs && faqs.length > 0 && (
+                <TouchableOpacity
+                  style={[styles.detailLink, { backgroundColor: colors.card, borderColor: colors.border }]}
+                  onPress={() => router.push(`/events/${id}/faqs` as const)}
+                >
+                  <View style={[styles.detailIcon, { backgroundColor: colors.tint + '15' }]}>
+                    <Ionicons name="help-circle-outline" size={20} color={colors.tint} />
+                  </View>
+                  <View style={styles.detailContent}>
+                    <Text style={[styles.detailTitle, { color: colors.text }]}>FAQs</Text>
+                    <Text style={[styles.detailSubtitle, { color: colors.textSecondary }]}>
+                      {faqs.length} question{faqs.length !== 1 ? 's' : ''}
+                    </Text>
+                  </View>
+                  <Ionicons name="chevron-forward" size={20} color={colors.icon} />
+                </TouchableOpacity>
+              )}
             </View>
           )}
 
@@ -347,6 +474,14 @@ const styles = StyleSheet.create({
   infoSubtitle: {
     fontSize: 13,
   },
+  directionsButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginLeft: 8,
+  },
   organizerRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -410,17 +545,53 @@ const styles = StyleSheet.create({
     fontSize: 12,
     marginTop: 2,
   },
-  faqItem: {
-    marginBottom: 16,
+  detailLink: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 14,
+    borderRadius: 12,
+    borderWidth: 1,
+    marginBottom: 10,
   },
-  faqQuestion: {
+  detailIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
+  },
+  detailContent: {
+    flex: 1,
+  },
+  detailTitle: {
     fontSize: 15,
     fontWeight: '600',
-    marginBottom: 6,
+    marginBottom: 2,
   },
-  faqAnswer: {
+  detailSubtitle: {
+    fontSize: 13,
+  },
+  reviewsSection: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 16,
+    borderRadius: 12,
+    borderWidth: 1,
+    marginBottom: 24,
+  },
+  reviewsHeader: {
+    flex: 1,
+  },
+  reviewsRating: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginTop: 6,
+  },
+  reviewsCount: {
     fontSize: 14,
-    lineHeight: 20,
   },
   bottomBar: {
     position: 'absolute',

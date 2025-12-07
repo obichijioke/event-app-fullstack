@@ -177,14 +177,28 @@ export type TicketStatus = 'issued' | 'transferred' | 'refunded' | 'checked_in' 
 export interface TicketTransfer {
   id: string;
   ticketId: string;
+  ticket?: Ticket;
   fromUserId: string;
+  fromUser?: {
+    id: string;
+    name: string;
+    email: string;
+  };
   toEmail: string;
   toUserId?: string;
-  status: 'pending' | 'accepted' | 'rejected' | 'canceled' | 'expired';
+  toUser?: {
+    id: string;
+    name: string;
+    email: string;
+  };
+  status: TransferStatus;
   expiresAt: string;
   createdAt: string;
   acceptedAt?: string;
+  canceledAt?: string;
 }
+
+export type TransferStatus = 'pending' | 'accepted' | 'rejected' | 'canceled' | 'expired';
 
 // Order types
 export interface Order {
@@ -277,16 +291,47 @@ export interface City {
 export interface Review {
   id: string;
   rating: number;
-  title?: string;
-  content: string;
+  comment?: string;
   userId: string;
   user: {
     id: string;
     name: string;
-    avatarUrl?: string;
   };
+  eventId?: string;
+  orgId?: string;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface ReviewSummary {
+  averageRating: number;
+  reviewCount: number;
+}
+
+export interface CreateReviewRequest {
+  rating: number;
+  comment?: string;
+}
+
+export interface UpdateReviewRequest {
+  rating?: number;
+  comment?: string;
+}
+
+// Following types
+export interface FollowedOrganizer {
+  id: string;
+  organizationId: string;
+  organization: {
+    id: string;
+    name: string;
+    legalName?: string;
+    website?: string;
+    country?: string;
+    status: string;
+    createdAt: string;
+  };
+  followedAt: string;
 }
 
 // Dispute types
