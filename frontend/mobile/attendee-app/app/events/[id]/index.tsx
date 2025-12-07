@@ -8,6 +8,7 @@ import {
   TouchableOpacity,
   Dimensions,
   Share,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -16,6 +17,8 @@ import { useQuery } from '@tanstack/react-query';
 import { format } from 'date-fns';
 import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
+import { useCalendar } from '@/hooks/use-calendar';
+import { useMaps } from '@/hooks/use-maps';
 import { eventsApi, savedEventsApi, reviewsApi } from '@/lib/api';
 import { Loading } from '@/components/ui/loading';
 import { Button } from '@/components/ui/button';
@@ -30,6 +33,8 @@ export default function EventDetailScreen() {
   const colorScheme = useColorScheme() ?? 'light';
   const colors = Colors[colorScheme];
   const [isSaved, setIsSaved] = useState(false);
+  const { addEventToCalendar, isAdding: isAddingToCalendar } = useCalendar();
+  const { openDirections: openMapsDirections } = useMaps();
 
   const { data: event, isLoading, error } = useQuery({
     queryKey: ['event', id],
@@ -86,6 +91,11 @@ export default function EventDetailScreen() {
     }
   };
 
+  const handleAddToCalendar = async () => {
+    if (!event) return;
+    await addEventToCalendar(event);
+  };
+
   const formatPrice = () => {
     if (!event) return '';
     if (event.isFree) return 'Free';
@@ -129,6 +139,17 @@ export default function EventDetailScreen() {
               <Ionicons name="arrow-back" size={22} color={colors.text} />
             </TouchableOpacity>
             <View style={styles.headerRight}>
+              <TouchableOpacity
+                style={[styles.headerButton, { backgroundColor: colors.card }]}
+                onPress={handleAddToCalendar}
+                disabled={isAddingToCalendar}
+              >
+                {isAddingToCalendar ? (
+                  <ActivityIndicator size="small" color={colors.tint} />
+                ) : (
+                  <Ionicons name="calendar-outline" size={22} color={colors.text} />
+                )}
+              </TouchableOpacity>
               <TouchableOpacity
                 style={[styles.headerButton, { backgroundColor: colors.card }]}
                 onPress={handleSave}
@@ -176,7 +197,12 @@ export default function EventDetailScreen() {
           </View>
 
           {/* Location */}
-          <View style={styles.infoRow}>
+          <TouchableOpacity
+            style={styles.infoRow}
+            onPress={() => event.venue && openMapsDirections(event.venue)}
+            disabled={!event.venue}
+            activeOpacity={event.venue ? 0.7 : 1}
+          >
             <View style={[styles.infoIcon, { backgroundColor: colors.tint + '15' }]}>
               <Ionicons name="location-outline" size={20} color={colors.tint} />
             </View>
@@ -190,7 +216,12 @@ export default function EventDetailScreen() {
                 </Text>
               )}
             </View>
-          </View>
+            {event.venue && (
+              <View style={[styles.directionsButton, { backgroundColor: colors.tint }]}>
+                <Ionicons name="navigate" size={16} color="#fff" />
+              </View>
+            )}
+          </TouchableOpacity>
 
           {/* Organizer */}
           <TouchableOpacity
@@ -442,6 +473,14 @@ const styles = StyleSheet.create({
   },
   infoSubtitle: {
     fontSize: 13,
+  },
+  directionsButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginLeft: 8,
   },
   organizerRow: {
     flexDirection: 'row',

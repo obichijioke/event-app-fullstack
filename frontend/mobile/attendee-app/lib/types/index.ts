@@ -177,14 +177,28 @@ export type TicketStatus = 'issued' | 'transferred' | 'refunded' | 'checked_in' 
 export interface TicketTransfer {
   id: string;
   ticketId: string;
+  ticket?: Ticket;
   fromUserId: string;
+  fromUser?: {
+    id: string;
+    name: string;
+    email: string;
+  };
   toEmail: string;
   toUserId?: string;
-  status: 'pending' | 'accepted' | 'rejected' | 'canceled' | 'expired';
+  toUser?: {
+    id: string;
+    name: string;
+    email: string;
+  };
+  status: TransferStatus;
   expiresAt: string;
   createdAt: string;
   acceptedAt?: string;
+  canceledAt?: string;
 }
+
+export type TransferStatus = 'pending' | 'accepted' | 'rejected' | 'canceled' | 'expired';
 
 // Order types
 export interface Order {

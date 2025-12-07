@@ -1,5 +1,12 @@
 import apiClient from './client';
-import type { User, Session } from '../types';
+import type { User, Session, TicketTransfer, PaginatedResponse } from '../types';
+
+export interface TransferFilters {
+  type?: 'sent' | 'received' | 'all';
+  status?: 'pending' | 'accepted' | 'canceled';
+  page?: number;
+  limit?: number;
+}
 
 export interface UpdateProfileRequest {
   firstName?: string;
@@ -114,5 +121,46 @@ export const accountApi = {
   // Disable 2FA
   async disable2FA(code: string): Promise<void> {
     await apiClient.post('/account/2fa/disable', { code });
+  },
+
+  // Get ticket transfers
+  async getTransfers(filters?: TransferFilters): Promise<PaginatedResponse<TicketTransfer>> {
+    const response = await apiClient.get<PaginatedResponse<TicketTransfer>>(
+      '/account/transfers',
+      { params: filters }
+    );
+    return response.data;
+  },
+
+  // Get pending incoming transfers count
+  async getPendingTransfersCount(): Promise<number> {
+    const response = await accountApi.getTransfers({
+      type: 'received',
+      status: 'pending',
+      limit: 1,
+    });
+    return response.meta.total;
+  },
+
+  // Register push notification token
+  async registerPushToken(data: {
+    token: string;
+    platform: string;
+    deviceType?: string;
+  }): Promise<void> {
+    await apiClient.post('/account/push-tokens', data);
+  },
+
+  // Unregister push notification token
+  async unregisterPushToken(token: string): Promise<void> {
+    await apiClient.delete('/account/push-tokens', { data: { token } });
+  },
+
+  // Get user's registered push tokens
+  async getPushTokens(): Promise<{ id: string; token: string; platform: string; createdAt: string }[]> {
+    const response = await apiClient.get<{ id: string; token: string; platform: string; createdAt: string }[]>(
+      '/account/push-tokens'
+    );
+    return response.data;
   },
 };

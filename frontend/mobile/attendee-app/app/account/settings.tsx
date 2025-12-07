@@ -13,7 +13,9 @@ import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Colors } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
+import { useColorScheme, useThemeMode } from '@/hooks/use-color-scheme';
+import { usePushNotifications } from '@/hooks/use-push-notifications';
+import type { ThemeMode } from '@/lib/stores/theme-store';
 import { accountApi } from '@/lib/api';
 import { Loading } from '@/components/ui/loading';
 import { Card } from '@/components/ui/card';
@@ -51,10 +53,25 @@ function SettingToggle({ label, description, value, onValueChange, disabled }: S
   );
 }
 
+const themeOptions: { value: ThemeMode; label: string; icon: keyof typeof Ionicons.glyphMap }[] = [
+  { value: 'light', label: 'Light', icon: 'sunny-outline' },
+  { value: 'dark', label: 'Dark', icon: 'moon-outline' },
+  { value: 'system', label: 'System', icon: 'phone-portrait-outline' },
+];
+
 export default function SettingsScreen() {
   const colorScheme = useColorScheme() ?? 'light';
   const colors = Colors[colorScheme];
   const queryClient = useQueryClient();
+  const { mode: themeMode, setMode: setThemeMode } = useThemeMode();
+
+  const {
+    hasPermission: hasPushPermission,
+    requestPermission: requestPushPermission,
+    isLoading: pushLoading,
+    registerForPushNotifications,
+    unregisterPushToken,
+  } = usePushNotifications();
 
   const [preferences, setPreferences] = useState({
     emailNotifications: true,
@@ -90,7 +107,27 @@ export default function SettingsScreen() {
     },
   });
 
-  const handleToggle = (key: keyof typeof preferences) => {
+  const handleToggle = async (key: keyof typeof preferences) => {
+    // Special handling for push notifications
+    if (key === 'pushNotifications') {
+      const newValue = !preferences[key];
+
+      if (newValue && !hasPushPermission) {
+        // Request permission when enabling
+        const granted = await requestPushPermission();
+        if (!granted) {
+          return; // Don't update if permission wasn't granted
+        }
+      } else if (!newValue) {
+        // Unregister token when disabling
+        await unregisterPushToken();
+      }
+
+      setPreferences((prev) => ({ ...prev, [key]: newValue }));
+      updateMutation.mutate({ [key]: newValue });
+      return;
+    }
+
     const newValue = !preferences[key];
     setPreferences((prev) => ({ ...prev, [key]: newValue }));
     updateMutation.mutate({ [key]: newValue });
@@ -115,12 +152,32 @@ export default function SettingsScreen() {
         {/* Notifications Section */}
         <Text style={[styles.sectionTitle, { color: colors.text }]}>Notifications</Text>
         <Card padding="none" style={styles.settingsCard}>
-          <SettingToggle
-            label="Push Notifications"
-            description="Receive push notifications on your device"
-            value={preferences.pushNotifications}
-            onValueChange={() => handleToggle('pushNotifications')}
-          />
+          <View style={[styles.settingItem, { borderBottomColor: colors.border }]}>
+            <View style={styles.settingInfo}>
+              <Text style={[styles.settingLabel, { color: colors.text }]}>Push Notifications</Text>
+              <Text style={[styles.settingDescription, { color: colors.textSecondary }]}>
+                Receive push notifications on your device
+              </Text>
+              {!hasPushPermission && preferences.pushNotifications && (
+                <TouchableOpacity
+                  style={[styles.permissionButton, { backgroundColor: colors.tint + '15' }]}
+                  onPress={requestPushPermission}
+                >
+                  <Ionicons name="notifications-outline" size={14} color={colors.tint} />
+                  <Text style={[styles.permissionButtonText, { color: colors.tint }]}>
+                    Enable permissions
+                  </Text>
+                </TouchableOpacity>
+              )}
+            </View>
+            <Switch
+              value={preferences.pushNotifications && hasPushPermission}
+              onValueChange={() => handleToggle('pushNotifications')}
+              disabled={pushLoading}
+              trackColor={{ false: colors.border, true: colors.tint }}
+              thumbColor="#FFFFFF"
+            />
+          </View>
           <SettingToggle
             label="Email Notifications"
             description="Receive notifications via email"
@@ -156,6 +213,78 @@ export default function SettingsScreen() {
             value={preferences.marketingEmails}
             onValueChange={() => handleToggle('marketingEmails')}
           />
+        </Card>
+
+        {/* Appearance */}
+        <Text style={[styles.sectionTitle, { color: colors.text }]}>Appearance</Text>
+        <Card padding="none" style={styles.settingsCard}>
+          <View style={[styles.themeContainer, { borderBottomColor: colors.border }]}>
+            <View style={styles.settingInfo}>
+              <Text style={[styles.settingLabel, { color: colors.text }]}>Theme</Text>
+              <Text style={[styles.settingDescription, { color: colors.textSecondary }]}>
+                Choose your preferred color scheme
+              </Text>
+            </View>
+          </View>
+          <View style={styles.themeOptions}>
+            {themeOptions.map((option) => (
+              <TouchableOpacity
+                key={option.value}
+                style={[
+                  styles.themeOption,
+                  {
+                    backgroundColor:
+                      themeMode === option.value
+                        ? colors.tint + '15'
+                        : colors.card,
+                    borderColor:
+                      themeMode === option.value
+                        ? colors.tint
+                        : colors.border,
+                  },
+                ]}
+                onPress={() => setThemeMode(option.value)}
+              >
+                <View
+                  style={[
+                    styles.themeIconContainer,
+                    {
+                      backgroundColor:
+                        themeMode === option.value
+                          ? colors.tint + '25'
+                          : colors.background,
+                    },
+                  ]}
+                >
+                  <Ionicons
+                    name={option.icon}
+                    size={20}
+                    color={themeMode === option.value ? colors.tint : colors.icon}
+                  />
+                </View>
+                <Text
+                  style={[
+                    styles.themeLabel,
+                    {
+                      color:
+                        themeMode === option.value ? colors.tint : colors.text,
+                      fontWeight: themeMode === option.value ? '600' : '500',
+                    },
+                  ]}
+                >
+                  {option.label}
+                </Text>
+                {themeMode === option.value && (
+                  <Ionicons
+                    name="checkmark-circle"
+                    size={18}
+                    color={colors.tint}
+                    style={styles.themeCheck}
+                  />
+                )}
+              </TouchableOpacity>
+            ))}
+          </View>
         </Card>
 
         {/* Info */}
@@ -241,5 +370,54 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 13,
     lineHeight: 18,
+  },
+  permissionButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 6,
+    alignSelf: 'flex-start',
+    gap: 6,
+  },
+  permissionButtonText: {
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  themeContainer: {
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+  },
+  themeOptions: {
+    flexDirection: 'row',
+    padding: 12,
+    gap: 10,
+  },
+  themeOption: {
+    flex: 1,
+    flexDirection: 'column',
+    alignItems: 'center',
+    paddingVertical: 14,
+    paddingHorizontal: 8,
+    borderRadius: 12,
+    borderWidth: 1.5,
+    gap: 8,
+  },
+  themeIconContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  themeLabel: {
+    fontSize: 13,
+  },
+  themeCheck: {
+    position: 'absolute',
+    top: 6,
+    right: 6,
   },
 });
