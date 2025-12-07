@@ -9,6 +9,7 @@ import {
   FlatList,
   Linking,
   RefreshControl,
+  Share,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -104,6 +105,18 @@ export default function OrganizerProfileScreen() {
     }
   };
 
+  const handleShare = async () => {
+    if (!organizer) return;
+    try {
+      await Share.share({
+        title: organizer.name,
+        message: `Check out ${organizer.name} on EventFlow! eventflow://organizers/${id}`,
+      });
+    } catch (error) {
+      console.error('Failed to share:', error);
+    }
+  };
+
   if (isLoading) {
     return <Loading fullScreen />;
   }
@@ -130,7 +143,7 @@ export default function OrganizerProfileScreen() {
         <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
           <Ionicons name="arrow-back" size={24} color={colors.text} />
         </TouchableOpacity>
-        <TouchableOpacity style={styles.shareButton}>
+        <TouchableOpacity style={styles.shareButton} onPress={handleShare}>
           <Ionicons name="share-outline" size={24} color={colors.text} />
         </TouchableOpacity>
       </View>

@@ -43,6 +43,20 @@ export default function EventDetailScreen() {
     enabled: !!id,
   });
 
+  // Fetch agenda
+  const { data: agenda } = useQuery({
+    queryKey: ['event', id, 'agenda'],
+    queryFn: () => eventsApi.getEventAgenda(id!),
+    enabled: !!id,
+  });
+
+  // Fetch speakers
+  const { data: speakers } = useQuery({
+    queryKey: ['event', id, 'speakers'],
+    queryFn: () => eventsApi.getEventSpeakers(id!),
+    enabled: !!id,
+  });
+
   // Fetch review summary
   const { data: reviewSummary } = useQuery({
     queryKey: ['event', id, 'review-summary'],
@@ -268,20 +282,67 @@ export default function EventDetailScreen() {
             <Ionicons name="chevron-forward" size={20} color={colors.icon} />
           </TouchableOpacity>
 
-          {/* FAQs */}
-          {faqs && faqs.length > 0 && (
+          {/* Event Details - Agenda, Speakers, FAQs */}
+          {((agenda && agenda.length > 0) || (speakers && speakers.length > 0) || (faqs && faqs.length > 0)) && (
             <View style={styles.section}>
-              <Text style={[styles.sectionTitle, { color: colors.text }]}>FAQ</Text>
-              {faqs.slice(0, 3).map((faq) => (
-                <View key={faq.id} style={styles.faqItem}>
-                  <Text style={[styles.faqQuestion, { color: colors.text }]}>
-                    {faq.question}
-                  </Text>
-                  <Text style={[styles.faqAnswer, { color: colors.textSecondary }]}>
-                    {faq.answer}
-                  </Text>
-                </View>
-              ))}
+              <Text style={[styles.sectionTitle, { color: colors.text }]}>Event Details</Text>
+
+              {/* Agenda Link */}
+              {agenda && agenda.length > 0 && (
+                <TouchableOpacity
+                  style={[styles.detailLink, { backgroundColor: colors.card, borderColor: colors.border }]}
+                  onPress={() => router.push(`/events/${id}/agenda` as const)}
+                >
+                  <View style={[styles.detailIcon, { backgroundColor: colors.tint + '15' }]}>
+                    <Ionicons name="calendar-outline" size={20} color={colors.tint} />
+                  </View>
+                  <View style={styles.detailContent}>
+                    <Text style={[styles.detailTitle, { color: colors.text }]}>Agenda</Text>
+                    <Text style={[styles.detailSubtitle, { color: colors.textSecondary }]}>
+                      {agenda.length} session{agenda.length !== 1 ? 's' : ''}
+                    </Text>
+                  </View>
+                  <Ionicons name="chevron-forward" size={20} color={colors.icon} />
+                </TouchableOpacity>
+              )}
+
+              {/* Speakers Link */}
+              {speakers && speakers.length > 0 && (
+                <TouchableOpacity
+                  style={[styles.detailLink, { backgroundColor: colors.card, borderColor: colors.border }]}
+                  onPress={() => router.push(`/events/${id}/speakers` as const)}
+                >
+                  <View style={[styles.detailIcon, { backgroundColor: colors.tint + '15' }]}>
+                    <Ionicons name="people-outline" size={20} color={colors.tint} />
+                  </View>
+                  <View style={styles.detailContent}>
+                    <Text style={[styles.detailTitle, { color: colors.text }]}>Speakers</Text>
+                    <Text style={[styles.detailSubtitle, { color: colors.textSecondary }]}>
+                      {speakers.length} speaker{speakers.length !== 1 ? 's' : ''}
+                    </Text>
+                  </View>
+                  <Ionicons name="chevron-forward" size={20} color={colors.icon} />
+                </TouchableOpacity>
+              )}
+
+              {/* FAQs Link */}
+              {faqs && faqs.length > 0 && (
+                <TouchableOpacity
+                  style={[styles.detailLink, { backgroundColor: colors.card, borderColor: colors.border }]}
+                  onPress={() => router.push(`/events/${id}/faqs` as const)}
+                >
+                  <View style={[styles.detailIcon, { backgroundColor: colors.tint + '15' }]}>
+                    <Ionicons name="help-circle-outline" size={20} color={colors.tint} />
+                  </View>
+                  <View style={styles.detailContent}>
+                    <Text style={[styles.detailTitle, { color: colors.text }]}>FAQs</Text>
+                    <Text style={[styles.detailSubtitle, { color: colors.textSecondary }]}>
+                      {faqs.length} question{faqs.length !== 1 ? 's' : ''}
+                    </Text>
+                  </View>
+                  <Ionicons name="chevron-forward" size={20} color={colors.icon} />
+                </TouchableOpacity>
+              )}
             </View>
           )}
 
@@ -445,17 +506,32 @@ const styles = StyleSheet.create({
     fontSize: 12,
     marginTop: 2,
   },
-  faqItem: {
-    marginBottom: 16,
+  detailLink: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 14,
+    borderRadius: 12,
+    borderWidth: 1,
+    marginBottom: 10,
   },
-  faqQuestion: {
+  detailIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
+  },
+  detailContent: {
+    flex: 1,
+  },
+  detailTitle: {
     fontSize: 15,
     fontWeight: '600',
-    marginBottom: 6,
+    marginBottom: 2,
   },
-  faqAnswer: {
-    fontSize: 14,
-    lineHeight: 20,
+  detailSubtitle: {
+    fontSize: 13,
   },
   reviewsSection: {
     flexDirection: 'row',
