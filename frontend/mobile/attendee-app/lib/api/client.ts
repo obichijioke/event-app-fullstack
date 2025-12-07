@@ -4,6 +4,13 @@ import { tokenStorage } from '../utils/storage';
 // API base URL - update this to match your backend
 const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000';
 
+// Callback to reset auth state - set by auth store to avoid circular dependency
+let onAuthReset: (() => void) | null = null;
+
+export const setAuthResetCallback = (callback: () => void) => {
+  onAuthReset = callback;
+};
+
 // Create axios instance
 const apiClient: AxiosInstance = axios.create({
   baseURL: API_BASE_URL,
@@ -15,14 +22,25 @@ const apiClient: AxiosInstance = axios.create({
 
 // Flag to prevent multiple refresh attempts
 let isRefreshing = false;
-let refreshSubscribers: ((token: string) => void)[] = [];
+let refreshSubscribers: {
+  resolve: (token: string) => void;
+  reject: (error: Error) => void;
+}[] = [];
 
-const subscribeTokenRefresh = (callback: (token: string) => void) => {
-  refreshSubscribers.push(callback);
+const subscribeTokenRefresh = (
+  resolve: (token: string) => void,
+  reject: (error: Error) => void
+) => {
+  refreshSubscribers.push({ resolve, reject });
 };
 
 const onTokenRefreshed = (token: string) => {
-  refreshSubscribers.forEach((callback) => callback(token));
+  refreshSubscribers.forEach(({ resolve }) => resolve(token));
+  refreshSubscribers = [];
+};
+
+const onTokenRefreshFailed = (error: Error) => {
+  refreshSubscribers.forEach(({ reject }) => reject(error));
   refreshSubscribers = [];
 };
 
@@ -50,13 +68,18 @@ apiClient.interceptors.response.use(
     if (error.response?.status === 401 && !originalRequest._retry) {
       if (isRefreshing) {
         // Wait for the refresh to complete
-        return new Promise((resolve) => {
-          subscribeTokenRefresh((token: string) => {
-            if (originalRequest.headers) {
-              originalRequest.headers.Authorization = `Bearer ${token}`;
+        return new Promise((resolve, reject) => {
+          subscribeTokenRefresh(
+            (token: string) => {
+              if (originalRequest.headers) {
+                originalRequest.headers.Authorization = `Bearer ${token}`;
+              }
+              resolve(apiClient(originalRequest));
+            },
+            (error: Error) => {
+              reject(error);
             }
-            resolve(apiClient(originalRequest));
-          });
+          );
         });
       }
 
@@ -91,9 +114,15 @@ apiClient.interceptors.response.use(
         return apiClient(originalRequest);
       } catch (refreshError) {
         isRefreshing = false;
-        // Clear tokens and redirect to login
+        // Clear tokens
         await tokenStorage.clearAll();
-        // The auth store will handle the redirect
+        // Reject all pending requests
+        const authError = new Error('Authentication failed. Please login again.');
+        onTokenRefreshFailed(authError);
+        // Reset auth state to trigger navigation to login
+        if (onAuthReset) {
+          onAuthReset();
+        }
         return Promise.reject(refreshError);
       }
     }

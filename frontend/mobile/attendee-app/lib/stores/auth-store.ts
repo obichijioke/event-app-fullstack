@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { tokenStorage } from '../utils/storage';
 import { authApi, getApiError, AuthResponse } from '../api/auth';
+import { setAuthResetCallback } from '../api/client';
 import type { User, LoginRequest, RegisterRequest } from '../types';
 
 interface AuthState {
@@ -22,6 +23,7 @@ interface AuthState {
   updateUser: (user: Partial<User>) => void;
   clearError: () => void;
   refreshUser: () => Promise<void>;
+  resetAuthState: () => void;
 }
 
 export const useAuthStore = create<AuthState>((set, get) => ({
@@ -189,7 +191,25 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       console.error('Failed to refresh user:', error);
     }
   },
+
+  // Reset auth state (called when refresh token fails)
+  resetAuthState: () => {
+    set({
+      user: null,
+      isAuthenticated: false,
+      isLoading: false,
+      error: null,
+      requires2FA: false,
+      tempToken: null,
+    });
+  },
 }));
+
+// Register the auth reset callback with the API client
+// This allows the API client to reset auth state when token refresh fails
+setAuthResetCallback(() => {
+  useAuthStore.getState().resetAuthState();
+});
 
 // Helper function to handle successful auth
 async function handleAuthSuccess(response: AuthResponse) {
