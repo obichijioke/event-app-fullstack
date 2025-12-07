@@ -140,6 +140,12 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       requires2FA: false,
       tempToken: null,
     });
+    // Reset location store on logout (lazy import to avoid circular dependency)
+    import('./location-store').then(({ useLocationStore }) => {
+      useLocationStore.getState().reset();
+    }).catch(() => {
+      // Ignore errors
+    });
   },
 
   // Verify 2FA

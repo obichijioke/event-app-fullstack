@@ -8,3 +8,4 @@ export { savedEventsApi } from './saved-events';
 export { notificationsApi } from './notifications';
 export { accountApi } from './account';
 export { organizersApi } from './organizers';
+export { locationApi } from './location';

@@ -157,6 +157,11 @@ export default function AccountScreen() {
             onPress={() => router.push('/account/settings')}
           />
           <MenuItem
+            icon="location-outline"
+            label="Location"
+            onPress={() => router.push('/account/location')}
+          />
+          <MenuItem
             icon="shield-checkmark-outline"
             label="Security"
             onPress={() => router.push('/account/security')}

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -15,17 +15,27 @@ import { useQuery } from '@tanstack/react-query';
 import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useAuthStore } from '@/lib/stores/auth-store';
+import { useLocationStore } from '@/lib/stores/location-store';
 import { eventsApi, savedEventsApi } from '@/lib/api';
 import { EventCard } from '@/components/events/event-card';
 import { Loading } from '@/components/ui/loading';
 import { Avatar } from '@/components/ui/avatar';
+import { LocationPrompt } from '@/components/location';
 import type { Event, Category } from '@/lib/types';
 
 export default function HomeScreen() {
   const colorScheme = useColorScheme() ?? 'light';
   const colors = Colors[colorScheme];
-  const { user } = useAuthStore();
+  const { user, isAuthenticated } = useAuthStore();
+  const { initialize: initLocation, userLocation, hasPromptedForLocation } = useLocationStore();
   const [savedEventIds, setSavedEventIds] = useState<Set<string>>(new Set());
+
+  // Initialize location store when authenticated
+  useEffect(() => {
+    if (isAuthenticated) {
+      initLocation();
+    }
+  }, [isAuthenticated, initLocation]);
 
   // Fetch homepage data
   const { data: homepage, isLoading, refetch, isRefetching } = useQuery({
@@ -142,6 +152,11 @@ export default function HomeScreen() {
           </Text>
         </TouchableOpacity>
 
+        {/* Location Prompt - show if user hasn't set location and hasn't dismissed */}
+        {!userLocation && !hasPromptedForLocation && (
+          <LocationPrompt onLocationSet={() => refetch()} />
+        )}
+
         {/* Categories */}
         {categories && categories.length > 0 && (
           <View style={styles.section}>
@@ -186,7 +201,20 @@ export default function HomeScreen() {
         {homepage?.nearbyEvents && homepage.nearbyEvents.length > 0 && (
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
-              <Text style={[styles.sectionTitle, { color: colors.text }]}>Near You</Text>
+              <View style={styles.sectionTitleRow}>
+                <Text style={[styles.sectionTitle, { color: colors.text }]}>Near You</Text>
+                {userLocation?.city && (
+                  <TouchableOpacity
+                    style={styles.locationBadge}
+                    onPress={() => router.push('/account/location')}
+                  >
+                    <Ionicons name="location" size={12} color={colors.tint} />
+                    <Text style={[styles.locationBadgeText, { color: colors.tint }]}>
+                      {userLocation.city}
+                    </Text>
+                  </TouchableOpacity>
+                )}
+              </View>
               <TouchableOpacity onPress={() => router.push('/events?nearby=true' as const)}>
                 <Text style={[styles.seeAll, { color: colors.tint }]}>See All</Text>
               </TouchableOpacity>
@@ -289,6 +317,24 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 18,
     fontWeight: '700',
+  },
+  sectionTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  locationBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+    backgroundColor: 'rgba(37, 99, 235, 0.1)',
+  },
+  locationBadgeText: {
+    fontSize: 12,
+    fontWeight: '500',
   },
   seeAll: {
     fontSize: 14,

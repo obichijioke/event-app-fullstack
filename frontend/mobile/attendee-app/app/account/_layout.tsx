@@ -8,6 +8,7 @@ export default function AccountLayout() {
       <Stack.Screen name="settings" />
       <Stack.Screen name="security" />
       <Stack.Screen name="sessions" />
+      <Stack.Screen name="location" />
     </Stack>
   );
 }
