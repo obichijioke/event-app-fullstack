@@ -1,5 +1,5 @@
 import apiClient from './client';
-import type { Organization, Event, PaginatedResponse, Review } from '../types';
+import type { Organization, Event, PaginatedResponse, Review, FollowedOrganizer } from '../types';
 
 export interface OrganizerFilters {
   page?: number;
@@ -9,9 +9,9 @@ export interface OrganizerFilters {
 }
 
 export const organizersApi = {
-  // Get organizer profile
+  // Get organizer profile (public endpoint)
   async getOrganizer(id: string): Promise<Organization> {
-    const response = await apiClient.get<Organization>(`/organizations/${id}/public`);
+    const response = await apiClient.get<Organization>(`/organizers/${id}`);
     return response.data;
   },
 
@@ -21,8 +21,8 @@ export const organizersApi = {
     filters?: { page?: number; limit?: number; upcoming?: boolean }
   ): Promise<PaginatedResponse<Event>> {
     const response = await apiClient.get<PaginatedResponse<Event>>(
-      `/organizations/${organizerId}/events`,
-      { params: filters }
+      `/events`,
+      { params: { ...filters, organizationId: organizerId } }
     );
     return response.data;
   },
@@ -40,6 +40,14 @@ export const organizersApi = {
     return response.data;
   },
 
+  // Get organizer review summary
+  async getOrganizerReviewSummary(organizerId: string): Promise<{ averageRating: number; reviewCount: number }> {
+    const response = await apiClient.get<{ averageRating: number; reviewCount: number }>(
+      `/organizations/${organizerId}/reviews/summary`
+    );
+    return response.data;
+  },
+
   // Follow organizer
   async followOrganizer(organizerId: string): Promise<void> {
     await apiClient.post(`/organizations/${organizerId}/follow`);
@@ -50,32 +58,26 @@ export const organizersApi = {
     await apiClient.delete(`/organizations/${organizerId}/follow`);
   },
 
-  // Check if following
+  // Get followed organizers (uses auth endpoint)
+  async getFollowedOrganizers(): Promise<FollowedOrganizer[]> {
+    const response = await apiClient.get<FollowedOrganizer[]>('/auth/me/following');
+    return response.data;
+  },
+
+  // Check if following an organizer (uses followed list)
   async isFollowing(organizerId: string): Promise<{ following: boolean }> {
-    const response = await apiClient.get<{ following: boolean }>(
-      `/organizations/${organizerId}/following`
-    );
-    return response.data;
+    try {
+      const following = await organizersApi.getFollowedOrganizers();
+      const isFollowed = following.some((f) => f.organizationId === organizerId);
+      return { following: isFollowed };
+    } catch {
+      return { following: false };
+    }
   },
 
-  // Get followed organizers
-  async getFollowedOrganizers(
-    page = 1,
-    limit = 20
-  ): Promise<PaginatedResponse<Organization>> {
-    const response = await apiClient.get<PaginatedResponse<Organization>>(
-      '/account/following',
-      { params: { page, limit } }
-    );
-    return response.data;
-  },
-
-  // Search organizers
-  async searchOrganizers(filters?: OrganizerFilters): Promise<PaginatedResponse<Organization>> {
-    const response = await apiClient.get<PaginatedResponse<Organization>>(
-      '/organizations/search',
-      { params: filters }
-    );
+  // Get all public organizers
+  async getAllOrganizers(): Promise<Organization[]> {
+    const response = await apiClient.get<Organization[]>('/organizers');
     return response.data;
   },
 };

@@ -16,11 +16,12 @@ import { useQuery } from '@tanstack/react-query';
 import { format } from 'date-fns';
 import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
-import { eventsApi, savedEventsApi } from '@/lib/api';
+import { eventsApi, savedEventsApi, reviewsApi } from '@/lib/api';
 import { Loading } from '@/components/ui/loading';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar } from '@/components/ui/avatar';
+import { StarRating } from '@/components/reviews';
 
 const { width } = Dimensions.get('window');
 
@@ -39,6 +40,13 @@ export default function EventDetailScreen() {
   const { data: faqs } = useQuery({
     queryKey: ['eventFaqs', id],
     queryFn: () => eventsApi.getEventFAQs(id!),
+    enabled: !!id,
+  });
+
+  // Fetch review summary
+  const { data: reviewSummary } = useQuery({
+    queryKey: ['event', id, 'review-summary'],
+    queryFn: () => reviewsApi.getEventReviewSummary(id!),
     enabled: !!id,
   });
 
@@ -233,6 +241,33 @@ export default function EventDetailScreen() {
             </View>
           )}
 
+          {/* Reviews */}
+          <TouchableOpacity
+            style={[styles.reviewsSection, { backgroundColor: colors.card, borderColor: colors.border }]}
+            onPress={() => router.push(`/events/${id}/reviews` as const)}
+          >
+            <View style={styles.reviewsHeader}>
+              <Text style={[styles.sectionTitle, { color: colors.text, marginBottom: 0 }]}>
+                Reviews
+              </Text>
+              <View style={styles.reviewsRating}>
+                {reviewSummary && reviewSummary.reviewCount > 0 ? (
+                  <>
+                    <StarRating rating={reviewSummary.averageRating} size={16} />
+                    <Text style={[styles.reviewsCount, { color: colors.textSecondary }]}>
+                      {reviewSummary.averageRating.toFixed(1)} ({reviewSummary.reviewCount})
+                    </Text>
+                  </>
+                ) : (
+                  <Text style={[styles.reviewsCount, { color: colors.textSecondary }]}>
+                    No reviews yet
+                  </Text>
+                )}
+              </View>
+            </View>
+            <Ionicons name="chevron-forward" size={20} color={colors.icon} />
+          </TouchableOpacity>
+
           {/* FAQs */}
           {faqs && faqs.length > 0 && (
             <View style={styles.section}>
@@ -421,6 +456,27 @@ const styles = StyleSheet.create({
   faqAnswer: {
     fontSize: 14,
     lineHeight: 20,
+  },
+  reviewsSection: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 16,
+    borderRadius: 12,
+    borderWidth: 1,
+    marginBottom: 24,
+  },
+  reviewsHeader: {
+    flex: 1,
+  },
+  reviewsRating: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginTop: 6,
+  },
+  reviewsCount: {
+    fontSize: 14,
   },
   bottomBar: {
     position: 'absolute',

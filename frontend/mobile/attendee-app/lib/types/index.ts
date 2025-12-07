@@ -277,39 +277,47 @@ export interface City {
 export interface Review {
   id: string;
   rating: number;
-  title?: string;
-  content: string;
+  comment?: string;
   userId: string;
   user: {
     id: string;
     name: string;
-    avatarUrl?: string;
   };
+  eventId?: string;
+  orgId?: string;
   createdAt: string;
   updatedAt: string;
 }
 
 export interface ReviewSummary {
   averageRating: number;
-  totalReviews: number;
-  distribution: Record<number, number>; // 1-5 star counts
+  reviewCount: number;
 }
 
 export interface CreateReviewRequest {
   rating: number;
-  title?: string;
-  content: string;
+  comment?: string;
 }
 
-export interface OrganizerReview extends Review {
-  organizationId: string;
+export interface UpdateReviewRequest {
+  rating?: number;
+  comment?: string;
 }
 
 // Following types
 export interface FollowedOrganizer {
   id: string;
-  organization: Organization;
-  createdAt: string;
+  organizationId: string;
+  organization: {
+    id: string;
+    name: string;
+    legalName?: string;
+    website?: string;
+    country?: string;
+    status: string;
+    createdAt: string;
+  };
+  followedAt: string;
 }
 
 // Dispute types
