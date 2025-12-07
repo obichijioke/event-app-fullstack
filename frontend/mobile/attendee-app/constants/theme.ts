@@ -1,29 +1,74 @@
 /**
- * Below are the colors that are used in the app. The colors are defined in the light and dark mode.
- * There are many other ways to style your app. For example, [Nativewind](https://www.nativewind.dev/), [Tamagui](https://tamagui.dev/), [unistyles](https://reactnativeunistyles.vercel.app), etc.
+ * Theme colors for the EventFlow attendee app.
+ * Supports light and dark mode with a professional, accessible design.
  */
 
 import { Platform } from 'react-native';
 
-const tintColorLight = '#0a7ea4';
-const tintColorDark = '#fff';
+// Primary brand color
+const primaryLight = '#2563EB'; // Blue 600
+const primaryDark = '#3B82F6'; // Blue 500
 
 export const Colors = {
   light: {
-    text: '#11181C',
-    background: '#fff',
-    tint: tintColorLight,
-    icon: '#687076',
-    tabIconDefault: '#687076',
-    tabIconSelected: tintColorLight,
+    text: '#111827', // Gray 900
+    textSecondary: '#6B7280', // Gray 500
+    background: '#FFFFFF',
+    backgroundSecondary: '#F9FAFB', // Gray 50
+    card: '#FFFFFF',
+    tint: primaryLight,
+    icon: '#6B7280', // Gray 500
+    border: '#E5E7EB', // Gray 200
+    tabIconDefault: '#9CA3AF', // Gray 400
+    tabIconSelected: primaryLight,
+    success: '#10B981', // Emerald 500
+    warning: '#F59E0B', // Amber 500
+    error: '#EF4444', // Red 500
+    info: '#3B82F6', // Blue 500
   },
   dark: {
-    text: '#ECEDEE',
-    background: '#151718',
-    tint: tintColorDark,
-    icon: '#9BA1A6',
-    tabIconDefault: '#9BA1A6',
-    tabIconSelected: tintColorDark,
+    text: '#F9FAFB', // Gray 50
+    textSecondary: '#9CA3AF', // Gray 400
+    background: '#111827', // Gray 900
+    backgroundSecondary: '#1F2937', // Gray 800
+    card: '#1F2937', // Gray 800
+    tint: primaryDark,
+    icon: '#9CA3AF', // Gray 400
+    border: '#374151', // Gray 700
+    tabIconDefault: '#6B7280', // Gray 500
+    tabIconSelected: primaryDark,
+    success: '#34D399', // Emerald 400
+    warning: '#FBBF24', // Amber 400
+    error: '#F87171', // Red 400
+    info: '#60A5FA', // Blue 400
+  },
+};
+
+// Semantic colors (not theme-dependent)
+export const SemanticColors = {
+  primary: {
+    50: '#EFF6FF',
+    100: '#DBEAFE',
+    200: '#BFDBFE',
+    300: '#93C5FD',
+    400: '#60A5FA',
+    500: '#3B82F6',
+    600: '#2563EB',
+    700: '#1D4ED8',
+    800: '#1E40AF',
+    900: '#1E3A8A',
+  },
+  gray: {
+    50: '#F9FAFB',
+    100: '#F3F4F6',
+    200: '#E5E7EB',
+    300: '#D1D5DB',
+    400: '#9CA3AF',
+    500: '#6B7280',
+    600: '#4B5563',
+    700: '#374151',
+    800: '#1F2937',
+    900: '#111827',
   },
 };
 
