@@ -22,6 +22,12 @@ import type { Ticket } from '@/lib/types';
 
 type FilterType = 'all' | 'upcoming' | 'past';
 
+const parseDate = (value?: string | null) => {
+  if (!value) return null;
+  const date = new Date(value);
+  return isNaN(date.getTime()) ? null : date;
+};
+
 export default function TicketsScreen() {
   const colorScheme = useColorScheme() ?? 'light';
   const colors = Colors[colorScheme];
@@ -36,10 +42,28 @@ export default function TicketsScreen() {
     queryKey: ['tickets', filter],
     queryFn: () =>
       ticketsApi.getTickets({
-        upcoming: filter === 'upcoming' ? true : filter === 'past' ? false : undefined,
+        upcoming: filter === 'upcoming' ? true : undefined,
         limit: 50,
       }),
   });
+
+  const filteredTickets = (() => {
+    const tickets = ticketsData?.data || [];
+    const now = new Date();
+    if (filter === 'upcoming') {
+      return tickets.filter((t) => {
+        const start = parseDate(t.event.startDate);
+        return start ? start > now : true;
+      });
+    }
+    if (filter === 'past') {
+      return tickets.filter((t) => {
+        const start = parseDate(t.event.startDate);
+        return start ? start <= now : false;
+      });
+    }
+    return tickets;
+  })();
 
   const renderTicket = ({ item }: { item: Ticket }) => {
     const event = item.event;
@@ -137,7 +161,7 @@ export default function TicketsScreen() {
 
       {/* Tickets List */}
       <FlatList
-        data={ticketsData?.data || []}
+        data={filteredTickets}
         renderItem={renderTicket}
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.ticketsList}

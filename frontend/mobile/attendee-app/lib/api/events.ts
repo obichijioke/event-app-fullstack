@@ -76,12 +76,27 @@ const mapTicketTypeFromApi = (ticket: any): TicketType => {
       ? Math.max(priceCents, 0) / 100
       : toNumber(ticket?.price) ?? 0;
 
-  const capacity = ticket?.capacity ?? ticket?.quantity ?? 0;
-  const sold = ticket?._count?.tickets ?? ticket?.ticketsSold ?? 0;
-  const held = ticket?._count?.holds ?? 0;
+  const capacity =
+    toNumber(ticket?.capacity) ??
+    toNumber(ticket?.quantity) ??
+    undefined;
+  const sold = toNumber(ticket?._count?.tickets) ?? toNumber(ticket?.ticketsSold) ?? 0;
+  const held = toNumber(ticket?._count?.holds) ?? 0;
+  const availableExplicit = toNumber(ticket?.quantityAvailable);
   const available =
-    ticket?.quantityAvailable ??
-    (capacity ? Math.max(capacity - sold - held, 0) : 0);
+    availableExplicit !== undefined
+      ? Math.max(availableExplicit, 0)
+      : capacity !== undefined
+        ? Math.max(capacity - sold - held, 0)
+        : 9999; // no capacity info; assume available
+  const maxPerOrderRaw =
+    toNumber(ticket?.perOrderLimit) ??
+    toNumber(ticket?.maxPerOrder) ??
+    toNumber(ticket?.ticketType?.perOrderLimit);
+  const maxPerOrder =
+    maxPerOrderRaw && maxPerOrderRaw > 0
+      ? maxPerOrderRaw
+      : (available !== undefined ? Math.max(available, 1) : 10);
 
   return {
     id: ticket?.id ?? '',
@@ -93,7 +108,7 @@ const mapTicketTypeFromApi = (ticket: any): TicketType => {
     quantity: capacity || available || 0,
     quantitySold: sold,
     quantityAvailable: available,
-    maxPerOrder: ticket?.perOrderLimit ?? ticket?.maxPerOrder ?? 0,
+    maxPerOrder,
     minPerOrder: ticket?.minPerOrder ?? 1,
     saleStartDate:
       normalizeDate(ticket?.salesStart ?? ticket?.saleStartDate ?? ticket?.saleStart) ??
