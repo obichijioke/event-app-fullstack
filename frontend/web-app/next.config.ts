@@ -9,6 +9,10 @@ const nextConfig: NextConfig = {
     remotePatterns: [
       {
         protocol: "https",
+        hostname: "i8.amplience.net",
+      },
+      {
+        protocol: "https",
         hostname: "images.unsplash.com",
       },
       {

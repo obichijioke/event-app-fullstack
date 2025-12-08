@@ -7,11 +7,11 @@ import {
   TouchableOpacity,
   Alert,
   Linking,
+  Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
-import { useStripe } from '@stripe/stripe-react-native';
 import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useCheckoutStore } from '@/lib/stores/checkout-store';
@@ -19,6 +19,7 @@ import { ordersApi } from '@/lib/api/orders';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { LoadingOverlay } from '@/components/ui/loading';
+import { useStripe } from '@/lib/stripe';
 
 type PaymentProvider = 'stripe' | 'paystack';
 
@@ -30,13 +31,15 @@ interface PaymentMethod {
   available: boolean;
 }
 
-const paymentMethods: PaymentMethod[] = [
+const getPaymentMethods = (): PaymentMethod[] => [
   {
     id: 'stripe',
     name: 'Credit / Debit Card',
     icon: 'card-outline',
-    description: 'Pay securely with Stripe',
-    available: true,
+    description: Platform.OS === 'web'
+      ? 'Not available on web (use mobile app)'
+      : 'Pay securely with Stripe',
+    available: Platform.OS !== 'web',
   },
   {
     id: 'paystack',
@@ -289,7 +292,7 @@ export default function PaymentScreen() {
         {/* Payment Methods */}
         <View style={styles.section}>
           <Text style={[styles.sectionTitle, { color: colors.text }]}>Payment Method</Text>
-          {paymentMethods.map((method) => (
+          {getPaymentMethods().map((method) => (
             <TouchableOpacity
               key={method.id}
               style={[
@@ -298,16 +301,17 @@ export default function PaymentScreen() {
                   backgroundColor: colors.card,
                   borderColor: selectedMethod === method.id ? colors.tint : colors.border,
                   borderWidth: selectedMethod === method.id ? 2 : 1,
+                  opacity: method.available ? 1 : 0.5,
                 },
               ]}
               onPress={() => setSelectedMethod(method.id)}
               disabled={!method.available}
             >
               <View style={[styles.methodIcon, { backgroundColor: colors.tint + '15' }]}>
-                <Ionicons name={method.icon} size={24} color={colors.tint} />
+                <Ionicons name={method.icon} size={24} color={method.available ? colors.tint : colors.textSecondary} />
               </View>
               <View style={styles.methodInfo}>
-                <Text style={[styles.methodName, { color: colors.text }]}>{method.name}</Text>
+                <Text style={[styles.methodName, { color: method.available ? colors.text : colors.textSecondary }]}>{method.name}</Text>
                 <Text style={[styles.methodDescription, { color: colors.textSecondary }]}>
                   {method.description}
                 </Text>

@@ -1,16 +1,16 @@
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { Stack, router, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import * as SplashScreen from 'expo-splash-screen';
 import 'react-native-reanimated';
-import { StripeProvider } from '@stripe/stripe-react-native';
 
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useAuthStore } from '@/lib/stores/auth-store';
 import { Loading } from '@/components/ui/loading';
 import { Colors } from '@/constants/theme';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { StripeProvider } from '@/lib/stripe';
 
 // Stripe publishable key
 const STRIPE_PUBLISHABLE_KEY = process.env.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY || '';

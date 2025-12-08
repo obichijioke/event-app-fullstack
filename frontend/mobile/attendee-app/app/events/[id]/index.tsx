@@ -15,6 +15,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
 import { format } from 'date-fns';
+import RenderHTML from 'react-native-render-html';
 import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useCalendar } from '@/hooks/use-calendar';
@@ -27,6 +28,12 @@ import { Avatar } from '@/components/ui/avatar';
 import { StarRating } from '@/components/reviews';
 
 const { width } = Dimensions.get('window');
+
+const parseDate = (dateString?: string) => {
+  if (!dateString) return null;
+  const date = new Date(dateString);
+  return isNaN(date.getTime()) ? null : date;
+};
 
 export default function EventDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -121,6 +128,18 @@ export default function EventDetailScreen() {
     );
   }
 
+  const startDate = parseDate(event.startDate);
+  const endDate = parseDate(event.endDate);
+
+  const dateLabel = startDate
+    ? format(startDate, 'EEEE, MMMM d, yyyy')
+    : 'Date to be announced';
+  const timeRangeLabel = startDate || endDate
+    ? [startDate && format(startDate, 'h:mm a'), endDate && format(endDate, 'h:mm a')]
+        .filter(Boolean)
+        .join(' - ')
+    : 'Time to be announced';
+
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <ScrollView showsVerticalScrollIndicator={false}>
@@ -186,12 +205,9 @@ export default function EventDetailScreen() {
               <Ionicons name="calendar-outline" size={20} color={colors.tint} />
             </View>
             <View style={styles.infoContent}>
-              <Text style={[styles.infoTitle, { color: colors.text }]}>
-                {format(new Date(event.startDate), 'EEEE, MMMM d, yyyy')}
-              </Text>
+              <Text style={[styles.infoTitle, { color: colors.text }]}>{dateLabel}</Text>
               <Text style={[styles.infoSubtitle, { color: colors.textSecondary }]}>
-                {format(new Date(event.startDate), 'h:mm a')} -{' '}
-                {format(new Date(event.endDate), 'h:mm a')}
+                {timeRangeLabel}
               </Text>
             </View>
           </View>
@@ -247,9 +263,17 @@ export default function EventDetailScreen() {
           {/* Description */}
           <View style={styles.section}>
             <Text style={[styles.sectionTitle, { color: colors.text }]}>About</Text>
-            <Text style={[styles.description, { color: colors.textSecondary }]}>
-              {event.description || event.shortDescription || 'No description available.'}
-            </Text>
+            {event.description || event.shortDescription ? (
+              <RenderHTML
+                contentWidth={width - 40}
+                source={{ html: event.description || event.shortDescription || '' }}
+                baseStyle={{ color: colors.textSecondary, fontSize: 15, lineHeight: 24 }}
+              />
+            ) : (
+              <Text style={[styles.description, { color: colors.textSecondary }]}>
+                No description available.
+              </Text>
+            )}
           </View>
 
           {/* Tickets */}

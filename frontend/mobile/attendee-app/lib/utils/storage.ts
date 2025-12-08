@@ -43,11 +43,16 @@ export const storage = {
 
   async setItem(key: string, value: string): Promise<void> {
     try {
-      if (Platform.OS === 'web') {
-        webStorage.setItem(key, value);
+      if (value === undefined || value === null) {
+        // Skip storing invalid values to avoid SecureStore errors
         return;
       }
-      await SecureStore.setItemAsync(key, value);
+      const stringValue = typeof value === 'string' ? value : String(value);
+      if (Platform.OS === 'web') {
+        webStorage.setItem(key, stringValue);
+        return;
+      }
+      await SecureStore.setItemAsync(key, stringValue);
     } catch (error) {
       console.error('Storage setItem error:', error);
     }

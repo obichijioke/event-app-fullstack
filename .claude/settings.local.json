@@ -60,7 +60,8 @@
       "Bash(docker logs:*)",
       "Bash(npm run db:seed:*)",
       "Bash(docker exec:*)",
-      "Bash(powershell.exe -Command \"Stop-Process -Id 11388 -Force\")"
+      "Bash(powershell.exe -Command \"Stop-Process -Id 11388 -Force\")",
+      "Bash(npx tsc:*)"
     ],
     "deny": [],
     "ask": []

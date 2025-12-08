@@ -43,7 +43,7 @@ async function bootstrap() {
   const corsOrigins =
     process.env.CORS_ORIGINS ||
     process.env.FRONTEND_URL ||
-    'http://localhost:3000,http://localhost:3001';
+    'http://localhost:3000,http://localhost:3001,http://localhost:8081';
 
   const allowedOrigins = corsOrigins
     .split(',')
