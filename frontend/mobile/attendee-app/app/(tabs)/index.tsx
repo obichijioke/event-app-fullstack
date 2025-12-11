@@ -7,6 +7,7 @@ import {
   RefreshControl,
   FlatList,
   TouchableOpacity,
+  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -37,22 +38,23 @@ export default function HomeScreen() {
     }
   }, [isAuthenticated, initLocation]);
 
-  // Fetch homepage data
+  // Fetch homepage data (public - no auth required)
   const { data: homepage, isLoading, refetch, isRefetching } = useQuery({
     queryKey: ['homepage'],
     queryFn: eventsApi.getHomepage,
   });
 
-  // Fetch categories
+  // Fetch categories (public - no auth required)
   const { data: categories } = useQuery({
     queryKey: ['categories'],
     queryFn: eventsApi.getCategories,
   });
 
-  // Fetch saved event IDs
+  // Fetch saved event IDs (only when authenticated)
   const { data: savedIds } = useQuery({
     queryKey: ['savedEventIds'],
     queryFn: savedEventsApi.getSavedEventIds,
+    enabled: isAuthenticated, // Only fetch when logged in
   });
 
   // Update saved event IDs when data changes
@@ -62,7 +64,24 @@ export default function HomeScreen() {
     }
   }, [savedIds]);
 
+  // Handle save toggle with auth check
   const handleSaveToggle = async (eventId: string) => {
+    // Check if user is authenticated
+    if (!isAuthenticated) {
+      Alert.alert(
+        'Login Required',
+        'Please log in to save events',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          {
+            text: 'Log In',
+            onPress: () => router.push('/(auth)/login'),
+          },
+        ]
+      );
+      return;
+    }
+
     try {
       const { saved } = await savedEventsApi.toggleSave(eventId);
       setSavedEventIds((prev) => {
@@ -126,19 +145,28 @@ export default function HomeScreen() {
         <View style={styles.header}>
           <View>
             <Text style={[styles.greeting, { color: colors.textSecondary }]}>
-              Hello, {user?.firstName || 'there'} 👋
+              {isAuthenticated ? `Hello, ${user?.firstName || 'there'}` : 'Welcome'} 👋
             </Text>
             <Text style={[styles.title, { color: colors.text }]}>
               Find amazing events
             </Text>
           </View>
-          <TouchableOpacity onPress={() => router.push('/account' as const)}>
-            <Avatar
-              source={user?.avatarUrl}
-              name={user?.name || user?.email}
-              size="md"
-            />
-          </TouchableOpacity>
+          {isAuthenticated ? (
+            <TouchableOpacity onPress={() => router.push('/(tabs)/profile')}>
+              <Avatar
+                source={user?.avatarUrl}
+                name={user?.name || user?.email}
+                size="md"
+              />
+            </TouchableOpacity>
+          ) : (
+            <TouchableOpacity
+              style={[styles.loginButton, { backgroundColor: colors.tint }]}
+              onPress={() => router.push('/(auth)/login')}
+            >
+              <Text style={styles.loginButtonText}>Log In</Text>
+            </TouchableOpacity>
+          )}
         </View>
 
         {/* Search Bar */}
@@ -383,5 +411,15 @@ const styles = StyleSheet.create({
     fontSize: 14,
     textAlign: 'center',
     lineHeight: 20,
+  },
+  loginButton: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+  },
+  loginButtonText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '600',
   },
 });

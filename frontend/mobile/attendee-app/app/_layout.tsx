@@ -46,6 +46,20 @@ const createCustomTheme = (isDark: boolean) => {
   };
 };
 
+// Screens that require authentication
+const PROTECTED_ROUTES = [
+  'tickets',      // My tickets - requires login
+  'orders',       // My orders - requires login
+  'notifications',// Notifications - requires login
+  'account',      // Account settings - requires login
+  'disputes',     // Disputes - requires login
+];
+
+// Screens that are always public (no login required)
+// - (tabs) - Home, Search, Explore are public
+// - events - Event browsing and details are public
+// - organizers - Organizer profiles are public
+
 function RootLayoutNav() {
   const colorScheme = useColorScheme() ?? 'light';
   const segments = useSegments();
@@ -68,14 +82,21 @@ function RootLayoutNav() {
     if (!isInitialized) return;
 
     const inAuthGroup = segments[0] === '(auth)';
+    const currentRoute = segments[0] as string;
+    const isProtectedRoute = PROTECTED_ROUTES.includes(currentRoute);
 
-    if (!isAuthenticated && !inAuthGroup) {
-      // Redirect to login if not authenticated and not on auth screens
-      router.replace('/(auth)/login');
+    // If user is on a protected route and not authenticated, redirect to login
+    if (!isAuthenticated && isProtectedRoute) {
+      // Store the intended destination for redirect after login
+      router.replace({
+        pathname: '/(auth)/login',
+        params: { redirect: `/${segments.join('/')}` },
+      });
     } else if (isAuthenticated && inAuthGroup) {
       // Redirect to tabs if authenticated and on auth screens
       router.replace('/(tabs)');
     }
+    // Otherwise, allow navigation (public routes accessible without auth)
   }, [isAuthenticated, isInitialized, segments]);
 
   // Show loading while initializing

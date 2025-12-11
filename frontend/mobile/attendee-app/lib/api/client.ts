@@ -2,7 +2,46 @@ import axios, { AxiosError, AxiosInstance, InternalAxiosRequestConfig } from 'ax
 import { tokenStorage } from '../utils/storage';
 
 // API base URL - update this to match your backend
-const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000';
+export const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000';
+
+// Normalize origin (strip paths like /api) for assets that may be returned as relative or localhost URLs
+export const API_BASE_ORIGIN = (() => {
+  try {
+    const url = new URL(API_BASE_URL);
+    return url.origin;
+  } catch {
+    // Fallback: best-effort remove trailing /api to get host:port
+    return API_BASE_URL.replace(/\/api\/?$/, '');
+  }
+})();
+
+// Ensure image/file URLs are absolute and reachable from devices
+export const resolveAssetUrl = (value?: string | null): string | undefined => {
+  if (!value) return undefined;
+  const url = `${value}`.trim();
+  if (!url) return undefined;
+
+  // Absolute URL
+  if (/^https?:\/\//i.test(url)) {
+    // Replace localhost with the API host so physical devices can load images
+    if (/https?:\/\/localhost/i.test(url)) {
+      return url.replace(/https?:\/\/localhost(?::\d+)?/i, API_BASE_ORIGIN);
+    }
+    return url;
+  }
+
+  // Protocol-relative URL
+  if (url.startsWith('//')) {
+    const protocol = API_BASE_ORIGIN.startsWith('https') ? 'https:' : 'http:';
+    return `${protocol}${url}`;
+  }
+
+  // Relative path
+  const normalizedPath = url.startsWith('/') ? url : `/${url}`;
+  // Avoid duplicating /api when asset paths already include it
+  const cleanedPath = normalizedPath.replace(/^\/api(\/|$)/, '/');
+  return `${API_BASE_ORIGIN}${cleanedPath}`;
+};
 
 // Callback to reset auth state - set by auth store to avoid circular dependency
 let onAuthReset: (() => void) | null = null;

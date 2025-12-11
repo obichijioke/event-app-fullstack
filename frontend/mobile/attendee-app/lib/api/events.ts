@@ -1,4 +1,4 @@
-import apiClient from './client';
+import apiClient, { resolveAssetUrl } from './client';
 import type {
   Event,
   Category,
@@ -133,21 +133,21 @@ export const mapEventFromApi = (raw: any): Event => {
     normalizeDate(raw?.endDate) ??
     normalizeDate(raw?.end_date);
 
-  const ticketTypes = Array.isArray(raw?.ticketTypes)
+  const ticketTypes: TicketType[] = Array.isArray(raw?.ticketTypes)
     ? raw.ticketTypes.map(mapTicketTypeFromApi)
     : [];
   const totalCapacity = ticketTypes.length
-    ? ticketTypes.reduce((sum, t) => sum + (t.quantity || 0), 0)
+    ? ticketTypes.reduce((sum: number, t: TicketType) => sum + (t.quantity || 0), 0)
     : undefined;
 
-  const pricePoints = ticketTypes.map((t) => t.price).filter((p) => typeof p === 'number');
+  const pricePoints: number[] = ticketTypes.map((t: TicketType) => t.price).filter((p: number) => typeof p === 'number');
   const minPrice = pricePoints.length ? Math.min(...pricePoints) : undefined;
   const maxPrice = pricePoints.length ? Math.max(...pricePoints) : undefined;
   const isFree =
     typeof raw?.isFree === 'boolean'
       ? raw.isFree
       : pricePoints.length > 0
-        ? pricePoints.every((p) => p === 0)
+        ? pricePoints.every((p: number) => p === 0)
         : false;
 
   const venueAddress = raw?.venue?.address || {};
@@ -189,7 +189,7 @@ export const mapEventFromApi = (raw: any): Event => {
             raw?.venue?.longitude !== undefined ? Number(raw?.venue?.longitude) : undefined,
           capacity: raw?.venue?.capacity,
           description: raw?.venue?.description,
-          imageUrl: raw?.venue?.imageUrl,
+          imageUrl: resolveAssetUrl(raw?.venue?.imageUrl ?? raw?.venue?.image_url),
         }
       : undefined,
     venueId: raw?.venueId ?? raw?.venue_id ?? raw?.venue?.id,
@@ -199,7 +199,7 @@ export const mapEventFromApi = (raw: any): Event => {
           name: organization.name ?? '',
           slug: organization.slug ?? '',
           description: organization.description,
-          logoUrl: organization.logoUrl,
+          logoUrl: resolveAssetUrl(organization.logoUrl ?? (organization as any)?.logo_url),
           websiteUrl: organization.website ?? organization.websiteUrl,
           verified: organization.verified ?? false,
           followerCount: organization.followerCount,
@@ -231,15 +231,19 @@ export const mapEventFromApi = (raw: any): Event => {
         }
       : undefined,
     categoryId: raw?.categoryId ?? raw?.category_id ?? raw?.category?.id,
-    coverImageUrl: raw?.coverImageUrl ?? raw?.cover_image_url ?? raw?.thumbnailUrl,
-    thumbnailUrl: raw?.thumbnailUrl ?? raw?.coverImageUrl ?? raw?.cover_image_url,
+    coverImageUrl: resolveAssetUrl(
+      raw?.coverImageUrl ?? raw?.cover_image_url ?? raw?.thumbnailUrl
+    ),
+    thumbnailUrl: resolveAssetUrl(
+      raw?.thumbnailUrl ?? raw?.coverImageUrl ?? raw?.cover_image_url
+    ),
     ticketTypes,
     isFree,
     minPrice,
     maxPrice,
     currency:
       raw?.currency ??
-      ticketTypes.find((t) => t.currency)?.currency ??
+      ticketTypes.find((t: TicketType) => t.currency)?.currency ??
       raw?.promoCodes?.[0]?.currency ??
       'USD',
     attendeeCount: raw?.attendeeCount ?? raw?._count?.tickets ?? raw?.ticketsCount,
@@ -269,6 +273,135 @@ const normalizeEventListResponse = (
   return {
     data: dataArray.map(mapEventFromApi),
     meta: normalizeMeta(payload?.meta, page, limit, dataArray.length),
+  };
+};
+
+// Map homepage event summary from backend to Event type
+const mapHomepageEventSummary = (raw: any): Event => {
+  // Backend returns EventSummaryDto with different field names
+  const startDate = normalizeDate(raw?.startAt) ?? '';
+  const endDate = normalizeDate(raw?.endAt) ?? '';
+
+  // Pricing is returned as an object with currency, startingAt, fee, label
+  const pricing = raw?.pricing;
+  const price = pricing?.startingAt ?? 0;
+
+  return {
+    id: raw?.id ?? '',
+    title: raw?.title ?? '',
+    slug: raw?.id ?? '',
+    description: '',
+    shortDescription: undefined,
+    status: 'live',
+    visibility: 'public',
+    startDate,
+    endDate,
+    timezone: raw?.venue?.timezone ?? 'UTC',
+    venue: raw?.venue
+      ? {
+          id: raw.venue.id ?? '',
+          name: raw.venue.name ?? '',
+          address: '',
+          city: raw.venue.city ?? '',
+          state: raw.venue.region ?? undefined,
+          country: raw.venue.country ?? '',
+          postalCode: undefined,
+          latitude: undefined,
+          longitude: undefined,
+          capacity: undefined,
+          description: undefined,
+          imageUrl: undefined,
+        }
+      : undefined,
+    venueId: raw?.venue?.id,
+    organization: raw?.organization
+      ? {
+          id: raw.organization.id ?? '',
+          name: raw.organization.name ?? '',
+          slug: '',
+          verified: false,
+        }
+      : {
+          id: '',
+          name: '',
+          slug: '',
+          verified: false,
+        },
+    organizationId: raw?.organization?.id ?? '',
+    category: raw?.category
+      ? {
+          id: raw.category.id ?? '',
+          name: raw.category.name ?? '',
+          slug: raw.category.slug ?? '',
+        }
+      : undefined,
+    categoryId: raw?.category?.id,
+    coverImageUrl: resolveAssetUrl(raw?.coverImageUrl ?? raw?.assets?.[0]?.url),
+    thumbnailUrl: resolveAssetUrl(raw?.coverImageUrl ?? raw?.assets?.[0]?.url),
+    ticketTypes: [],
+    isFree: price === 0,
+    minPrice: price > 0 ? price : undefined,
+    maxPrice: price > 0 ? price : undefined,
+    currency: pricing?.currency ?? 'USD',
+    attendeeCount: raw?.stats?.orderCount,
+    capacity: undefined,
+    isSaved: false,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  };
+};
+
+// Map homepage response from backend structure to frontend HomepageData
+const mapHomepageFromApi = (raw: any): HomepageData => {
+  // Backend returns: { hero, filters, sections, organizers, generatedAt, cache }
+  // Frontend expects: { featuredEvents, nearbyEvents, categories, upcomingEvents, popularEvents }
+
+  const sections = Array.isArray(raw?.sections) ? raw.sections : [];
+  const heroFeatured = Array.isArray(raw?.hero?.featured) ? raw.hero.featured : [];
+
+  // Extract events from hero section
+  const featuredEvents = heroFeatured.map(mapHomepageEventSummary);
+
+  // Find specific sections by id
+  const trendingSection = sections.find((s: any) => s.id === 'trending');
+  const forYouSection = sections.find((s: any) => s.id === 'for-you');
+
+  // Get trending/popular events
+  const popularEvents = Array.isArray(trendingSection?.items)
+    ? trendingSection.items.map(mapHomepageEventSummary)
+    : [];
+
+  // Get personalized events as nearby (or use empty if not available)
+  const nearbyEvents = Array.isArray(forYouSection?.items)
+    ? forYouSection.items.map(mapHomepageEventSummary)
+    : [];
+
+  // Collect all events from category sections as upcoming
+  const categoryEvents = sections
+    .filter((s: any) => s.id?.startsWith('category-'))
+    .flatMap((s: any) => Array.isArray(s.items) ? s.items : [])
+    .map(mapHomepageEventSummary);
+
+  // Get categories from filters
+  const categories: Category[] = Array.isArray(raw?.filters?.categories)
+    ? raw.filters.categories.map((cat: any) => ({
+        id: cat.id ?? '',
+        name: cat.name ?? '',
+        slug: cat.slug ?? '',
+        icon: undefined,
+        color: undefined,
+        description: undefined,
+        parentId: undefined,
+        eventCount: undefined,
+      }))
+    : [];
+
+  return {
+    featuredEvents: featuredEvents.length > 0 ? featuredEvents : popularEvents.slice(0, 4),
+    nearbyEvents: nearbyEvents.length > 0 ? nearbyEvents : popularEvents.slice(0, 5),
+    categories,
+    upcomingEvents: categoryEvents.length > 0 ? categoryEvents : popularEvents,
+    popularEvents,
   };
 };
 
@@ -326,26 +459,63 @@ export const eventsApi = {
 
   // Get homepage data
   async getHomepage(): Promise<HomepageData> {
-    const response = await apiClient.get<HomepageData>('/homepage');
-    return response.data;
+    const response = await apiClient.get('/homepage');
+    return mapHomepageFromApi(response.data);
   },
 
   // Get all categories
   async getCategories(): Promise<Category[]> {
-    const response = await apiClient.get<Category[]>('/categories');
-    return response.data;
+    const response = await apiClient.get('/categories');
+    const data = Array.isArray(response.data) ? response.data : [];
+    return data.map((cat: any) => ({
+      id: cat?.id ?? '',
+      name: cat?.name ?? '',
+      slug: cat?.slug ?? '',
+      icon: cat?.icon ?? undefined,
+      color: cat?.color ?? undefined,
+      description: cat?.description ?? undefined,
+      parentId: cat?.parentId ?? cat?.parent_id ?? undefined,
+      eventCount: cat?.eventCount ?? cat?._count?.events ?? undefined,
+    }));
   },
 
   // Get event agenda
   async getEventAgenda(eventId: string): Promise<EventAgenda[]> {
-    const response = await apiClient.get<EventAgenda[]>(`/events/${eventId}/agenda`);
-    return response.data;
+    const response = await apiClient.get(`/events/${eventId}/agenda`);
+    const data = Array.isArray(response.data) ? response.data : [];
+    return data.map((item: any) => ({
+      id: item?.id ?? '',
+      title: item?.title ?? '',
+      description: item?.description ?? undefined,
+      startTime: normalizeDate(item?.startTime ?? item?.start_time) ?? '',
+      endTime: normalizeDate(item?.endTime ?? item?.end_time) ?? '',
+      speakerId: item?.speakerId ?? item?.speaker_id ?? undefined,
+      speaker: item?.speaker
+        ? {
+            id: item.speaker.id ?? '',
+            name: item.speaker.name ?? '',
+            title: item.speaker.title ?? undefined,
+            bio: item.speaker.bio ?? undefined,
+            photoUrl: item.speaker.photoUrl ?? item.speaker.photo_url ?? undefined,
+            socialLinks: item.speaker.socialLinks ?? undefined,
+          }
+        : undefined,
+      location: item?.location ?? undefined,
+    }));
   },
 
   // Get event speakers
   async getEventSpeakers(eventId: string): Promise<EventSpeaker[]> {
-    const response = await apiClient.get<EventSpeaker[]>(`/events/${eventId}/speakers`);
-    return response.data;
+    const response = await apiClient.get(`/events/${eventId}/speakers`);
+    const data = Array.isArray(response.data) ? response.data : [];
+    return data.map((speaker: any) => ({
+      id: speaker?.id ?? '',
+      name: speaker?.name ?? '',
+      title: speaker?.title ?? undefined,
+      bio: speaker?.bio ?? undefined,
+      photoUrl: speaker?.photoUrl ?? speaker?.photo_url ?? undefined,
+      socialLinks: speaker?.socialLinks ?? undefined,
+    }));
   },
 
   // Get event reviews

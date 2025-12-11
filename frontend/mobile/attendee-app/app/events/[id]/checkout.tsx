@@ -19,6 +19,7 @@ import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { eventsApi } from '@/lib/api';
 import { useCheckoutStore } from '@/lib/stores/checkout-store';
+import { useAuthStore } from '@/lib/stores/auth-store';
 import { Loading } from '@/components/ui/loading';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -28,6 +29,33 @@ export default function CheckoutScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const colorScheme = useColorScheme() ?? 'light';
   const colors = Colors[colorScheme];
+  const { isAuthenticated } = useAuthStore();
+
+  // Redirect to login if not authenticated
+  useEffect(() => {
+    if (!isAuthenticated) {
+      Alert.alert(
+        'Login Required',
+        'Please log in to purchase tickets',
+        [
+          {
+            text: 'Cancel',
+            style: 'cancel',
+            onPress: () => router.back(),
+          },
+          {
+            text: 'Log In',
+            onPress: () => {
+              router.replace({
+                pathname: '/(auth)/login',
+                params: { redirect: `/events/${id}/checkout` },
+              });
+            },
+          },
+        ]
+      );
+    }
+  }, [isAuthenticated, id]);
 
   const [promoInput, setPromoInput] = useState('');
   const [showPromoInput, setShowPromoInput] = useState(false);

@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { locationApi } from '../api/location';
+import { tokenStorage } from '../utils/storage';
 import type { UserLocation, City } from '../types';
 
 export type LocationPermissionStatus = 'undetermined' | 'granted' | 'denied' | 'restricted';
@@ -46,6 +47,16 @@ export const useLocationStore = create<LocationState>((set, get) => ({
 
     try {
       set({ isLoading: true });
+      const accessToken = await tokenStorage.getAccessToken();
+      // Skip remote fetch for guests
+      if (!accessToken) {
+        set({
+          isInitialized: true,
+          isLoading: false,
+        });
+        return;
+      }
+
       const location = await locationApi.getLocation();
 
       set({
@@ -78,6 +89,29 @@ export const useLocationStore = create<LocationState>((set, get) => ({
   updateLocationFromGPS: async (coords: { latitude: number; longitude: number }) => {
     set({ isLoading: true, error: null });
     try {
+      const accessToken = await tokenStorage.getAccessToken();
+
+      // If not authenticated, store locally without hitting the API
+      if (!accessToken) {
+        const now = new Date().toISOString();
+        const guestLocation: UserLocation = {
+          id: 'guest-location',
+          latitude: coords.latitude,
+          longitude: coords.longitude,
+          source: 'browser',
+          createdAt: now,
+          updatedAt: now,
+        };
+
+        set({
+          userLocation: guestLocation,
+          currentCoords: coords,
+          isLoading: false,
+          selectedCity: null,
+        });
+        return;
+      }
+
       const location = await locationApi.updateLocation({
         latitude: coords.latitude,
         longitude: coords.longitude,
@@ -104,6 +138,31 @@ export const useLocationStore = create<LocationState>((set, get) => ({
   updateLocationFromCity: async (city: City) => {
     set({ isLoading: true, error: null });
     try {
+      const accessToken = await tokenStorage.getAccessToken();
+
+      // Guest mode: store locally only
+      if (!accessToken) {
+        const now = new Date().toISOString();
+        const guestLocation: UserLocation = {
+          id: 'guest-location',
+          latitude: city.latitude,
+          longitude: city.longitude,
+          city: city.name,
+          country: city.country,
+          source: 'manual',
+          createdAt: now,
+          updatedAt: now,
+        };
+
+        set({
+          userLocation: guestLocation,
+          currentCoords: { latitude: city.latitude, longitude: city.longitude },
+          selectedCity: city,
+          isLoading: false,
+        });
+        return;
+      }
+
       const location = await locationApi.updateLocation({
         latitude: city.latitude,
         longitude: city.longitude,
@@ -132,7 +191,10 @@ export const useLocationStore = create<LocationState>((set, get) => ({
   deleteLocation: async () => {
     set({ isLoading: true, error: null });
     try {
-      await locationApi.deleteLocation();
+      const accessToken = await tokenStorage.getAccessToken();
+      if (accessToken) {
+        await locationApi.deleteLocation();
+      }
       set({
         userLocation: null,
         currentCoords: null,
@@ -152,6 +214,9 @@ export const useLocationStore = create<LocationState>((set, get) => ({
   // Refresh location from server
   refreshLocation: async () => {
     try {
+      const accessToken = await tokenStorage.getAccessToken();
+      if (!accessToken) return;
+
       const location = await locationApi.getLocation();
       set({
         userLocation: location,

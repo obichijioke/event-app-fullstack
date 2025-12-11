@@ -15,6 +15,7 @@ import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useAuthStore } from '@/lib/stores/auth-store';
 import { Avatar } from '@/components/ui/avatar';
 import { Card } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 
 interface MenuItemProps {
   icon: keyof typeof Ionicons.glyphMap;
@@ -53,10 +54,126 @@ function MenuItem({ icon, label, onPress, showArrow = true, danger = false, badg
   );
 }
 
+// Guest welcome screen shown when not logged in
+function GuestWelcomeScreen() {
+  const colorScheme = useColorScheme() ?? 'light';
+  const colors = Colors[colorScheme];
+
+  return (
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.guestContainer}
+      >
+        {/* Welcome Illustration */}
+        <View style={[styles.illustrationContainer, { backgroundColor: colors.tint + '10' }]}>
+          <Ionicons name="person-circle-outline" size={80} color={colors.tint} />
+        </View>
+
+        {/* Welcome Message */}
+        <Text style={[styles.guestTitle, { color: colors.text }]}>
+          Welcome to EventFlow
+        </Text>
+        <Text style={[styles.guestSubtitle, { color: colors.textSecondary }]}>
+          Sign in to access your tickets, save events, and get personalized recommendations.
+        </Text>
+
+        {/* Auth Buttons */}
+        <View style={styles.authButtons}>
+          <Button
+            title="Log In"
+            onPress={() => router.push('/(auth)/login')}
+            style={styles.authButton}
+          />
+          <Button
+            title="Create Account"
+            variant="outline"
+            onPress={() => router.push('/(auth)/register')}
+            style={styles.authButton}
+          />
+        </View>
+
+        {/* Benefits List */}
+        <View style={styles.benefitsSection}>
+          <Text style={[styles.benefitsTitle, { color: colors.text }]}>
+            Why create an account?
+          </Text>
+          <View style={styles.benefitItem}>
+            <Ionicons name="ticket-outline" size={24} color={colors.tint} />
+            <View style={styles.benefitText}>
+              <Text style={[styles.benefitLabel, { color: colors.text }]}>
+                Your Tickets
+              </Text>
+              <Text style={[styles.benefitDesc, { color: colors.textSecondary }]}>
+                Access your tickets anytime, anywhere
+              </Text>
+            </View>
+          </View>
+          <View style={styles.benefitItem}>
+            <Ionicons name="bookmark-outline" size={24} color={colors.tint} />
+            <View style={styles.benefitText}>
+              <Text style={[styles.benefitLabel, { color: colors.text }]}>
+                Save Events
+              </Text>
+              <Text style={[styles.benefitDesc, { color: colors.textSecondary }]}>
+                Bookmark events you're interested in
+              </Text>
+            </View>
+          </View>
+          <View style={styles.benefitItem}>
+            <Ionicons name="flash-outline" size={24} color={colors.tint} />
+            <View style={styles.benefitText}>
+              <Text style={[styles.benefitLabel, { color: colors.text }]}>
+                Fast Checkout
+              </Text>
+              <Text style={[styles.benefitDesc, { color: colors.textSecondary }]}>
+                Save your info for quicker purchases
+              </Text>
+            </View>
+          </View>
+          <View style={styles.benefitItem}>
+            <Ionicons name="notifications-outline" size={24} color={colors.tint} />
+            <View style={styles.benefitText}>
+              <Text style={[styles.benefitLabel, { color: colors.text }]}>
+                Event Updates
+              </Text>
+              <Text style={[styles.benefitDesc, { color: colors.textSecondary }]}>
+                Get notified about events you follow
+              </Text>
+            </View>
+          </View>
+        </View>
+
+        {/* Continue Browsing Link */}
+        <TouchableOpacity
+          style={styles.continueLink}
+          onPress={() => router.push('/(tabs)/')}
+        >
+          <Text style={[styles.continueLinkText, { color: colors.tint }]}>
+            Continue browsing as guest
+          </Text>
+        </TouchableOpacity>
+
+        {/* App Version */}
+        <View style={styles.footer}>
+          <Text style={[styles.version, { color: colors.textSecondary }]}>
+            EventFlow v1.0.0
+          </Text>
+        </View>
+      </ScrollView>
+    </SafeAreaView>
+  );
+}
+
 export default function ProfileScreen() {
   const colorScheme = useColorScheme() ?? 'light';
   const colors = Colors[colorScheme];
-  const { user, logout } = useAuthStore();
+  const { user, logout, isAuthenticated } = useAuthStore();
+
+  // Show guest welcome screen if not authenticated
+  if (!isAuthenticated) {
+    return <GuestWelcomeScreen />;
+  }
 
   const handleLogout = () => {
     Alert.alert(
@@ -328,5 +445,73 @@ const styles = StyleSheet.create({
   },
   version: {
     fontSize: 12,
+  },
+  // Guest screen styles
+  guestContainer: {
+    flexGrow: 1,
+    paddingHorizontal: 20,
+    paddingTop: 40,
+  },
+  illustrationContainer: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    alignItems: 'center',
+    justifyContent: 'center',
+    alignSelf: 'center',
+    marginBottom: 24,
+  },
+  guestTitle: {
+    fontSize: 24,
+    fontWeight: '700',
+    textAlign: 'center',
+    marginBottom: 12,
+  },
+  guestSubtitle: {
+    fontSize: 15,
+    textAlign: 'center',
+    lineHeight: 22,
+    marginBottom: 32,
+    paddingHorizontal: 20,
+  },
+  authButtons: {
+    gap: 12,
+    marginBottom: 40,
+  },
+  authButton: {
+    width: '100%',
+  },
+  benefitsSection: {
+    marginBottom: 32,
+  },
+  benefitsTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    marginBottom: 16,
+  },
+  benefitItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 16,
+    gap: 16,
+  },
+  benefitText: {
+    flex: 1,
+  },
+  benefitLabel: {
+    fontSize: 15,
+    fontWeight: '600',
+    marginBottom: 2,
+  },
+  benefitDesc: {
+    fontSize: 13,
+  },
+  continueLink: {
+    alignItems: 'center',
+    paddingVertical: 16,
+  },
+  continueLinkText: {
+    fontSize: 14,
+    fontWeight: '500',
   },
 });
