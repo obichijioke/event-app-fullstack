@@ -271,6 +271,12 @@ export default function ProfileScreen() {
           </Text>
           <Card padding="none" style={styles.menuCard}>
             <MenuItem
+              icon="settings-outline"
+              label="Preferences"
+              onPress={() => router.push('/account/settings' as const)}
+            />
+            <View style={[styles.separator, { backgroundColor: colors.border }]} />
+            <MenuItem
               icon="shield-checkmark-outline"
               label="Security"
               onPress={() => router.push('/account/security' as const)}

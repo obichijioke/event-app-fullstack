@@ -82,12 +82,13 @@ export function EventCard({ event, compact }: EventCardProps) {
             </svg>
             {formatDate(event.startAt, 'long')}
           </div>
-          <Link
+          <div><Link
             href={`/events/${event.id}`}
             className="text-xl font-semibold text-foreground transition group-hover:text-primary"
           >
             {truncate(event.title, 70)}
-          </Link>
+          </Link></div>
+          
           {venueLine && (
             <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
               <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -99,26 +100,13 @@ export function EventCard({ event, compact }: EventCardProps) {
           )}
         </div>
 
-        <div className="mt-4 flex flex-wrap gap-2">
-          {event.tags.slice(0, 2).map((tag) => (
-            <span key={tag} className="inline-flex items-center rounded-full bg-muted/60 border border-border/50 px-3 py-1 text-xs font-medium text-foreground">
-              {tag}
-            </span>
-          ))}
-        </div>
-
-        <div className="mt-6 flex items-center justify-between border-t border-border/50 pt-4">
-          <div>
-            <Text className="text-xs uppercase tracking-wide text-muted-foreground">
-              Organised by
-            </Text>
-            <Text className="font-semibold text-sm">{event.organization.name}</Text>
-          </div>
+        <div className="mt-6 flex items-center justify-end">
+          
           <Link
             href={`/events/${event.id}`}
             className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition hover:opacity-90"
           >
-            View tickets
+            Get tickets
             <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
             </svg>

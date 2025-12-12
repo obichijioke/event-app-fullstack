@@ -76,6 +76,13 @@ export default function EventDetailScreen() {
     enabled: !!id,
   });
 
+  // Fetch announcements
+  const { data: announcements } = useQuery({
+    queryKey: ['event', id, 'announcements'],
+    queryFn: () => eventsApi.getEventAnnouncements(id!),
+    enabled: !!id,
+  });
+
   const handleSave = async () => {
     if (!id) return;
     try {
@@ -337,8 +344,8 @@ export default function EventDetailScreen() {
             <Ionicons name="chevron-forward" size={20} color={colors.icon} />
           </TouchableOpacity>
 
-          {/* Event Details - Agenda, Speakers, FAQs */}
-          {((agenda && agenda.length > 0) || (speakers && speakers.length > 0) || (faqs && faqs.length > 0)) && (
+          {/* Event Details - Agenda, Speakers, FAQs, Announcements */}
+          {((agenda && agenda.length > 0) || (speakers && speakers.length > 0) || (faqs && faqs.length > 0) || (announcements && announcements.length > 0)) && (
             <View style={styles.section}>
               <Text style={[styles.sectionTitle, { color: colors.text }]}>Event Details</Text>
 
@@ -398,6 +405,78 @@ export default function EventDetailScreen() {
                   <Ionicons name="chevron-forward" size={20} color={colors.icon} />
                 </TouchableOpacity>
               )}
+
+              {/* Announcements Link */}
+              {announcements && announcements.length > 0 && (
+                <TouchableOpacity
+                  style={[styles.detailLink, { backgroundColor: colors.card, borderColor: colors.border }]}
+                  onPress={() => router.push(`/events/${id}/announcements` as const)}
+                >
+                  <View style={[styles.detailIcon, { backgroundColor: colors.tint + '15' }]}>
+                    <Ionicons name="megaphone-outline" size={20} color={colors.tint} />
+                  </View>
+                  <View style={styles.detailContent}>
+                    <Text style={[styles.detailTitle, { color: colors.text }]}>Announcements</Text>
+                    <Text style={[styles.detailSubtitle, { color: colors.textSecondary }]}>
+                      {announcements.length} announcement{announcements.length !== 1 ? 's' : ''}
+                    </Text>
+                  </View>
+                  <Ionicons name="chevron-forward" size={20} color={colors.icon} />
+                </TouchableOpacity>
+              )}
+            </View>
+          )}
+
+          {/* Event Policies */}
+          {event.policies && (
+            <View style={styles.section}>
+              <Text style={[styles.sectionTitle, { color: colors.text }]}>Event Policies</Text>
+
+              <View style={[styles.policyCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+                {/* Refund Policy */}
+                {event.policies.refundPolicy && (
+                  <View style={styles.policyRow}>
+                    <View style={[styles.policyIcon, { backgroundColor: colors.tint + '15' }]}>
+                      <Ionicons name="cash-outline" size={20} color={colors.tint} />
+                    </View>
+                    <View style={styles.policyContent}>
+                      <Text style={[styles.policyTitle, { color: colors.text }]}>Refund Policy</Text>
+                      <Text style={[styles.policyText, { color: colors.textSecondary }]}>
+                        {event.policies.refundPolicy}
+                      </Text>
+                    </View>
+                  </View>
+                )}
+
+                {/* Transfer Policy */}
+                <View style={styles.policyRow}>
+                  <View style={[styles.policyIcon, { backgroundColor: colors.tint + '15' }]}>
+                    <Ionicons name="swap-horizontal-outline" size={20} color={colors.tint} />
+                  </View>
+                  <View style={styles.policyContent}>
+                    <Text style={[styles.policyTitle, { color: colors.text }]}>Ticket Transfer</Text>
+                    <Text style={[styles.policyText, { color: colors.textSecondary }]}>
+                      {event.policies.transferAllowed
+                        ? `Allowed${event.policies.transferCutoff ? ` (${event.policies.transferCutoff} before event)` : ''}`
+                        : 'Not allowed'
+                      }
+                    </Text>
+                  </View>
+                </View>
+
+                {/* Resale Policy */}
+                <View style={[styles.policyRow, { borderBottomWidth: 0 }]}>
+                  <View style={[styles.policyIcon, { backgroundColor: colors.tint + '15' }]}>
+                    <Ionicons name="pricetag-outline" size={20} color={colors.tint} />
+                  </View>
+                  <View style={styles.policyContent}>
+                    <Text style={[styles.policyTitle, { color: colors.text }]}>Ticket Resale</Text>
+                    <Text style={[styles.policyText, { color: colors.textSecondary }]}>
+                      {event.policies.resaleAllowed ? 'Allowed' : 'Not allowed'}
+                    </Text>
+                  </View>
+                </View>
+              </View>
             </View>
           )}
 
@@ -616,6 +695,37 @@ const styles = StyleSheet.create({
   },
   reviewsCount: {
     fontSize: 14,
+  },
+  policyCard: {
+    borderRadius: 12,
+    borderWidth: 1,
+    overflow: 'hidden',
+  },
+  policyRow: {
+    flexDirection: 'row',
+    padding: 14,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(0,0,0,0.05)',
+  },
+  policyIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
+  },
+  policyContent: {
+    flex: 1,
+  },
+  policyTitle: {
+    fontSize: 15,
+    fontWeight: '600',
+    marginBottom: 4,
+  },
+  policyText: {
+    fontSize: 14,
+    lineHeight: 20,
   },
   bottomBar: {
     position: 'absolute',

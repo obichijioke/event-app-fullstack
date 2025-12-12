@@ -479,10 +479,10 @@ export const eventsApi = {
     }));
   },
 
-  // Get event agenda
+  // Get event agenda from the event details
   async getEventAgenda(eventId: string): Promise<EventAgenda[]> {
-    const response = await apiClient.get(`/events/${eventId}/agenda`);
-    const data = Array.isArray(response.data) ? response.data : [];
+    const event = await this.getEvent(eventId);
+    const data = Array.isArray(event.agenda) ? event.agenda : [];
     return data.map((item: any) => ({
       id: item?.id ?? '',
       title: item?.title ?? '',
@@ -504,10 +504,10 @@ export const eventsApi = {
     }));
   },
 
-  // Get event speakers
+  // Get event speakers from the event details
   async getEventSpeakers(eventId: string): Promise<EventSpeaker[]> {
-    const response = await apiClient.get(`/events/${eventId}/speakers`);
-    const data = Array.isArray(response.data) ? response.data : [];
+    const event = await this.getEvent(eventId);
+    const data = Array.isArray(event.speakers) ? event.speakers : [];
     return data.map((speaker: any) => ({
       id: speaker?.id ?? '',
       name: speaker?.name ?? '',

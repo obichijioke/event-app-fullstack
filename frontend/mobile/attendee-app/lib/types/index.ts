@@ -84,6 +84,9 @@ export interface Event {
   attendeeCount?: number;
   capacity?: number;
   isSaved?: boolean;
+  policies?: EventPolicies;
+  agenda?: any[];
+  speakers?: any[];
   createdAt: string;
   updatedAt: string;
 }
@@ -127,6 +130,14 @@ export interface Category {
   description?: string;
   parentId?: string;
   eventCount?: number;
+}
+
+export interface EventPolicies {
+  eventId: string;
+  refundPolicy?: string;
+  transferAllowed: boolean;
+  transferCutoff?: string;
+  resaleAllowed: boolean;
 }
 
 // Ticket types
