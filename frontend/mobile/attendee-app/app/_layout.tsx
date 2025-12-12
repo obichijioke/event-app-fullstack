@@ -115,7 +115,7 @@ function RootLayoutNav() {
         <Stack.Screen name="notifications" />
         <Stack.Screen name="account" />
         <Stack.Screen name="organizers" />
-        <Stack.Screen name="disputes" />
+        <Stack.Screen name="disputes/index" />
         <Stack.Screen
           name="modal"
           options={{

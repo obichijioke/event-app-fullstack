@@ -3,7 +3,12 @@ import { Platform, Alert } from 'react-native';
 import * as Notifications from 'expo-notifications';
 import * as Device from 'expo-device';
 import { router } from 'expo-router';
+import Constants from 'expo-constants';
 import { accountApi } from '@/lib/api';
+
+// Note: Push notifications are not available in Expo Go on Android (SDK 53+)
+// This is expected behavior - use a development build for full push notification support
+// The warnings can be safely ignored during development in Expo Go
 
 // Configure how notifications are displayed when the app is in the foreground
 Notifications.setNotificationHandler({
@@ -29,11 +34,19 @@ export function usePushNotifications() {
   const [hasPermission, setHasPermission] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
+  const isExpoGoAndroid = Platform.OS === 'android' && Constants.appOwnership === 'expo';
+
   const notificationListener = useRef<Notifications.EventSubscription>();
   const responseListener = useRef<Notifications.EventSubscription>();
 
   // Register for push notifications and get token
   const registerForPushNotifications = useCallback(async (): Promise<string | null> => {
+    if (isExpoGoAndroid) {
+      console.warn(
+        'Android push notifications are not available in Expo Go. Use a development build for push functionality.'
+      );
+    }
+
     if (!Device.isDevice) {
       console.log('Push notifications require a physical device');
       return null;
@@ -113,6 +126,16 @@ export function usePushNotifications() {
 
   // Request permission explicitly
   const requestPermission = useCallback(async (): Promise<boolean> => {
+    if (isExpoGoAndroid) {
+      Alert.alert(
+        'Push not available in Expo Go',
+        'Android push notifications require a development build. Please install the dev client to enable push.'
+      );
+      setHasPermission(false);
+      setIsLoading(false);
+      return false;
+    }
+
     if (!Device.isDevice) {
       Alert.alert(
         'Physical Device Required',
@@ -233,6 +256,12 @@ export function usePushNotifications() {
     // Initialize push notifications
     const initPushNotifications = async () => {
       setIsLoading(true);
+
+      if (isExpoGoAndroid) {
+        setHasPermission(false);
+        setIsLoading(false);
+        return;
+      }
 
       // Check permissions
       const { status } = await Notifications.getPermissionsAsync();

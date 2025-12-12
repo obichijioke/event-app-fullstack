@@ -179,11 +179,15 @@ Multi-step wizard for creating events with comprehensive features:
 - **Speaker Management**: Define event speakers with bios, photos, titles, and social links
 
 ### Database Schema Highlights
-- **Complex relationships**: User â†’ Organization â†’ Events â†’ Tickets with proper foreign keys
+- **Complex relationships**: User â†' Organization â†' Events â†' Tickets with proper foreign keys
 - **Audit trails**: AuditLog tracks all significant actions
 - **Soft deletes**: Many entities use deletedAt for data retention
 - **Optimistic concurrency**: updatedAt timestamps for conflict resolution
 - **Indexed queries**: Performance indexes on frequently queried fields
+- **JSON fields on Event model**:
+  - **agenda**: Array of agenda items (sessions, timeslots) stored as JSON, defaults to `[]`
+  - **speakers**: Array of speaker information stored as JSON, defaults to `[]`
+  - Both fields are included in event detail responses via `GET /events/:id`
 - **New models added**:
   - **UserFollow**: User following organizations
   - **SavedEvent**: User saved/bookmarked events
@@ -199,7 +203,8 @@ Multi-step wizard for creating events with comprehensive features:
   - **EventReview** & **OrganizerReview**: Separate reviews for events and organizers
   - **Notification**: In-app, email, push, and SMS notifications
   - **Dispute**: Platform dispute management for chargebacks and buyer disputes
-  - **EventAgenda** & **EventSpeaker**: Event agenda items and speaker information
+  - **EventPolicies**: Event-specific policies (refund, transfer, resale) as a relation
+  - **EventAnnouncement** & **EventFAQ**: Announcements and FAQs as separate tables
   - **Region** & **City**: Geographic data for location-based features with spatial indexes
   - **UserLocation**: User location storage with source tracking (ip, browser, manual)
 
@@ -379,8 +384,153 @@ NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_...
 - **Form Validation**: Client-side validation with Zod schemas matching backend DTOs
 - **Error Handling**: Standardized error responses and user-friendly error messages
 
-### Mobile Application
-Currently planned in `frontend/mobile/` (empty directory) - likely React Native or Flutter implementation.
+### Mobile Application (Expo/React Native)
+Located in `frontend/mobile/attendee-app/`, this is a native mobile application built with:
+
+#### Tech Stack
+- **Framework**: Expo SDK with React Native
+- **Navigation**: Expo Router (file-based routing)
+- **UI Framework**: React Native with custom components
+- **Styling**: StyleSheet API with theme support
+- **State Management**: Zustand 5.0.8 with AsyncStorage persistence
+- **Data Fetching**: TanStack Query (React Query) for server state
+- **Icons**: Expo Vector Icons (@expo/vector-icons)
+- **Date Handling**: date-fns 4.1.0
+- **Form Handling**: React Hook Form with validation
+- **Payments**: Stripe React Native SDK (@stripe/stripe-react-native)
+- **TypeScript**: Full type safety throughout
+- **Notifications**: Expo Notifications for push notifications
+- **Location**: Expo Location for geolocation features
+- **Calendar**: Expo Calendar for adding events to device calendar
+- **Maps**: React Native Maps for venue locations
+
+#### Mobile App Commands
+```bash
+# Navigate to mobile app
+cd frontend/mobile/attendee-app
+
+# Development
+npm start                # Start Expo dev server
+npm run android          # Run on Android device/emulator
+npm run ios              # Run on iOS device/simulator
+npm run web              # Run in web browser
+
+# Code Quality
+npm run lint             # Run ESLint
+```
+
+#### Mobile App Features
+- **Authentication**: Login, register, email verification, guest mode support
+- **Event Browsing**:
+  - Homepage with featured, nearby, and popular events
+  - Search and filter events by category, date, location
+  - Event details with agenda, speakers, FAQs, announcements, and policies
+  - Save/bookmark events for later viewing
+  - Add events to device calendar
+  - Share events with others
+- **Ticketing**:
+  - Browse ticket types with real-time availability
+  - Checkout with Stripe payment integration
+  - View purchased tickets with QR codes
+  - Transfer tickets to others
+  - Check-in tickets at events
+- **User Account**:
+  - Profile management
+  - Order history and tracking
+  - Active sessions management
+  - Security settings (password, 2FA)
+  - Location preferences with IP/browser/manual options
+  - Notification preferences (push, email, SMS)
+  - Theme toggle (light/dark/system)
+- **Reviews & Ratings**:
+  - Read event and organizer reviews
+  - Write reviews after attending events
+  - Rate events and organizers
+- **Organizer Profiles**:
+  - View organizer information
+  - Follow favorite organizers
+  - Browse organizer's events
+- **Notifications**:
+  - In-app notifications
+  - Push notifications for order updates
+  - Event reminders
+
+#### Theme System
+The mobile app features a comprehensive dark/light mode system:
+- **Theme Modes**: Light, Dark, System (auto-switches based on device)
+- **Theme Store**: Zustand store with AsyncStorage persistence
+- **Color Schemes**: Professional color palettes for both modes
+  - Light: White backgrounds, dark text, blue (#2563EB) accents
+  - Dark: Dark gray backgrounds, light text, lighter blue (#3B82F6) accents
+- **Theme Toggle**: Accessible via Profile → Preferences → Appearance
+- **Navigation Path**:
+  1. Profile tab → Preferences → Appearance section
+  2. Choose Light, Dark, or System mode
+- **Automatic Sync**: System mode respects device appearance settings
+
+#### Event Detail Sections
+Each event includes comprehensive information:
+- **Overview**: Title, description, date/time, venue with map
+- **Ticket Types**: Pricing tiers with real-time availability
+- **Agenda**: Timeline view with session times, speakers, and locations
+- **Speakers**: Speaker profiles with bios, photos, and social links
+- **FAQs**: Expandable Q&A with helpful tracking
+- **Announcements**: Updates from organizers with timestamps
+- **Policies**: Refund, transfer, and resale policies
+- **Reviews**: Event and organizer ratings with detailed feedback
+
+#### Mobile-Specific Features
+- **Platform-specific files**: Uses `.native.ts` and `.web.ts` extensions for platform code
+- **Stripe Integration**: Native Stripe SDK for iOS/Android, web fallback
+- **Push Notifications**: Permission handling with device-specific flows
+- **Location Services**: IP geolocation, browser geolocation, and manual city selection
+- **Calendar Integration**: Add events directly to device calendar
+- **QR Code Generation**: Ticket QR codes for event check-in
+- **Deep Linking**: Support for event and ticket deep links
+- **Offline Support**: Basic caching with React Query
+- **Pull-to-Refresh**: Refresh data across all list screens
+- **Haptic Feedback**: Touch feedback on interactive elements
+
+#### Guest Mode
+Users can browse events without authentication:
+- Browse and search all public events
+- View event details, agenda, speakers, FAQs
+- Read reviews and organizer information
+- Prompted to log in for protected actions:
+  - Saving events
+  - Purchasing tickets
+  - Following organizers
+  - Writing reviews
+
+#### Route Structure
+File-based routing with Expo Router:
+- **`(tabs)/`**: Main tab navigation (Home, Search, Tickets, Saved, Profile)
+- **`(auth)/`**: Authentication flows (Login, Register, 2FA, Forgot Password)
+- **`events/[id]/`**: Event detail screens (index, agenda, speakers, FAQs, announcements, checkout, payment, reviews)
+- **`tickets/[id]/`**: Ticket screens (details, QR code, transfer)
+- **`orders/`**: Order management screens
+- **`account/`**: User account screens (profile, settings, security, sessions, location, transfers)
+- **`organizers/[id]`**: Organizer profile screen
+- **`notifications/`**: Notifications center
+
+#### Environment Setup
+```bash
+# Copy environment template (if exists)
+cp .env.example .env
+
+# Required variables:
+EXPO_PUBLIC_API_URL=http://localhost:3000
+EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_...
+```
+
+#### Integration with Backend
+- **API Communication**: REST API calls to NestJS backend
+- **Authentication**: JWT token-based with refresh tokens stored in SecureStore
+- **Payment Integration**: Native Stripe SDK for payments
+- **Real-time Updates**: WebSocket connection for live notifications (planned)
+- **State Management**: Zustand stores synced with backend state
+- **Data Caching**: React Query for intelligent data caching and background updates
+- **Error Handling**: Standardized error responses with user-friendly messages
 
 ### Simplified User Onboarding
 
@@ -660,7 +810,7 @@ EMAIL_PASS=your-password
 ### Completed Features
 - ✅ Multi-tenant organization management with verification
 - ✅ Event creation wizard (v2) with autosave and templates
-- ✅ Event agenda and speakers support
+- ✅ Event agenda and speakers support (stored as JSON fields)
 - ✅ Ticketing system with GA and seated tickets
 - ✅ Order and payment processing (Stripe + Paystack)
 - ✅ Dispute management system for chargebacks and buyer complaints
@@ -674,19 +824,23 @@ EMAIL_PASS=your-password
 - ✅ User account management
 - ✅ Health monitoring endpoints
 - ✅ Enhanced Redis connection pooling and error handling
+- ✅ Mobile attendee application (Expo/React Native)
+- ✅ Dark/light mode theme system for mobile app
+- ✅ Guest mode for browsing events without authentication
+- ✅ Event detail sections (agenda, speakers, FAQs, announcements, policies)
+- ✅ Location-based event search with PostGIS
 
 ### In Progress / Planned Features
 - 🚧 Rate limiting for API endpoints
 - 🚧 Advanced analytics and reporting
 - 🚧 Redis adapter for WebSocket horizontal scaling
-- 🚧 Mobile application (React Native/Flutter)
 - 🚧 Advanced search with Elasticsearch (planned)
 - 🚧 Email template system improvements
-- 🚧 Push notification service integration
 - 🚧 SMS notification delivery
-- 🚧 Two-factor authentication (2FA)
 - 🚧 Social media integrations
 - 🚧 Advanced fraud detection
+- 🚧 Mobile app offline mode and sync
+- 🚧 Real-time WebSocket for mobile notifications
 
 ### Known Limitations
 - Frontend and backend share default port 3000 (configuration needed for concurrent run)
@@ -703,6 +857,8 @@ EMAIL_PASS=your-password
 - **Stripe API**: https://stripe.com/docs/api
 - **Socket.IO Docs**: https://socket.io/docs
 - **Next.js Docs**: https://nextjs.org/docs
+- **Expo Docs**: https://docs.expo.dev
+- **React Native Docs**: https://reactnative.dev/docs/getting-started
 
 ### Related Files
 - `tables.md` - Comprehensive database schema documentation
@@ -723,17 +879,32 @@ This is an active development project. When making changes:
 
 ---
 
-**Last Updated**: 2025-12-05
+**Last Updated**: 2025-12-12
 **Project Version**: 0.0.1 (Active Development)
 **NestJS Version**: 11.x
 **Node Version**: 22.x (recommended)
+**Expo SDK Version**: Latest
 **Recent Updates**:
-- Added PostGIS-powered location-based event search with city/region support
-- Implemented user location management (IP geolocation, browser geolocation, manual selection)
-- Added cities database with 60+ major cities pre-seeded
-- Created new endpoints: GET /events/nearby/me, GET/PUT/DELETE /account/location, GET /cities
-- Added dispute management system for platform-level dispute handling
-- Implemented saved events feature for user bookmarking
-- Enhanced event management with agenda and speakers support
-- Improved Redis connection pooling and error handling
-- Added comprehensive webhook integration for dispute notifications
+- **Mobile App Launch**: Completed Expo/React Native attendee mobile application
+  - Full event browsing with guest mode support
+  - Comprehensive event details with agenda, speakers, FAQs, announcements, and policies
+  - Dark/light/system theme toggle with persistent preferences
+  - Native Stripe payment integration with platform-specific implementations
+  - Location-based features (IP, browser, manual selection)
+  - QR code ticket generation and check-in
+  - Profile management and account settings
+  - Push notification support with permission handling
+- **Event Details Enhancement**:
+  - Agenda and speakers stored as JSON fields on Event model (not separate endpoints)
+  - Mobile app displays policies section (refund, transfer, resale)
+  - Added announcements screen for organizer updates
+  - All event detail sections accessible from mobile app
+- **Backend Updates**:
+  - Event `findOne` includes agenda, speakers, and policies in response
+  - FAQs and Announcements available via dedicated endpoints
+  - PostGIS-powered location-based event search
+  - User location management with multiple sources
+- **Theme System**:
+  - Mobile app theme store with Zustand + AsyncStorage
+  - Professional color palettes for light and dark modes
+  - Settings accessible via Profile → Preferences → Appearance

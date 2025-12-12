@@ -91,7 +91,8 @@ export default function SearchScreen() {
         startDate: filters.dateRange?.start?.toISOString(),
         endDate: filters.dateRange?.end?.toISOString(),
       }),
-    enabled: debouncedQuery.length >= 2 || selectedCategory !== null || activeFilterCount > 0,
+    // Always load events; empty search/filer returns all live events
+    enabled: true,
   });
 
   const handleSaveToggle = async (eventId: string) => {
@@ -165,7 +166,8 @@ export default function SearchScreen() {
     );
   };
 
-  const showResults = debouncedQuery.length >= 2 || selectedCategory !== null || activeFilterCount > 0;
+  // Show results list by default (no filters shows all live events)
+  const showResults = true;
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
@@ -290,7 +292,7 @@ export default function SearchScreen() {
               <View style={styles.loadingHeader}>
                 <ActivityIndicator size="small" color={colors.tint} />
                 <Text style={[styles.loadingText, { color: colors.textSecondary }]}>
-                  Searching...
+                  Loading events...
                 </Text>
               </View>
             ) : searchResults?.data.length ? (

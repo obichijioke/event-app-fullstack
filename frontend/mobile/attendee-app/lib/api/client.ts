@@ -1,8 +1,33 @@
 import axios, { AxiosError, AxiosInstance, InternalAxiosRequestConfig } from 'axios';
+import { Platform } from 'react-native';
+import Constants from 'expo-constants';
+import * as Device from 'expo-device';
 import { tokenStorage } from '../utils/storage';
 
 // API base URL - update this to match your backend
 export const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000';
+
+// Generate User-Agent string with device information
+const getUserAgent = (): string => {
+  const appName = Constants.expoConfig?.name || 'EventFlow';
+  const appVersion = Constants.expoConfig?.version || '1.0.0';
+  const platform = Platform.OS;
+  const osVersion = Platform.Version;
+  const deviceModel = Device.modelName || Device.deviceName || 'Unknown';
+  const isExpoGo = Constants.appOwnership === 'expo';
+
+  // Format: EventFlow/1.0.0 (iOS 17.0; iPhone 15 Pro) Expo Go
+  const parts = [
+    `${appName}/${appVersion}`,
+    `(${platform === 'ios' ? 'iOS' : 'Android'} ${osVersion}; ${deviceModel})`,
+  ];
+
+  if (isExpoGo) {
+    parts.push('Expo Go');
+  }
+
+  return parts.join(' ');
+};
 
 // Normalize origin (strip paths like /api) for assets that may be returned as relative or localhost URLs
 export const API_BASE_ORIGIN = (() => {
@@ -56,6 +81,7 @@ const apiClient: AxiosInstance = axios.create({
   timeout: 30000,
   headers: {
     'Content-Type': 'application/json',
+    'User-Agent': getUserAgent(),
   },
 });
 

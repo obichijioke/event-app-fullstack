@@ -176,7 +176,7 @@ export class AuthController {
   @ApiBearerAuth()
   @ApiOperation({ summary: 'List active and historical sessions for the user' })
   async listSessions(@CurrentUser() user: any) {
-    return this.authService.listSessions(user.id);
+    return this.authService.listSessions(user.id, user.sessionId);
   }
 
   @Delete('sessions/:sessionId')

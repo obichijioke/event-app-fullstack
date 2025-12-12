@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -7,6 +7,8 @@ import {
   TouchableOpacity,
   Image,
   Alert,
+  FlatList,
+  Dimensions,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -34,22 +36,81 @@ export default function TicketDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const colorScheme = useColorScheme() ?? 'light';
   const colors = Colors[colorScheme];
+  const screenWidth = Dimensions.get('window').width;
+  const [activeTicketId, setActiveTicketId] = useState<string | undefined>(id);
+  const [activeIndex, setActiveIndex] = useState(0);
 
-  const { data: ticket, isLoading, error, refetch } = useQuery({
+  const {
+    data: ticket,
+    isLoading,
+    error,
+    refetch,
+  } = useQuery({
     queryKey: ['ticket', id],
     queryFn: () => ticketsApi.getTicket(id!),
     enabled: !!id,
   });
 
-  const handleTransfer = () => {
-    if (!ticket) return;
+  const { data: eventTickets } = useQuery({
+    queryKey: ['event-tickets', ticket?.eventId],
+    queryFn: () => ticketsApi.getTickets({ eventId: ticket?.eventId, limit: 50 }),
+    enabled: !!ticket?.eventId,
+  });
 
-    if (ticket.status !== 'issued') {
+  useEffect(() => {
+    if (id && !activeTicketId) {
+      setActiveTicketId(id);
+    }
+  }, [id, activeTicketId]);
+
+  const allTickets: Ticket[] = useMemo(() => {
+    const list = eventTickets?.data || [];
+    if (ticket) {
+      const exists = list.find((t) => t.id === ticket.id);
+      return exists ? list : [ticket, ...list];
+    }
+    return list;
+  }, [eventTickets, ticket]);
+
+  const activeTicket = useMemo(() => {
+    if (!activeTicketId && allTickets.length) return allTickets[activeIndex] || allTickets[0];
+    if (activeTicketId) {
+      const found = allTickets.find((t) => t.id === activeTicketId);
+      if (found) return found;
+    }
+    return ticket;
+  }, [activeTicketId, allTickets, ticket, activeIndex]);
+
+  useEffect(() => {
+    if (!id || !allTickets.length) return;
+    const index = allTickets.findIndex((t) => t.id === id);
+    if (index >= 0) {
+      setActiveIndex(index);
+      setActiveTicketId(id);
+    }
+  }, [id, allTickets]);
+
+  const onViewableItemsChanged = useRef(
+    ({ viewableItems }: { viewableItems: Array<{ index: number | null; item: Ticket }> }) => {
+      if (viewableItems.length && viewableItems[0].index !== null && viewableItems[0].item) {
+        const idx = viewableItems[0].index ?? 0;
+        setActiveIndex(idx);
+        setActiveTicketId(viewableItems[0].item.id);
+      }
+    }
+  );
+
+  const viewConfigRef = useRef({ viewAreaCoveragePercentThreshold: 60 });
+
+  const handleTransfer = () => {
+    if (!activeTicket) return;
+
+    if (activeTicket.status !== 'issued') {
       Alert.alert('Cannot Transfer', 'Only active tickets can be transferred.');
       return;
     }
 
-    if (isPast(new Date(ticket.event.startDate))) {
+    if (isPast(new Date(activeTicket.event.startDate))) {
       Alert.alert('Cannot Transfer', 'Cannot transfer tickets for past events.');
       return;
     }
@@ -65,7 +126,7 @@ export default function TicketDetailScreen() {
     return <Loading fullScreen />;
   }
 
-  if (error || !ticket) {
+  if (error || !ticket || !activeTicket) {
     return (
       <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
         <View style={styles.errorContainer}>
@@ -77,45 +138,42 @@ export default function TicketDetailScreen() {
     );
   }
 
-  const event = ticket.event;
-  const status = statusConfig[ticket.status] || statusConfig.void;
+  const event = activeTicket.event;
+  const status = statusConfig[activeTicket.status] || statusConfig.void;
   const isUpcoming = isFuture(new Date(event.startDate));
-  const isActive = ticket.status === 'issued' && isUpcoming;
+  const isActive = activeTicket.status === 'issued' && isUpcoming;
 
-  return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <Ionicons name="arrow-back" size={24} color={colors.text} />
-        </TouchableOpacity>
-        <Text style={[styles.headerTitle, { color: colors.text }]}>Ticket Details</Text>
-        <View style={styles.placeholder} />
-      </View>
+  const renderTicketPage = ({ item }: { item: Ticket }) => {
+    const eventPage = item.event;
+    const statusPage = statusConfig[item.status] || statusConfig.void;
+    const isUpcomingPage = isFuture(new Date(eventPage.startDate));
+    const isActivePage = item.status === 'issued' && isUpcomingPage;
 
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
-        {/* Ticket Card */}
-        <View style={[styles.ticketCard, { backgroundColor: colors.card }]}>
+    return (
+      <View style={[styles.page, { width: screenWidth }]}>
+        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
+          {/* Ticket Card */}
+          <View style={[styles.ticketCard, { backgroundColor: colors.card }]}>
           {/* Status Badge */}
           <View style={styles.statusRow}>
-            <View style={[styles.statusBadge, { backgroundColor: status.bgColor }]}>
-              <Text style={[styles.statusText, { color: status.color }]}>{status.label}</Text>
+            <View style={[styles.statusBadge, { backgroundColor: statusPage.bgColor }]}>
+              <Text style={[styles.statusText, { color: statusPage.color }]}>{statusPage.label}</Text>
             </View>
-            {ticket.seat && (
+            {item.seat && (
               <View style={[styles.seatBadge, { backgroundColor: colors.tint + '15' }]}>
                 <Text style={[styles.seatText, { color: colors.tint }]}>
-                  {ticket.seat.section} · Row {ticket.seat.row} · Seat {ticket.seat.number}
+                  {item.seat.section} Жњ Row {item.seat.row} Жњ Seat {item.seat.number}
                 </Text>
               </View>
             )}
           </View>
 
           {/* QR Code */}
-          {isActive && (
+          {isActivePage && (
             <TouchableOpacity style={styles.qrContainer} onPress={handleViewQR} activeOpacity={0.8}>
               <View style={styles.qrWrapper}>
                 <QRCode
-                  value={ticket.qrCode || ticket.id}
+                  value={item.qrCode || item.id}
                   size={180}
                   backgroundColor="white"
                   color="black"
@@ -130,11 +188,9 @@ export default function TicketDetailScreen() {
           {/* Ticket Info */}
           <View style={styles.ticketInfo}>
             <Text style={[styles.ticketNumber, { color: colors.textSecondary }]}>
-              #{ticket.ticketNumber || ticket.id.slice(0, 8).toUpperCase()}
+              #{item.ticketNumber || item.id.slice(0, 8).toUpperCase()}
             </Text>
-            <Text style={[styles.ticketType, { color: colors.text }]}>
-              {ticket.ticketType.name}
-            </Text>
+            <Text style={[styles.ticketType, { color: colors.text }]}>{item.ticketType.name}</Text>
           </View>
 
           {/* Divider */}
@@ -146,7 +202,7 @@ export default function TicketDetailScreen() {
           {/* Event Info */}
           <View style={styles.eventInfo}>
             <Text style={[styles.eventTitle, { color: colors.text }]} numberOfLines={2}>
-              {event.title}
+              {eventPage.title}
             </Text>
 
             <View style={styles.eventDetail}>
@@ -156,15 +212,15 @@ export default function TicketDetailScreen() {
                   Date & Time
                 </Text>
                 <Text style={[styles.eventDetailValue, { color: colors.text }]}>
-                  {format(new Date(event.startDate), 'EEEE, MMMM d, yyyy')}
+                  {format(new Date(eventPage.startDate), 'EEEE, MMMM d, yyyy')}
                 </Text>
                 <Text style={[styles.eventDetailValue, { color: colors.text }]}>
-                  {format(new Date(event.startDate), 'h:mm a')}
+                  {format(new Date(eventPage.startDate), 'h:mm a')}
                 </Text>
               </View>
             </View>
 
-            {event.venue && (
+            {eventPage.venue && (
               <View style={styles.eventDetail}>
                 <Ionicons name="location-outline" size={18} color={colors.tint} />
                 <View style={styles.eventDetailText}>
@@ -172,20 +228,20 @@ export default function TicketDetailScreen() {
                     Location
                   </Text>
                   <Text style={[styles.eventDetailValue, { color: colors.text }]}>
-                    {event.venue.name}
+                    {eventPage.venue.name}
                   </Text>
                   <Text style={[styles.eventDetailSubvalue, { color: colors.textSecondary }]}>
-                    {event.venue.address}, {event.venue.city}
+                    {eventPage.venue.address}, {eventPage.venue.city}
                   </Text>
                 </View>
               </View>
             )}
 
-            {isUpcoming && (
+            {isUpcomingPage && (
               <View style={[styles.countdownBadge, { backgroundColor: colors.tint + '10' }]}>
                 <Ionicons name="time-outline" size={16} color={colors.tint} />
                 <Text style={[styles.countdownText, { color: colors.tint }]}>
-                  {formatDistanceToNow(new Date(event.startDate), { addSuffix: true })}
+                  {formatDistanceToNow(new Date(eventPage.startDate), { addSuffix: true })}
                 </Text>
               </View>
             )}
@@ -193,12 +249,12 @@ export default function TicketDetailScreen() {
         </View>
 
         {/* Event Image */}
-        {event.coverImageUrl && (
+        {eventPage.coverImageUrl && (
           <TouchableOpacity
             style={styles.eventImageContainer}
-            onPress={() => router.push(`/events/${event.id}` as const)}
+            onPress={() => router.push(`/events/${eventPage.id}` as const)}
           >
-            <Image source={{ uri: event.coverImageUrl }} style={styles.eventImage} />
+            <Image source={{ uri: eventPage.coverImageUrl }} style={styles.eventImage} />
             <View style={styles.eventImageOverlay}>
               <Text style={styles.eventImageText}>View Event</Text>
               <Ionicons name="chevron-forward" size={16} color="#FFFFFF" />
@@ -207,33 +263,33 @@ export default function TicketDetailScreen() {
         )}
 
         {/* Attendee Info */}
-        {(ticket.attendeeName || ticket.attendeeEmail) && (
+        {(item.attendeeName || item.attendeeEmail) && (
           <Card style={styles.section}>
             <Text style={[styles.sectionTitle, { color: colors.text }]}>Attendee</Text>
-            {ticket.attendeeName && (
+            {item.attendeeName && (
               <View style={styles.infoRow}>
                 <Ionicons name="person-outline" size={18} color={colors.textSecondary} />
-                <Text style={[styles.infoText, { color: colors.text }]}>{ticket.attendeeName}</Text>
+                <Text style={[styles.infoText, { color: colors.text }]}>{item.attendeeName}</Text>
               </View>
             )}
-            {ticket.attendeeEmail && (
+            {item.attendeeEmail && (
               <View style={styles.infoRow}>
                 <Ionicons name="mail-outline" size={18} color={colors.textSecondary} />
-                <Text style={[styles.infoText, { color: colors.text }]}>{ticket.attendeeEmail}</Text>
+                <Text style={[styles.infoText, { color: colors.text }]}>{item.attendeeEmail}</Text>
               </View>
             )}
           </Card>
         )}
 
         {/* Check-in Status */}
-        {ticket.status === 'checked_in' && ticket.checkedInAt && (
+        {item.status === 'checked_in' && item.checkedInAt && (
           <Card style={styles.section}>
             <View style={styles.checkedInBanner}>
               <Ionicons name="checkmark-circle" size={24} color="#059669" />
               <View style={styles.checkedInText}>
                 <Text style={[styles.checkedInTitle, { color: colors.text }]}>Checked In</Text>
                 <Text style={[styles.checkedInTime, { color: colors.textSecondary }]}>
-                  {format(new Date(ticket.checkedInAt), 'MMM d, yyyy h:mm a')}
+                  {format(new Date(item.checkedInAt), 'MMM d, yyyy h:mm a')}
                 </Text>
               </View>
             </View>
@@ -241,7 +297,7 @@ export default function TicketDetailScreen() {
         )}
 
         {/* Actions */}
-        {isActive && (
+        {isActivePage && (
           <View style={styles.actions}>
             <Button
               title="View Full QR Code"
@@ -259,14 +315,50 @@ export default function TicketDetailScreen() {
           </View>
         )}
 
-        <View style={{ height: 40 }} />
-      </ScrollView>
+          <View style={{ height: 40 }} />
+        </ScrollView>
+      </View>
+    );
+  };
+
+  return (
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
+      {/* Header */}
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+          <Ionicons name="arrow-back" size={24} color={colors.text} />
+        </TouchableOpacity>
+        <Text style={[styles.headerTitle, { color: colors.text }]}>Ticket Details</Text>
+        <View style={styles.placeholder} />
+      </View>
+
+      <FlatList
+        data={allTickets}
+        horizontal
+        pagingEnabled
+        decelerationRate="fast"
+        snapToInterval={screenWidth}
+        snapToAlignment="start"
+        showsHorizontalScrollIndicator={false}
+        keyExtractor={(item) => item.id}
+        renderItem={renderTicketPage}
+        onViewableItemsChanged={onViewableItemsChanged.current}
+        viewabilityConfig={viewConfigRef.current}
+        getItemLayout={(_, index) => ({
+          length: screenWidth,
+          offset: screenWidth * index,
+          index,
+        })}
+      />
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
+    flex: 1,
+  },
+  page: {
     flex: 1,
   },
   header: {

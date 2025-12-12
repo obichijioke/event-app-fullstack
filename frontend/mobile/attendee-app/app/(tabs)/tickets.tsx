@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   View,
   Text,
@@ -6,7 +6,6 @@ import {
   FlatList,
   TouchableOpacity,
   RefreshControl,
-  Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -20,7 +19,16 @@ import { Loading } from '@/components/ui/loading';
 import { StatusBadge } from '@/components/ui/badge';
 import type { Ticket } from '@/lib/types';
 
-type FilterType = 'all' | 'upcoming' | 'past';
+type FilterType = 'upcoming' | 'past';
+
+type EventGroup = {
+  eventId: string;
+  eventTitle: string;
+  eventLocation: string;
+  startDate: Date | null;
+  tickets: Ticket[];
+  categorySlug?: string;
+};
 
 const parseDate = (value?: string | null) => {
   if (!value) return null;
@@ -47,68 +55,49 @@ export default function TicketsScreen() {
       }),
   });
 
-  const filteredTickets = (() => {
+  const groupedTickets: EventGroup[] = useMemo(() => {
     const tickets = ticketsData?.data || [];
     const now = new Date();
-    if (filter === 'upcoming') {
-      return tickets.filter((t) => {
-        const start = parseDate(t.event.startDate);
-        return start ? start > now : true;
-      });
-    }
-    if (filter === 'past') {
-      return tickets.filter((t) => {
-        const start = parseDate(t.event.startDate);
-        return start ? start <= now : false;
-      });
-    }
-    return tickets;
-  })();
 
-  const renderTicket = ({ item }: { item: Ticket }) => {
-    const event = item.event;
-    const isUpcoming = new Date(event.startDate) > new Date();
+    const filtered = tickets.filter((t) => {
+      const start = parseDate(t.event.startDate);
+      if (!start) return filter === 'upcoming';
+      return filter === 'upcoming' ? start >= now : start < now;
+    });
 
-    return (
-      <TouchableOpacity
-        style={[styles.ticketCard, { backgroundColor: colors.card }]}
-        onPress={() => router.push(`/tickets/${item.id}` as const)}
-        activeOpacity={0.7}
-      >
-        <Image
-          source={{ uri: event.coverImageUrl || 'https://via.placeholder.com/80x80' }}
-          style={styles.ticketImage}
-        />
-        <View style={styles.ticketContent}>
-          <View style={styles.ticketHeader}>
-            <Text style={[styles.ticketDate, { color: colors.tint }]}>
-              {format(new Date(event.startDate), 'EEE, MMM d · h:mm a')}
-            </Text>
-            <StatusBadge status={item.status} />
-          </View>
-          <Text style={[styles.ticketTitle, { color: colors.text }]} numberOfLines={2}>
-            {event.title}
-          </Text>
-          <Text style={[styles.ticketType, { color: colors.textSecondary }]}>
-            {item.ticketType.name}
-            {item.seat && ` · ${item.seat.section} Row ${item.seat.row} Seat ${item.seat.number}`}
-          </Text>
-          <View style={styles.ticketFooter}>
-            <View style={styles.ticketLocation}>
-              <Ionicons name="location-outline" size={14} color={colors.textSecondary} />
-              <Text style={[styles.ticketVenue, { color: colors.textSecondary }]} numberOfLines={1}>
-                {event.venue?.name || 'Online Event'}
-              </Text>
-            </View>
-            {isUpcoming && (
-              <View style={styles.qrIcon}>
-                <Ionicons name="qr-code-outline" size={16} color={colors.tint} />
-              </View>
-            )}
-          </View>
-        </View>
-      </TouchableOpacity>
-    );
+    const groups = new Map<string, EventGroup>();
+
+    filtered.forEach((ticket) => {
+      const event = ticket.event;
+      const startDate = parseDate(event.startDate);
+      const existing = groups.get(event.id);
+      if (existing) {
+        existing.tickets.push(ticket);
+      } else {
+        groups.set(event.id, {
+          eventId: event.id,
+          eventTitle: event.title,
+          eventLocation: event.venue?.name || 'Online event',
+          startDate,
+          tickets: [ticket],
+          categorySlug: event.category?.slug,
+        });
+      }
+    });
+
+    return Array.from(groups.values()).sort((a, b) => {
+      if (!a.startDate || !b.startDate) return 0;
+      return a.startDate.getTime() - b.startDate.getTime();
+    });
+  }, [ticketsData, filter]);
+
+  const categoryIconMap: Record<string, keyof typeof Ionicons.glyphMap> = {
+    music: 'musical-notes',
+    arts: 'color-palette',
+    sports: 'football-outline',
+    business: 'briefcase-outline',
+    tech: 'laptop-outline',
+    food: 'fast-food-outline',
   };
 
   const FilterButton = ({ type, label }: { type: FilterType; label: string }) => (
@@ -121,6 +110,7 @@ export default function TicketsScreen() {
         },
       ]}
       onPress={() => setFilter(type)}
+      activeOpacity={0.8}
     >
       <Text
         style={[
@@ -133,6 +123,72 @@ export default function TicketsScreen() {
     </TouchableOpacity>
   );
 
+  const renderEventGroup = ({ item }: { item: EventGroup }) => {
+    const tickets = item.tickets;
+    const firstTicket = tickets[0];
+    const hasSeat = firstTicket?.seat;
+    const ticketLabel = `${firstTicket?.ticketType?.name || 'Ticket'} x${tickets.length}`;
+    const startText = item.startDate
+      ? format(item.startDate, 'EEE, MMM d - h:mm a')
+      : 'Date TBA';
+    const iconName = item.categorySlug
+      ? categoryIconMap[item.categorySlug] || 'ticket-outline'
+      : 'ticket-outline';
+
+    return (
+      <TouchableOpacity
+        style={[styles.groupCard, { backgroundColor: colors.card, borderColor: colors.border }]}
+        onPress={() => router.push(`/tickets/${firstTicket?.id}` as const)}
+        activeOpacity={0.9}
+      >
+        <View style={styles.groupHeader}>
+          <View style={[styles.iconPill, { backgroundColor: colors.tint + '15' }]}>
+            <Ionicons name={iconName} size={20} color={colors.tint} />
+          </View>
+          <View style={styles.headerText}>
+            <Text style={[styles.eventTitle, { color: colors.text }]} numberOfLines={2}>
+              {item.eventTitle}
+            </Text>
+            <Text style={[styles.eventDate, { color: colors.textSecondary }]}>{startText}</Text>
+            <View style={styles.locationRow}>
+              <Ionicons name="location-outline" size={14} color={colors.textSecondary} />
+              <Text style={[styles.eventLocation, { color: colors.textSecondary }]} numberOfLines={1}>
+                {item.eventLocation}
+              </Text>
+            </View>
+          </View>
+          <View style={styles.statusPill}>
+            <StatusBadge status={firstTicket?.status} />
+          </View>
+        </View>
+
+        <View style={[styles.divider, { backgroundColor: colors.border }]} />
+
+        <View style={styles.detailRow}>
+          <View style={styles.detailItem}>
+            <Text style={[styles.detailLabel, { color: colors.textSecondary }]}>Time</Text>
+            <Text style={[styles.detailValue, { color: colors.text }]} numberOfLines={1}>
+              {item.startDate ? format(item.startDate, 'h:mm a') : 'TBA'}
+            </Text>
+          </View>
+          <View style={styles.detailItem}>
+            <Text style={[styles.detailLabel, { color: colors.textSecondary }]}>Seat</Text>
+            <Text style={[styles.detailValue, { color: colors.text }]} numberOfLines={1}>
+              {hasSeat
+                ? `${firstTicket.seat?.section} ${firstTicket.seat?.row} ${firstTicket.seat?.number}`
+                : 'No seat'}
+            </Text>
+          </View>
+          <View style={[styles.badge, { backgroundColor: colors.tint + '15' }]}>
+            <Text style={[styles.badgeText, { color: colors.tint }]} numberOfLines={1}>
+              {ticketLabel}
+            </Text>
+          </View>
+        </View>
+      </TouchableOpacity>
+    );
+  };
+
   if (isLoading) {
     return <Loading fullScreen />;
   }
@@ -141,7 +197,7 @@ export default function TicketsScreen() {
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
       {/* Header */}
       <View style={styles.header}>
-        <Text style={[styles.title, { color: colors.text }]}>My Tickets</Text>
+        <Text style={[styles.title, { color: colors.text }]}>Tickets</Text>
         <View style={styles.headerActions}>
           <TouchableOpacity onPress={() => router.push('/account/transfers' as const)}>
             <Ionicons name="swap-horizontal-outline" size={22} color={colors.tint} />
@@ -155,15 +211,14 @@ export default function TicketsScreen() {
       {/* Filters */}
       <View style={styles.filters}>
         <FilterButton type="upcoming" label="Upcoming" />
-        <FilterButton type="past" label="Past" />
-        <FilterButton type="all" label="All" />
+        <FilterButton type="past" label="Past ticket" />
       </View>
 
-      {/* Tickets List */}
+      {/* Tickets List grouped by event */}
       <FlatList
-        data={filteredTickets}
-        renderItem={renderTicket}
-        keyExtractor={(item) => item.id}
+        data={groupedTickets}
+        renderItem={renderEventGroup}
+        keyExtractor={(item) => item.eventId}
         contentContainerStyle={styles.ticketsList}
         showsVerticalScrollIndicator={false}
         refreshControl={
@@ -176,15 +231,11 @@ export default function TicketsScreen() {
         ListEmptyComponent={
           <View style={styles.emptyState}>
             <Ionicons name="ticket-outline" size={64} color={colors.border} />
-            <Text style={[styles.emptyTitle, { color: colors.text }]}>
-              No tickets yet
-            </Text>
+            <Text style={[styles.emptyTitle, { color: colors.text }]}>No tickets yet</Text>
             <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
               {filter === 'upcoming'
                 ? "You don't have any upcoming events"
-                : filter === 'past'
-                ? "You haven't attended any events yet"
-                : "Purchase tickets to your favorite events"}
+                : "You haven't attended any events yet"}
             </Text>
             <TouchableOpacity
               style={[styles.browseButton, { backgroundColor: colors.tint }]}
@@ -209,10 +260,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 20,
     paddingTop: 8,
-    paddingBottom: 16,
+    paddingBottom: 12,
   },
   title: {
-    fontSize: 28,
+    fontSize: 26,
     fontWeight: '700',
   },
   headerActions: {
@@ -227,77 +278,98 @@ const styles = StyleSheet.create({
   filters: {
     flexDirection: 'row',
     paddingHorizontal: 20,
-    marginBottom: 16,
+    marginBottom: 12,
     gap: 10,
   },
   filterButton: {
     paddingHorizontal: 16,
-    paddingVertical: 8,
+    paddingVertical: 10,
     borderRadius: 20,
     borderWidth: 1,
   },
   filterButtonText: {
     fontSize: 14,
-    fontWeight: '500',
+    fontWeight: '600',
   },
   ticketsList: {
     paddingHorizontal: 20,
     paddingBottom: 24,
   },
-  ticketCard: {
+  groupCard: {
+    borderRadius: 16,
+    borderWidth: 1,
+    padding: 16,
+    marginBottom: 14,
+    gap: 12,
+  },
+  groupHeader: {
     flexDirection: 'row',
-    borderRadius: 12,
-    overflow: 'hidden',
-    marginBottom: 12,
-    padding: 12,
+    gap: 12,
+    alignItems: 'flex-start',
   },
-  ticketImage: {
-    width: 80,
-    height: 80,
-    borderRadius: 8,
-    backgroundColor: '#E5E7EB',
-  },
-  ticketContent: {
-    flex: 1,
-    marginLeft: 12,
-  },
-  ticketHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+  iconPill: {
+    width: 44,
+    height: 44,
+    borderRadius: 14,
     alignItems: 'center',
-    marginBottom: 4,
+    justifyContent: 'center',
   },
-  ticketDate: {
-    fontSize: 12,
-    fontWeight: '600',
-  },
-  ticketTitle: {
-    fontSize: 15,
-    fontWeight: '600',
-    marginBottom: 4,
-    lineHeight: 20,
-  },
-  ticketType: {
-    fontSize: 12,
-    marginBottom: 8,
-  },
-  ticketFooter: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  ticketLocation: {
-    flexDirection: 'row',
-    alignItems: 'center',
+  headerText: {
     flex: 1,
     gap: 4,
   },
-  ticketVenue: {
-    fontSize: 12,
+  eventTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    lineHeight: 22,
+  },
+  eventDate: {
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  locationRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  eventLocation: {
+    fontSize: 13,
     flex: 1,
   },
-  qrIcon: {
-    padding: 4,
+  statusPill: {
+    justifyContent: 'flex-start',
+  },
+  divider: {
+    height: 1,
+    opacity: 0.8,
+  },
+  detailRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  detailItem: {
+    flex: 1,
+    gap: 4,
+  },
+  detailLabel: {
+    fontSize: 12,
+    fontWeight: '500',
+    textTransform: 'uppercase',
+    letterSpacing: 0.3,
+  },
+  detailValue: {
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  badge: {
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    borderRadius: 12,
+  },
+  badgeText: {
+    fontSize: 12,
+    fontWeight: '700',
   },
   emptyState: {
     alignItems: 'center',

@@ -236,7 +236,7 @@ export class AuthService {
     return { message: 'Password changed successfully' };
   }
 
-  async listSessions(userId: string) {
+  async listSessions(userId: string, currentSessionId?: string) {
     const sessions = await this.prisma.userSession.findMany({
       where: { userId },
       orderBy: { createdAt: 'desc' },
@@ -250,7 +250,17 @@ export class AuthService {
       },
     });
 
-    return sessions;
+    // Map sessions to include isCurrent flag and rename ipAddr to ipAddress
+    return sessions.map((session) => ({
+      id: session.id,
+      userAgent: session.userAgent,
+      ipAddress: session.ipAddr,
+      createdAt: session.createdAt,
+      expiresAt: session.expiresAt,
+      revokedAt: session.revokedAt,
+      isCurrent: currentSessionId ? session.id === currentSessionId : false,
+      lastActiveAt: session.createdAt, // Use createdAt as lastActiveAt for now
+    }));
   }
 
   async revokeSession(userId: string, sessionId: string) {

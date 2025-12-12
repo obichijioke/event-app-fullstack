@@ -15,7 +15,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { formatDistanceToNow } from 'date-fns';
 import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
-import { accountApi } from '@/lib/api';
+import { authApi, accountApi } from '@/lib/api';
 import { Loading } from '@/components/ui/loading';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -42,12 +42,24 @@ const getDeviceIcon = (userAgent?: string): keyof typeof Ionicons.glyphMap => {
 const getDeviceName = (session: Session): string => {
   if (session.deviceName) return session.deviceName;
   if (!session.userAgent) return 'Unknown Device';
-  const ua = session.userAgent.toLowerCase();
-  if (ua.includes('iphone')) return 'iPhone';
-  if (ua.includes('ipad')) return 'iPad';
-  if (ua.includes('android')) return 'Android Device';
-  if (ua.includes('mac')) return 'Mac';
-  if (ua.includes('windows')) return 'Windows PC';
+
+  const ua = session.userAgent;
+
+  // Try to extract device model from our custom user agent format
+  // Format: "EventFlow/1.0.0 (iOS 17.0; iPhone 15 Pro) Expo Go"
+  const modelMatch = ua.match(/\([^)]+;\s*([^)]+)\)/);
+  if (modelMatch && modelMatch[1] && modelMatch[1] !== 'Unknown') {
+    return modelMatch[1]; // Returns "iPhone 15 Pro" or "Android Device Name"
+  }
+
+  // Fallback to simple detection
+  const uaLower = ua.toLowerCase();
+  if (uaLower.includes('iphone')) return 'iPhone';
+  if (uaLower.includes('ipad')) return 'iPad';
+  if (uaLower.includes('android')) return 'Android Device';
+  if (uaLower.includes('mac')) return 'Mac';
+  if (uaLower.includes('windows')) return 'Windows PC';
+
   return 'Unknown Device';
 };
 
@@ -62,14 +74,14 @@ export default function SessionsScreen() {
     refetch,
     isRefetching,
   } = useQuery({
-    queryKey: ['account', 'sessions'],
-    queryFn: accountApi.getSessions,
+    queryKey: ['auth', 'sessions'],
+    queryFn: authApi.getSessions,
   });
 
   const revokeMutation = useMutation({
-    mutationFn: accountApi.revokeSession,
+    mutationFn: authApi.revokeSession,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['account', 'sessions'] });
+      queryClient.invalidateQueries({ queryKey: ['auth', 'sessions'] });
     },
     onError: (error: Error) => {
       Alert.alert('Error', error.message || 'Failed to revoke session');
@@ -77,9 +89,11 @@ export default function SessionsScreen() {
   });
 
   const revokeAllMutation = useMutation({
-    mutationFn: accountApi.revokeAllSessions,
+    mutationFn: async () => {
+      await authApi.logoutAll();
+    },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['account', 'sessions'] });
+      queryClient.invalidateQueries({ queryKey: ['auth', 'sessions'] });
       Alert.alert('Success', 'All other sessions have been logged out');
     },
     onError: (error: Error) => {

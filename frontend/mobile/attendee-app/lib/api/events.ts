@@ -152,6 +152,17 @@ export const mapEventFromApi = (raw: any): Event => {
 
   const venueAddress = raw?.venue?.address || {};
   const organization = raw?.organization ?? raw?.org;
+  const agenda = Array.isArray(raw?.agenda) ? raw.agenda : [];
+  const speakers = Array.isArray(raw?.speakers) ? raw.speakers : [];
+  const policies = raw?.policies
+    ? {
+        eventId: raw?.policies?.eventId ?? raw?.id ?? '',
+        refundPolicy: raw?.policies?.refundPolicy ?? raw?.policies?.refund_policy,
+        transferAllowed: Boolean(raw?.policies?.transferAllowed ?? raw?.policies?.transfer_allowed),
+        transferCutoff: raw?.policies?.transferCutoff ?? raw?.policies?.transfer_cutoff,
+        resaleAllowed: Boolean(raw?.policies?.resaleAllowed ?? raw?.policies?.resale_allowed),
+      }
+    : undefined;
 
   return {
     id: raw?.id ?? '',
@@ -237,6 +248,9 @@ export const mapEventFromApi = (raw: any): Event => {
     thumbnailUrl: resolveAssetUrl(
       raw?.thumbnailUrl ?? raw?.coverImageUrl ?? raw?.cover_image_url
     ),
+    agenda,
+    speakers,
+    policies,
     ticketTypes,
     isFree,
     minPrice,
