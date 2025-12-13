@@ -35,8 +35,11 @@ export default function EventAgendaScreen() {
     enabled: !!eventId,
   });
 
-  const formatTime = (dateString: string) => {
-    return format(new Date(dateString), 'h:mm a');
+  const formatTime = (dateString: string | null | undefined) => {
+    if (!dateString) return 'TBA';
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return 'TBA';
+    return format(date, 'h:mm a');
   };
 
   const renderAgendaItem = ({ item, index }: { item: EventAgenda; index: number }) => {

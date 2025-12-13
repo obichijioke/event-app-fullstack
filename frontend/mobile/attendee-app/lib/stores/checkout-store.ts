@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import type { Event, TicketType, PromoValidation } from '../types';
 import { ordersApi } from '../api/orders';
+import { useCurrencyStore } from './currency-store';
 
 export interface CartItem {
   ticketTypeId: string;
@@ -82,7 +83,7 @@ export const useCheckoutStore = create<CheckoutState>((set, get) => ({
   discount: 0,
   fees: 0,
   total: 0,
-  currency: 'USD',
+  currency: useCurrencyStore.getState().config?.defaultCurrency || 'USD',
   orderId: null,
   paymentProvider: null,
   isProcessing: false,
@@ -91,7 +92,7 @@ export const useCheckoutStore = create<CheckoutState>((set, get) => ({
   setEvent: (event: Event) => {
     set({
       event,
-      currency: event.currency || 'USD',
+      currency: event.currency || useCurrencyStore.getState().config?.defaultCurrency || 'USD',
       items: [],
       promoCode: null,
       promoValidation: null,
@@ -286,7 +287,7 @@ export const useCheckoutStore = create<CheckoutState>((set, get) => ({
       discount: 0,
       fees: 0,
       total: 0,
-      currency: 'USD',
+      currency: useCurrencyStore.getState().config?.defaultCurrency || 'USD',
       orderId: null,
       paymentProvider: null,
       isProcessing: false,

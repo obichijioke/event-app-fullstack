@@ -24,6 +24,7 @@ import { Loading } from '@/components/ui/loading';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import type { TicketType } from '@/lib/types';
+import { formatCurrency } from '@/lib/utils/format';
 
 export default function CheckoutScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -131,10 +132,7 @@ export default function CheckoutScreen() {
   };
 
   const formatPrice = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: currency,
-    }).format(amount);
+    return formatCurrency(amount, currency);
   };
 
   if (isLoading) {

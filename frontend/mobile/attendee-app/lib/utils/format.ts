@@ -1,4 +1,5 @@
 import { format, formatDistance, isToday, isTomorrow, isThisWeek } from 'date-fns';
+import { useCurrencyStore, getCurrencySymbol } from '../stores/currency-store';
 
 /**
  * Format a date for display
@@ -41,13 +42,17 @@ export function formatRelativeTime(date: string | Date): string {
 /**
  * Format currency
  */
-export function formatCurrency(amount: number, currency = 'USD'): string {
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency,
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 2,
-  }).format(amount);
+export function formatCurrency(amount: number, currency?: string): string {
+  const { config } = useCurrencyStore.getState();
+  const currencyCode = currency || config?.defaultCurrency || 'USD';
+  const symbol = getCurrencySymbol(currencyCode, config?.currencySymbol || '$');
+  const decimalPlaces = config?.decimalPlaces ?? 2;
+  const formatted = (amount || 0).toLocaleString(undefined, {
+    minimumFractionDigits: decimalPlaces,
+    maximumFractionDigits: decimalPlaces,
+  });
+  const position = config?.currencyPosition || 'before';
+  return position === 'before' ? `${symbol}${formatted}` : `${formatted}${symbol}`;
 }
 
 /**

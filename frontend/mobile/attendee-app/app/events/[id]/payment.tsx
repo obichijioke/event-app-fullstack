@@ -20,6 +20,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { LoadingOverlay } from '@/components/ui/loading';
 import { useStripe } from '@/lib/stripe';
+import { formatCurrency } from '@/lib/utils/format';
 
 type PaymentProvider = 'stripe' | 'paystack';
 
@@ -84,10 +85,7 @@ export default function PaymentScreen() {
   }, [items.length, id]);
 
   const formatPrice = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: currency,
-    }).format(amount);
+    return formatCurrency(amount, currency);
   };
 
   const handleStripePayment = async (orderIdToUse: string) => {

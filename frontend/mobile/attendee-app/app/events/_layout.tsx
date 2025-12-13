@@ -7,6 +7,11 @@ export default function EventsLayout() {
       <Stack.Screen name="[id]/index" />
       <Stack.Screen name="[id]/checkout" />
       <Stack.Screen name="[id]/payment" />
+      <Stack.Screen name="[id]/agenda" />
+      <Stack.Screen name="[id]/speakers" />
+      <Stack.Screen name="[id]/faqs" />
+      <Stack.Screen name="[id]/announcements" />
+      <Stack.Screen name="[id]/reviews" />
     </Stack>
   );
 }

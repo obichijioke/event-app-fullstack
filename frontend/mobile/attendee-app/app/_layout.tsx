@@ -9,6 +9,7 @@ import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useAuthStore } from '@/lib/stores/auth-store';
 import { Loading } from '@/components/ui/loading';
 import { Colors } from '@/constants/theme';
+import { useCurrencyStore } from '@/lib/stores/currency-store';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { StripeProvider } from '@/lib/stripe';
 
@@ -64,10 +65,12 @@ function RootLayoutNav() {
   const colorScheme = useColorScheme() ?? 'light';
   const segments = useSegments();
   const { isAuthenticated, isInitialized, initialize } = useAuthStore();
+  const fetchCurrencyConfig = useCurrencyStore((state) => state.fetchConfig);
 
   // Initialize auth state
   useEffect(() => {
     initialize();
+    fetchCurrencyConfig();
   }, []);
 
   // Hide splash screen when initialized
@@ -84,6 +87,8 @@ function RootLayoutNav() {
     const inAuthGroup = segments[0] === '(auth)';
     const currentRoute = segments[0] as string;
     const isProtectedRoute = PROTECTED_ROUTES.includes(currentRoute);
+    const atRoot = !segments || segments.length === 0;
+    const inTabs = currentRoute === '(tabs)';
 
     // If user is on a protected route and not authenticated, redirect to login
     if (!isAuthenticated && isProtectedRoute) {
@@ -94,6 +99,9 @@ function RootLayoutNav() {
       });
     } else if (isAuthenticated && inAuthGroup) {
       // Redirect to tabs if authenticated and on auth screens
+      router.replace('/(tabs)');
+    } else if (!isAuthenticated && !inAuthGroup && !isProtectedRoute && (atRoot || !inTabs)) {
+      // Default unauthenticated entry point goes to tabs/home instead of login
       router.replace('/(tabs)');
     }
     // Otherwise, allow navigation (public routes accessible without auth)

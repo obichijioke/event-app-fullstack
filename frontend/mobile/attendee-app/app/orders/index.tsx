@@ -18,6 +18,7 @@ import { useColorScheme } from '@/hooks/use-color-scheme';
 import { ordersApi } from '@/lib/api/orders';
 import { Loading } from '@/components/ui/loading';
 import type { Order, OrderStatus } from '@/lib/types';
+import { formatCurrency } from '@/lib/utils/format';
 
 type FilterType = 'all' | 'paid' | 'pending' | 'refunded';
 
@@ -47,13 +48,6 @@ export default function OrdersHistoryScreen() {
         limit: 50,
       }),
   });
-
-  const formatPrice = (amount: number, currency = 'USD') => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: currency,
-    }).format(amount);
-  };
 
   const renderOrder = ({ item }: { item: Order }) => {
     const statusColor = statusColors[item.status] || statusColors.pending;
@@ -108,7 +102,7 @@ export default function OrdersHistoryScreen() {
           {/* Total */}
           <View style={styles.orderFooter}>
             <Text style={[styles.orderTotal, { color: colors.text }]}>
-              {formatPrice(item.totalAmount, item.currency)}
+              {formatCurrency(item.totalAmount, item.currency)}
             </Text>
             <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
           </View>

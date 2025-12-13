@@ -17,6 +17,7 @@ import { ordersApi } from '@/lib/api/orders';
 import { Loading } from '@/components/ui/loading';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { formatCurrency } from '@/lib/utils/format';
 
 export default function OrderConfirmationScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -28,13 +29,6 @@ export default function OrderConfirmationScreen() {
     queryFn: () => ordersApi.getOrder(id!),
     enabled: !!id,
   });
-
-  const formatPrice = (amount: number, currency = 'USD') => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: currency,
-    }).format(amount);
-  };
 
   if (isLoading) {
     return <Loading fullScreen />;
@@ -178,7 +172,7 @@ export default function OrderConfirmationScreen() {
                 Subtotal
               </Text>
               <Text style={[styles.summaryValue, { color: colors.text }]}>
-                {formatPrice(order.subtotal || 0, order.currency)}
+                {formatCurrency(order.subtotal || 0, order.currency)}
               </Text>
             </View>
             {order.discount > 0 && (
@@ -187,7 +181,7 @@ export default function OrderConfirmationScreen() {
                   Discount
                 </Text>
                 <Text style={[styles.summaryValue, { color: colors.success }]}>
-                  -{formatPrice(order.discount, order.currency)}
+                  -{formatCurrency(order.discount, order.currency)}
                 </Text>
               </View>
             )}
@@ -196,13 +190,13 @@ export default function OrderConfirmationScreen() {
                 Fees
               </Text>
               <Text style={[styles.summaryValue, { color: colors.text }]}>
-                {formatPrice(order.fees || 0, order.currency)}
+                {formatCurrency(order.fees || 0, order.currency)}
               </Text>
             </View>
             <View style={[styles.totalRow, { borderTopColor: colors.border }]}>
               <Text style={[styles.totalLabel, { color: colors.text }]}>Total</Text>
               <Text style={[styles.totalValue, { color: colors.text }]}>
-                {formatPrice(order.totalAmount, order.currency)}
+                {formatCurrency(order.totalAmount, order.currency)}
               </Text>
             </View>
           </Card>

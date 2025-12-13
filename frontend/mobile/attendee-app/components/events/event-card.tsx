@@ -13,6 +13,7 @@ import { format } from 'date-fns';
 import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import type { Event } from '@/lib/types';
+import { formatCurrency } from '@/lib/utils/format';
 
 const { width } = Dimensions.get('window');
 const CARD_WIDTH = width - 48;
@@ -44,9 +45,9 @@ export function EventCard({
   const formatPrice = () => {
     if (event.isFree) return 'Free';
     if (event.minPrice === event.maxPrice) {
-      return `$${event.minPrice?.toFixed(2)}`;
+      return formatCurrency(event.minPrice || 0, event.currency);
     }
-    return `From $${event.minPrice?.toFixed(2)}`;
+    return `From ${formatCurrency(event.minPrice || 0, event.currency)}`;
   };
 
   const formatDate = () => {

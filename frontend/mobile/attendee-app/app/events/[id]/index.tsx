@@ -26,6 +26,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar } from '@/components/ui/avatar';
 import { StarRating } from '@/components/reviews';
+import { formatCurrency } from '@/lib/utils/format';
 
 const { width } = Dimensions.get('window');
 
@@ -114,9 +115,9 @@ export default function EventDetailScreen() {
     if (!event) return '';
     if (event.isFree) return 'Free';
     if (event.minPrice === event.maxPrice) {
-      return `$${event.minPrice?.toFixed(2)}`;
+      return formatCurrency(event.minPrice || 0, event.currency);
     }
-    return `From $${event.minPrice?.toFixed(2)}`;
+    return `From ${formatCurrency(event.minPrice || 0, event.currency)}`;
   };
 
   if (isLoading) {
@@ -304,7 +305,9 @@ export default function EventDetailScreen() {
                   </View>
                   <View style={styles.ticketPriceContainer}>
                     <Text style={[styles.ticketPrice, { color: colors.text }]}>
-                      {ticketType.price === 0 ? 'Free' : `$${ticketType.price.toFixed(2)}`}
+                      {ticketType.price === 0
+                        ? 'Free'
+                        : formatCurrency(ticketType.price, ticketType.currency || event.currency)}
                     </Text>
                     {ticketType.quantityAvailable <= 10 && ticketType.quantityAvailable > 0 && (
                       <Text style={[styles.ticketAvailable, { color: colors.warning }]}>
