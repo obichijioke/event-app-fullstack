@@ -11,7 +11,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
-import { format } from 'date-fns';
+import { format, parseISO } from 'date-fns';
 import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { eventsApi } from '@/lib/api';
@@ -37,9 +37,21 @@ export default function EventAgendaScreen() {
 
   const formatTime = (dateString: string | null | undefined) => {
     if (!dateString) return 'TBA';
-    const date = new Date(dateString);
-    if (isNaN(date.getTime())) return 'TBA';
-    return format(date, 'h:mm a');
+
+    // Try parsing common formats; fallback to raw string if invalid
+    const parsed =
+      !isNaN(new Date(dateString).getTime())
+        ? new Date(dateString)
+        : !isNaN(parseISO(dateString).getTime())
+          ? parseISO(dateString)
+          : null;
+
+    if (parsed) {
+      return format(parsed, 'h:mm a');
+    }
+
+    // If we can't parse, show the raw value so it's not hidden behind "TBA"
+    return dateString;
   };
 
   const renderAgendaItem = ({ item, index }: { item: EventAgenda; index: number }) => {
@@ -52,9 +64,11 @@ export default function EventAgendaScreen() {
           <Text style={[styles.time, { color: colors.tint }]}>
             {formatTime(item.startTime)}
           </Text>
-          <Text style={[styles.endTime, { color: colors.textSecondary }]}>
-            {formatTime(item.endTime)}
-          </Text>
+          {item.endTime ? (
+            <Text style={[styles.endTime, { color: colors.textSecondary }]}>
+              {formatTime(item.endTime)}
+            </Text>
+          ) : null}
         </View>
 
         {/* Timeline */}
@@ -124,7 +138,7 @@ export default function EventAgendaScreen() {
       <FlatList
         data={agenda || []}
         renderItem={renderAgendaItem}
-        keyExtractor={(item) => item.id}
+        keyExtractor={(item, index) => item.id || `${index}-${item.title}`}
         contentContainerStyle={styles.listContent}
         showsVerticalScrollIndicator={false}
         refreshControl={

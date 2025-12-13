@@ -83,7 +83,7 @@ export default function EventAnnouncementsScreen() {
       <FlatList
         data={announcements || []}
         renderItem={renderAnnouncement}
-        keyExtractor={(item) => item.id}
+        keyExtractor={(item, index) => item.id || `${index}-${item.title}`}
         contentContainerStyle={styles.listContent}
         showsVerticalScrollIndicator={false}
         refreshControl={

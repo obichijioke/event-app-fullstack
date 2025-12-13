@@ -548,12 +548,14 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 24,
   },
   categoryBadge: {
+    marginTop: -30,
     marginBottom: 12,
   },
   title: {
     fontSize: 24,
     fontWeight: '700',
     marginBottom: 20,
+    paddingTop: 15,
     lineHeight: 32,
   },
   infoRow: {

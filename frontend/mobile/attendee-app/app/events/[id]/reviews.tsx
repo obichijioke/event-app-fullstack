@@ -127,7 +127,7 @@ export default function EventReviewsScreen() {
       <FlatList
         data={reviewsData?.data || []}
         renderItem={renderReview}
-        keyExtractor={(item) => item.id}
+        keyExtractor={(item, index) => item.id || `${index}-${item.user?.id || 'review'}`}
         contentContainerStyle={styles.listContent}
         showsVerticalScrollIndicator={false}
         refreshControl={

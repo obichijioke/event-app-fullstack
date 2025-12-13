@@ -138,7 +138,7 @@ export default function EventFAQsScreen() {
       <FlatList
         data={sortedFaqs}
         renderItem={renderFAQ}
-        keyExtractor={(item) => item.id}
+        keyExtractor={(item, index) => item.id || `${index}-${item.question}`}
         contentContainerStyle={styles.listContent}
         showsVerticalScrollIndicator={false}
         refreshControl={

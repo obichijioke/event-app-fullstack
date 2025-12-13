@@ -116,7 +116,7 @@ export default function EventSpeakersScreen() {
       <FlatList
         data={speakers || []}
         renderItem={renderSpeaker}
-        keyExtractor={(item) => item.id}
+        keyExtractor={(item, index) => item.id || `${index}-${item.name}`}
         contentContainerStyle={styles.listContent}
         showsVerticalScrollIndicator={false}
         refreshControl={

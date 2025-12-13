@@ -501,8 +501,17 @@ export const eventsApi = {
       id: item?.id ?? '',
       title: item?.title ?? '',
       description: item?.description ?? undefined,
-      startTime: normalizeDate(item?.startTime ?? item?.start_time) ?? '',
-      endTime: normalizeDate(item?.endTime ?? item?.end_time) ?? '',
+      startTime:
+        normalizeDate(
+          item?.startTime ??
+            item?.start_time ??
+            item?.start_at ??
+            item?.startsAt
+        ) ??
+        (typeof item?.time === 'string' ? item.time : undefined),
+      endTime:
+        normalizeDate(item?.endTime ?? item?.end_time ?? item?.end_at ?? item?.endsAt) ??
+        undefined,
       speakerId: item?.speakerId ?? item?.speaker_id ?? undefined,
       speaker: item?.speaker
         ? {
